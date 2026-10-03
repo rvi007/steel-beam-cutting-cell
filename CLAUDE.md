@@ -30,7 +30,6 @@ beginner-friendly; lessons are numbered and build on each other.
 | `teach_replay.py` | Record knob waypoints, replay with eased trajectories, speed slider, loop, saves `waypoints.json`. Logic tested headless; launched on hardware OK. |
 | `ik_target.py` | Inverse kinematics: knob swings a target around the base, IK solves all 6 joints (tool down), servo follows J1, clamps at ±90° and shows "SERVO LIMIT". **In progress - see below.** |
 | `arduino/servo_joint/servo_joint.ino` | Servo pin 9, knob A0. Serial 115200. Orin->Arduino `S<0..180>\n`; Arduino->Orin `K<0..180>\n` every 50 ms (smoothed) |
-| `arduino/encoder_test/encoder_test.ino` | Rotary encoder wiring test (CLK 2, DT 3, SW 4) |
 
 Angle mapping everywhere: robot J1 -90..+90 deg  <->  servo 0..180 deg.
 Target angle 0 = straight out along -X (where the arm points at J1 = 0).
