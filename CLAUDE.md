@@ -30,6 +30,8 @@ beginner-friendly; lessons are numbered and build on each other.
 | `teach_replay.py` | Record knob waypoints, replay with eased trajectories, speed slider, loop, saves `waypoints.json`. Logic tested headless; launched on hardware OK. |
 | `ik_target.py` | Inverse kinematics: knob swings a target around the base, IK solves all 6 joints (tool down), servo follows J1, clamps at ±90° and shows "SERVO LIMIT". Tested headless; hardware test pending. |
 | `test_ik_target.py` | Headless test for `ik_target.py` (no window/Arduino). Must print PASS. |
+| `test_scripts_load.py` | Smoke test: each window script loads headless up to its main loop. Must print PASS. |
+| `.github/workflows/tests.yml` | CI on every push: py_compile, both tests above, exercises 8/8, and compiles the Arduino sketches for the UNO. Keep it green. |
 | `arduino/servo_joint/servo_joint.ino` | Servo pin 9, knob A0. Serial 115200. Orin->Arduino `S<0..180>\n`; Arduino->Orin `K<0..180>\n` every 50 ms (smoothed) |
 | `arduino/encoder_test/encoder_test.ino` | Rotary encoder wiring test (CLK 2, DT 3, SW 4) |
 

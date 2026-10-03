@@ -1,0 +1,51 @@
+# Runs the headless tests on GitHub every time code is pushed.
+# No Arduino and no screen here - hardware tests still happen on the Jetson.
+name: tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:   # lets you press "Run workflow" on the Actions tab
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"   # same as the Jetson (JetPack 6 / Ubuntu 22.04)
+          cache: pip
+
+      - name: Install libraries
+        run: pip install numpy matplotlib scipy pyserial
+
+      - name: Check every file has valid Python
+        run: python -m py_compile *.py
+
+      - name: Window scripts load
+        run: python test_scripts_load.py
+
+      - name: Exercises (must be 8/8)
+        run: |
+          python exercises.py all --quick --solution | tee exercises.out
+          grep -q "Score: 8/8" exercises.out
+
+      - name: Inverse kinematics (300 random jumps)
+        run: python test_ik_target.py
+
+  arduino:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Compile the Arduino sketches for the UNO
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
+          arduino-cli lib install Servo
+          for sketch in arduino/*/; do
+            arduino-cli compile --fqbn arduino:avr:uno "$sketch"
+          done
