@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beam Cutting Cell</title>
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.min.js", "orbit": "./vendor/OrbitControls.js", "stl": "./vendor/STLExporter.js", "room": "./vendor/RoomEnvironment.js" } }
+</script>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">&#9638;</span> BEAM CELL <small>UK structural steel cutting</small></div>
+  <nav class="tabs">
+    <button data-tab="cell" class="on">Machine</button>
+    <button data-tab="parts">Parts &amp; NC1</button>
+    <button data-tab="library">Section library</button>
+    <button data-tab="camera">Camera</button>
+    <button data-tab="help">Help</button>
+  </nav>
+  <div class="pills">
+    <span id="pill-machine" class="pill">Idle</span>
+    <span id="pill-safety" class="pill ok">Safety OK</span>
+    <span id="pill-camera" class="pill dim">Camera off</span>
+    <span id="pill-memory" class="pill dim"></span>
+  </div>
+</header>
+
+<main>
+  <!-- ============================================================ MACHINE -->
+  <section id="tab-cell" class="tab on">
+    <aside class="side">
+      <h2>Job</h2>
+      <div id="job-summary" class="muted"></div>
+      <label class="row">Stock length <select id="stock-length"></select></label>
+      <h3>Bars <span class="muted small">(click one to cut it)</span></h3>
+      <div id="bars"></div>
+      <button id="btn-plan" class="primary big">Plan this bar</button>
+      <div id="plan-info"></div>
+      <div id="plan-warnings"></div>
+    </aside>
+    <div class="viewport">
+      <canvas id="cell-canvas"></canvas>
+      <div class="views">
+        <button data-view="overview">Overview</button>
+        <button data-view="cutter">Follow Cutter</button>
+        <button data-view="handler">Follow Handler</button>
+        <button data-view="side">Side</button>
+        <button data-view="end">End</button>
+        <button data-view="top">Top</button>
+      </div>
+      <div class="hud">
+        <div class="card cutter"><b>CUTTER</b> <span class="muted small">plasma</span><div id="hud-cutter"></div></div>
+        <div class="card handler"><b>HANDLER</b> <span class="muted small">magnet</span><div id="hud-handler"></div></div>
+      </div>
+      <div id="safety-banner" class="banner" hidden>
+        <b>SAFETY STOP</b> &ndash; person in the cell. <span id="safety-detail"></span>
+        <button id="btn-safety-reset">Reset</button>
+      </div>
+      <div id="loading" class="loading" hidden>Planning both hands&hellip;</div>
+    </div>
+    <footer class="transport">
+      <button id="btn-play" class="primary big play">&#9654; Run</button>
+      <button id="btn-restart" class="big" title="Back to the start">&#10226;</button>
+      <div class="speeds">
+        <span class="muted small">Speed</span>
+        <button data-speed="1">1&times;</button><button data-speed="5">5&times;</button>
+        <button data-speed="20" class="on">20&times;</button><button data-speed="60">60&times;</button>
+      </div>
+      <input id="scrub" type="range" min="0" max="1" step="0.1" value="0">
+      <span id="time" class="time">0:00 / 0:00</span>
+    </footer>
+  </section>
+
+  <!-- ============================================================ PARTS -->
+  <section id="tab-parts" class="tab">
+    <aside class="side wide">
+      <div class="toolbar">
+        <button id="btn-add-part" class="primary">+ New part</button>
+        <label class="button">Import NC1 files&hellip;<input id="file-nc1" type="file" accept=".nc1,.nc,.NC1" multiple hidden></label>
+        <select id="example-pick"><option value="">Add an example&hellip;</option></select>
+      </div>
+      <div id="drop-zone" class="drop">Drop NC1 files from Tekla / Advance Steel here</div>
+      <table id="part-list" class="list"><thead><tr><th>Mark</th><th>Section</th><th>Length</th><th>Qty</th><th>kg</th><th></th></tr></thead><tbody></tbody></table>
+      <div class="toolbar">
+        <input id="job-name" placeholder="job name" size="12">
+        <button id="btn-save-job">Save job</button>
+        <select id="job-open"><option value="">Open job&hellip;</option></select>
+        <button id="btn-clear-job" class="danger">Clear all</button>
+      </div>
+      <div id="import-report" class="report"></div>
+    </aside>
+    <div class="editor" id="editor"></div>
+  </section>
+
+  <!-- ============================================================ LIBRARY -->
+  <section id="tab-library" class="tab">
+    <aside class="side">
+      <h2>UK sections</h2>
+      <input id="lib-search" placeholder="search e.g. 457x191 or PFC" class="full">
+      <div id="lib-families"></div>
+    </aside>
+    <div class="lib-table"><table id="lib-list" class="list"></table></div>
+    <div class="lib-view">
+      <canvas id="lib-canvas"></canvas>
+      <div id="lib-info"></div>
+      <div class="box">
+        <h3>3D print / model it</h3>
+        <label class="row">Length (mm, full size) <input id="stl-length" type="number" value="1000" min="10"></label>
+        <label class="row">Scale <select id="stl-scale">
+          <option value="1">1:1</option><option value="5">1:5</option><option value="10" selected>1:10</option>
+          <option value="20">1:20</option><option value="25">1:25</option><option value="50">1:50</option><option value="100">1:100</option>
+        </select></label>
+        <div id="stl-size" class="muted small"></div>
+        <button id="btn-stl" class="primary">Download section STL</button>
+        <button id="btn-stl-cell">Download whole machine STL</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ CAMERA -->
+  <section id="tab-camera" class="tab">
+    <div class="cam-view"><img id="cam-img" alt=""><div id="cam-empty" class="muted">Camera is off</div></div>
+    <aside class="side">
+      <h2>Camera &amp; safety zone</h2>
+      <label class="row">Camera <select id="cam-source">
+        <option value="0">USB camera 0</option><option value="1">USB camera 1</option>
+        <option value="csi">Jetson CSI camera</option><option value="file">Video file&hellip;</option></select></label>
+      <input id="cam-file" placeholder="/home/ravi/video.mp4" class="full" hidden>
+      <label class="row">Detector <select id="cam-model"></select></label>
+      <div class="toolbar"><button id="btn-cam-on" class="primary">Start camera</button><button id="btn-cam-off">Stop</button></div>
+      <label class="check"><input id="cam-link" type="checkbox" checked> Person in the zone stops the machine</label>
+      <h3>Zone (part of the picture)</h3>
+      <label class="row">Left <input id="z0" type="range" min="0" max="1" step="0.01"></label>
+      <label class="row">Top <input id="z1" type="range" min="0" max="1" step="0.01"></label>
+      <label class="row">Right <input id="z2" type="range" min="0" max="1" step="0.01"></label>
+      <label class="row">Bottom <input id="z3" type="range" min="0" max="1" step="0.01"></label>
+      <div id="cam-status" class="report"></div>
+    </aside>
+  </section>
+
+  <!-- ============================================================ HELP -->
+  <section id="tab-help" class="tab"><div class="help" id="help"></div></section>
+</main>
+<div id="toast" class="toast" hidden></div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
