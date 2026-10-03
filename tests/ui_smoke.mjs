@@ -14,7 +14,14 @@ const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
-const shot = async (name) => { if (shots) await page.screenshot({ path: `${shots}/${name}.png` }); };
+// screenshots are for people to look at; a slow one (software WebGL on CI) must not fail the test
+const shot = async (name) => {
+  if (!shots) return;
+  try { await page.screenshot({ path: `${shots}/${name}.png`, timeout: 60000 }); }
+  catch (e) { console.warn(`screenshot ${name} skipped: ${e.message.split("\n")[0]}`); }
+};
+// CI runners have no GPU: use the app's own low-graphics setting (no shadows) so frames stay fast
+if (process.env.CI) await page.addInitScript(() => localStorage.setItem("quality", "low"));
 
 await page.goto(base, { waitUntil: "load" });   // the safety check-in never lets the network go idle
 await page.waitForFunction(() => window.app && window.app.bars && window.app.bars.length > 0, null, { timeout: 30000 });
