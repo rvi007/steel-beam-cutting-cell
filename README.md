@@ -11,6 +11,14 @@ cd ~/robot_arm
 python3 lesson01_joints.py
 ```
 
+## Tests
+GitHub runs these automatically on every push (Actions tab). You can also run them yourself:
+```
+python3 test_scripts_load.py                  # every window script starts
+python3 exercises.py all --quick --solution   # must say 8/8
+python3 test_ik_target.py                     # inverse kinematics, must say PASS
+```
+
 ## Roadmap
 | # | Lesson | You learn |
 |---|--------|-----------|

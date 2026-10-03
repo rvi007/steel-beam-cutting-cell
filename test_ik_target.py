@@ -9,6 +9,8 @@ It loads ik_target.py without opening a window, then moves the sliders in code:
      (reach 0.25-0.75 m, height 0-0.5 m), with an unreachable jump every 10th time.
 Pass = 0 failures (error >= 2 mm) and 0 flips (base more than 45 deg off the target).
 """
+import sys
+
 import matplotlib
 matplotlib.use("Agg")                    # draw off-screen
 matplotlib.use = lambda *args, **kw: None  # stop ik_target.py switching to TkAgg
@@ -53,4 +55,7 @@ for i in range(300):
         print(f"  FLIP  target ({a:.0f}, {r:.2f}, {h:.2f})  J1 offset {offset:+.1f}°")
 
 print(f"\n300 random jumps: {fails} failures, {flips} flips, worst error {worst:.2f} mm")
-print("PASS" if fails == 0 and flips == 0 else "FAIL")
+if fails or flips:
+    print("FAIL")
+    sys.exit(1)
+print("PASS")
