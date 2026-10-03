@@ -17,6 +17,12 @@ API (all JSON):
     POST /api/plan                  {parts, stock_length, bar} -> motion plan for one bar
     GET  /api/jobs, GET/POST /api/jobs/<name>   saved jobs (jobs/ folder)
     GET  /api/camera, POST /api/camera, GET /camera.mjpg   camera + person detection
+    GET  /api/safety                safety controller status
+    POST /api/safety/<action>       tick (watchdog + hold-to-run), estop, release, reset, start,
+                                    stop, finished, mode, checklist, input
+    GET  /api/situation             plain-English "what's happening" (no AI)
+    POST /api/assistant             {question} -> optional Claude advisor (advisory only)
+    GET  /api/config                settings from config/cell.toml and any problems in them
 """
 import argparse
 import json
@@ -30,9 +36,12 @@ import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlparse
 
-from beamcell import collisions, machine, nc1, sections as S, uk_codes as UK
+from beamcell import assistant, collisions, machine, nc1, sections as S, uk_codes as UK
+from beamcell.config import CONFIG, problems as config_problems
+from beamcell.gpio_inputs import GpioInputs
 from beamcell.parts import Part, nest_all
 from beamcell.planner import Plan
+from beamcell.safety import SafetyController
 from beamcell.vision import Vision
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -40,6 +49,9 @@ WEB = os.path.join(ROOT, "web")
 EXAMPLES = os.path.join(ROOT, "examples", "nc1")
 JOBS = os.path.join(ROOT, "jobs")
 VISION = Vision(os.path.join(ROOT, "models"))
+VISION.configure({"zones": {"warning": CONFIG["camera"]["warning_zone"], "danger": CONFIG["camera"]["danger_zone"]}})
+SAFETY = SafetyController(vision=VISION)
+GPIO = GpioInputs(SAFETY, CONFIG["gpio"])
 
 
 def system_info():
@@ -168,6 +180,16 @@ class Handler(BaseHTTPRequestHandler):
                     return self._send(200, json.load(fh))
             if path == "/api/camera":
                 return self._send(200, VISION.status())
+            if path == "/api/safety":
+                return self._send(200, dict(SAFETY.status(), gpio=GPIO.status()))
+            if path == "/api/situation":
+                st = SAFETY.status()
+                return self._send(200, dict(assistant.situation(st, SAFETY.playback, VISION.status()),
+                                            advisor=assistant.available()[0], advisor_why=assistant.available()[1]))
+            if path == "/api/config":
+                safe = {k: v for k, v in CONFIG.items()}
+                return self._send(200, {"config": safe, "problems": config_problems(CONFIG),
+                                        "api_key_set": bool(os.environ.get("ANTHROPIC_API_KEY"))})
             if path == "/camera.mjpg":
                 return self._mjpeg()
             if path == "/api/system":
@@ -204,12 +226,44 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, {"saved": name})
             if path == "/api/camera":
                 return self._send(200, VISION.configure(body))
+            if path.startswith("/api/safety/"):
+                return self._safety(path.rsplit("/", 1)[1], body)
+            if path == "/api/assistant":
+                facts = {"safety": SAFETY.status(), "playback": SAFETY.playback, "camera": VISION.status()}
+                facts["safety"].pop("events", None)
+                facts["situation"] = assistant.situation(SAFETY.status(), SAFETY.playback, VISION.status())["text"]
+                return self._send(200, assistant.ask(body.get("question", ""), facts, VISION.jpeg()))
             return self._send(404, {"error": "not found"})
         except (ValueError, KeyError) as e:
             return self._send(400, {"error": str(e)})
         except Exception as e:                             # noqa: BLE001
             traceback.print_exc()
             return self._send(500, {"error": str(e)})
+
+    def _safety(self, action, body):
+        who = body.get("who", "screen")
+        if action == "tick":
+            return self._send(200, SAFETY.tick(body.get("client", "screen"), bool(body.get("enable")), body.get("playback")))
+        if action == "estop":
+            SAFETY.press_estop(body.get("source", "screen"))
+        elif action == "release":
+            SAFETY.release_estop(body.get("source", "screen"))
+        elif action in ("reset", "start"):
+            ok, why = (SAFETY.reset if action == "reset" else SAFETY.start)(who)
+            return self._send(200, dict(SAFETY.status(), ok=ok, why=why))
+        elif action == "stop":
+            SAFETY.stop(who, body.get("reason", "stop button"))
+        elif action == "finished":
+            SAFETY.finished()
+        elif action == "mode":
+            SAFETY.set_mode(body["mode"], bool(body.get("lockout_confirmed")))
+        elif action == "checklist":
+            SAFETY.confirm_checklist(who)
+        elif action == "input":
+            SAFETY.set_input(body["name"], bool(body["value"]))
+        else:
+            return self._send(404, {"error": f"unknown safety action {action}"})
+        return self._send(200, dict(SAFETY.status(), ok=True, why=[]))
 
     def _mjpeg(self):
         self.send_response(200)
@@ -249,12 +303,19 @@ def lan_address():
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Beam cutting cell - web app")
-    ap.add_argument("--port", type=int, default=8080)
+    ap.add_argument("--port", type=int, default=CONFIG["server"]["port"])
     ap.add_argument("--host", default="0.0.0.0", help="0.0.0.0 = other computers on the network can open it")
     ap.add_argument("--camera", default=None, help="camera to start with: 0 (USB), 'csi', or a video file")
     args = ap.parse_args(argv)
-    if args.camera is not None:
-        print(VISION.configure({"enabled": True, "source": args.camera}).get("message", ""))
+    for p in config_problems(CONFIG):
+        print("CONFIG PROBLEM:", p)
+    SAFETY.watchdog()
+    GPIO.start()
+    if GPIO.error:
+        print("GPIO:", GPIO.error)
+    camera = args.camera if args.camera is not None else (CONFIG["camera"]["source"] if CONFIG["camera"]["autostart"] else None)
+    if camera is not None:
+        print(VISION.configure({"enabled": True, "source": camera, "model": CONFIG["camera"]["model"]}).get("message", ""))
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"Beam cutting cell running:\n  on this computer:   http://localhost:{args.port}\n"
           f"  from the network:   http://{lan_address()}:{args.port}\nPress Ctrl+C to stop.")

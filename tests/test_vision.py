@@ -50,9 +50,10 @@ class Camera(unittest.TestCase):
                 break
             time.sleep(0.1)
         st = v.status()
-        v.configure({"zone": [0.2, 0.2, 0.8, 0.8], "enabled": False})
+        v.configure({"zones": {"danger": [0.2, 0.2, 0.8, 0.8], "warning": [0.5, 0, 0.4, 1]}, "enabled": False})
         self.assertTrue(st["has_frame"], st)
-        self.assertEqual(v.status()["zone"], [0.2, 0.2, 0.8, 0.8])
+        self.assertEqual(v.status()["zones"]["danger"], [0.2, 0.2, 0.8, 0.8])
+        self.assertNotEqual(v.status()["zones"]["warning"], [0.5, 0, 0.4, 1])   # bad box ignored
         self.assertFalse(v.status()["enabled"])
 
     def test_missing_camera(self):
