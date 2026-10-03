@@ -190,11 +190,13 @@ export class CellScene {
     const fenceMat = new THREE.MeshStandardMaterial({ color: C.fence, metalness: 0.2, roughness: 0.6 });
     const meshMat = new THREE.MeshStandardMaterial({ color: 0x222222, transparent: true, opacity: 0.18, side: THREE.DoubleSide });
     const fx0 = xa - 0.6, fx1 = xb + 0.6, fy = W / 2 + 0.6;
-    const runs = [[fx0, -fy, fx1, -fy, true], [fx0, fy, fx1, fy], [fx0, -fy, fx0, fy], [fx1, -fy, fx1, fy]];
-    for (const [x0, y0, x1, y1, gate] of runs) {
+    // front run: gap for the gate; infeed end (-X): gap where the stock comes in, guarded by a light curtain
+    const runs = [[fx0, -fy, fx1, -fy, "gate"], [fx0, fy, fx1, fy], [fx0, -fy, fx0, fy, "curtain"], [fx1, -fy, fx1, fy]];
+    for (const [x0, y0, x1, y1, gap] of runs) {
       const len = Math.hypot(x1 - x0, y1 - y0), n = Math.round(len / 2);
       for (let i = 0; i < n; i++) {
-        if (gate && i === Math.floor(n / 2)) continue;                     // the gate opening
+        if (gap === "gate" && i === Math.floor(n / 2)) continue;           // the gate opening
+        if (gap === "curtain" && i === 0) continue;                        // the infeed opening
         const a = i / n, b = (i + 1) / n;
         const cx = x0 + (x1 - x0) * (a + b) / 2, cy = y0 + (y1 - y0) * (a + b) / 2;
         const panel = new THREE.Mesh(new THREE.PlaneGeometry(len / n - 0.06, 1.9), meshMat);
@@ -204,17 +206,62 @@ export class CellScene {
         this._box(0.06, 0.06, 2.1, 0, x0 + (x1 - x0) * a, y0 + (y1 - y0) * a, 1.05, { material: fenceMat });
       }
     }
-    const gx = fx0 + (fx1 - fx0) * (Math.floor(Math.round((fx1 - fx0) / 2) / 2) + 0.5) / Math.round((fx1 - fx0) / 2);
-    for (const dx of [-0.95, 0.95]) {
-      this._box(0.07, 0.07, 1.8, 0x111111, gx + dx, -fy - 0.1, 0.9);
-      this._box(0.03, 0.03, 1.6, 0xd91e18, gx + dx, -fy - 0.06, 0.95, { noShadow: true });
+    const nFront = Math.round((fx1 - fx0) / 2);
+    const gx = fx0 + (fx1 - fx0) * (Math.floor(nFront / 2) + 0.5) / nFront, gw = (fx1 - fx0) / nFront - 0.06;
+    // interlocked gate (hinged on its left post) - swings open when the gate input opens
+    this.gate = new THREE.Group();
+    this.gate.position.set(gx - gw / 2, -fy, 0);
+    const gatePanel = new THREE.Mesh(new THREE.PlaneGeometry(gw, 1.9), meshMat);
+    gatePanel.rotation.x = Math.PI / 2;
+    gatePanel.position.set(gw / 2, 0, 1.1);
+    this.gate.add(gatePanel);
+    for (const [w, h, x, z] of [[gw, 0.05, gw / 2, 2.05], [gw, 0.05, gw / 2, 0.15], [0.05, 1.95, gw - 0.03, 1.1]])
+      this._box(w, 0.05, h, 0, x, 0, z, { parent: this.gate, material: fenceMat });
+    this._box(0.08, 0.06, 0.12, 0xd91e18, gw - 0.1, -0.06, 1.1, { parent: this.gate });   // interlock switch
+    this.scene.add(this.gate);
+    // light curtain across the infeed opening: two posts and its beams
+    const cy0 = -fy, cy1 = -fy + (2 * fy) / Math.round((2 * fy) / 2);
+    for (const y of [cy0 + 0.05, cy1 - 0.05]) this._box(0.06, 0.06, 1.8, 0x111111, fx0 - 0.12, y, 0.9);
+    this.beams = new THREE.Group();
+    for (let z = 0.25; z <= 1.65; z += 0.07) {
+      const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(fx0 - 0.12, cy0 + 0.05, z), new THREE.Vector3(fx0 - 0.12, cy1 - 0.05, z)]);
+      this.beams.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xff3020, transparent: true, opacity: 0.18 })));
     }
+    this.scene.add(this.beams);
     // operator desk and the camera mast (where the real camera watches the gate)
     this._box(1.2, 0.6, 0.9, 0x39424b, gx + 2.6, -fy - 1.1, 0.45);
     const screen = this._box(0.7, 0.04, 0.42, 0x0b1a2a, gx + 2.6, -fy - 1.0, 1.25, { noShadow: true });
     screen.rotation.x = -0.25;
     this._box(0.06, 0.06, 3.0, 0x39424b, gx - 1.6, -fy - 0.4, 1.5);
     this._box(0.16, 0.1, 0.1, 0x111111, gx - 1.6, -fy - 0.32, 2.95);
+    // E-stop on the desk (yellow box, red mushroom head)
+    this._box(0.12, 0.12, 0.08, 0xf2c230, gx + 2.15, -fy - 1.05, 0.94);
+    const head = this._cyl(0.045, 0.04, 0xd91e18, { seg: 24 });
+    head.rotation.x = Math.PI / 2;
+    head.position.set(gx + 2.15, -fy - 1.05, 1.0);
+    // stack light on a pole by the desk: red, amber, green, blue (top to bottom)
+    this._box(0.04, 0.04, 1.2, 0x2b2f33, gx + 3.35, -fy - 1.0, 1.5);
+    this.lamps = {};
+    [["red", 0xff2a1f], ["amber", 0xffb000], ["green", 0x22d36b], ["blue", 0x2f7bff]].forEach(([name, colour], i) => {
+      const mat = new THREE.MeshStandardMaterial({ color: colour, emissive: colour, emissiveIntensity: 0.05, transparent: true, opacity: 0.9 });
+      const lamp = this._cyl(0.06, 0.11, 0, { material: mat });
+      lamp.rotation.x = Math.PI / 2;
+      lamp.position.set(gx + 3.35, -fy - 1.0, 2.6 - i * 0.12);
+      this.lamps[name] = mat;
+    });
+  }
+
+  // Show the safety state in the 3D cell: stack light, gate, light curtain.
+  setSafety(st) {
+    const blink = Math.floor(performance.now() / 500) % 2 === 0;
+    for (const [name, mat] of Object.entries(this.lamps)) {
+      const on = !!st.lamps[name] && (name !== "blue" || blink);
+      mat.emissiveIntensity = on ? 2.2 : 0.05;
+    }
+    const open = !st.inputs.gate_closed;
+    this.gate.rotation.z += ((open ? -1.4 : 0) - this.gate.rotation.z) * 0.5;
+    const broken = !st.inputs.curtain_clear;
+    this.beams.children.forEach((l) => { l.material.opacity = broken ? 0.95 : 0.18; });
   }
 
   // ---------------------------------------------------------------- a hand

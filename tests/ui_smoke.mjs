@@ -16,23 +16,78 @@ page.on("pageerror", (e) => errors.push(e.message));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 const shot = async (name) => { if (shots) await page.screenshot({ path: `${shots}/${name}.png` }); };
 
-await page.goto(base, { waitUntil: "networkidle" });
+await page.goto(base, { waitUntil: "load" });   // the safety check-in never lets the network go idle
 await page.waitForFunction(() => window.app && window.app.bars && window.app.bars.length > 0, null, { timeout: 30000 });
 await shot("1_start");
 
-// plan the first bar and play it
+// the machine can't run until Reset + checklist (like a real machine)
 await page.click("#btn-plan");
 await page.waitForFunction(() => window.app.plan, null, { timeout: 120000 });
 const plan = await page.evaluate(() => ({ c: app.plan.collisions, d: app.plan.summary.duration_s, w: app.plan.warnings }));
 if (plan.c !== 0) fail(`plan has ${plan.c} collisions`);
 await page.click("#btn-play");
+await page.waitForTimeout(800);
+if (await page.evaluate(() => app.t > 0)) fail("machine moved without Reset and checklist");
+await page.click(".tabs button[data-tab=safety]");
+await page.click("#sf-reset");
+for (const box of await page.$$("[data-ck]")) await box.check();
+await page.click("#sf-check-ok");
+await page.waitForTimeout(400);
+await page.click(".tabs button[data-tab=cell]");
+await page.click("#btn-play");
 await page.waitForTimeout(1500);
-if (!(await page.evaluate(() => app.t > 0))) fail("time didn't move after Run");
+if (!(await page.evaluate(() => app.t > 0))) fail("time didn't move after Reset + checklist + Run");
+
+// E-stop: everything stops at once, release alone doesn't restart, reset + start does
+await page.keyboard.press("Escape");
+await page.waitForTimeout(300);
+const t1 = await page.evaluate(() => app.t);
+await page.waitForTimeout(800);
+if ((await page.evaluate(() => app.t)) !== t1) fail("machine moved after the E-stop");
+if (!(await page.isVisible("#safety-banner"))) fail("no E-stop banner");
+await page.click("#btn-release");
+await page.waitForTimeout(600);
+if ((await page.evaluate(() => app.t)) !== t1) fail("machine restarted on E-stop release");
+await page.click("#btn-safety-reset");
+await page.waitForTimeout(400);
+await page.click("#btn-play");
+await page.waitForTimeout(1200);
+if (!((await page.evaluate(() => app.t)) > t1)) fail("didn't restart after reset + start");
+await shot("2_running");
+
+// opening the gate in Auto = protective stop
+await page.click(".tabs button[data-tab=safety]");
+await page.click("[data-input=gate_closed]");
+await page.waitForTimeout(600);
+const st = await page.evaluate(() => fetch("/api/safety").then((r) => r.json()));
+if (st.state !== "FAULT" || !st.latched.some((f) => f.code === "GATE")) fail("gate open didn't stop: " + st.state);
+await shot("2b_safety_tab");
+await page.click("[data-input=gate_closed]");
+await page.click("#sf-reset");
+
+// Manual mode: moves only while "Hold to move" is held
+await page.click("[data-mode=MANUAL]");
+await page.click("#sf-reset");
+await page.click("#sf-start");
+await page.click(".tabs button[data-tab=cell]");
+const t2 = await page.evaluate(() => app.t);
+await page.waitForTimeout(700);
+if ((await page.evaluate(() => app.t)) !== t2) fail("Manual mode moved without hold-to-run");
+const hold = await page.$("#btn-hold");
+const box = await hold.boundingBox();
+await page.mouse.move(box.x + 20, box.y + 10);
+await page.mouse.down();
+await page.waitForTimeout(1500);
+await page.mouse.up();
+const t3 = await page.evaluate(() => app.t);
+if (!(t3 > t2)) fail("hold-to-run didn't move");
+await page.waitForTimeout(800);
+if ((await page.evaluate(() => app.t)) - t3 > 0.5) fail("kept moving after letting go");
 for (const t of [0.3, 0.6, 1.0]) {
   await page.evaluate((f) => { app.t = app.plan.summary.duration_s * f; }, t);
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(400);
 }
-await shot("2_finished");
+await shot("2c_finished");
 
 // import an NC1 file through the file picker
 await page.click(".tabs button[data-tab=parts]");
@@ -60,10 +115,10 @@ const file = await download.path();
 if (fs.statSync(file).size < 1000) fail("STL too small");
 await shot("4_library");
 
-for (const tab of ["camera", "help", "cell"]) {
+for (const tab of ["camera", "help", "safety", "cell"]) {
   await page.click(`.tabs button[data-tab=${tab}]`);
   await page.waitForTimeout(500);
 }
 if (errors.length) fail("JavaScript errors:\n" + errors.join("\n"));
-console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions, NC1 import, editor checks, STL download ${fs.statSync(file).size} bytes`);
+console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; NC1 import; editor checks; STL ${fs.statSync(file).size} bytes`);
 await browser.close();

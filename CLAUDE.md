@@ -22,6 +22,16 @@ a three.js web app (`web/`). The user runs it on a Jetson Orin Nano (4 GB, see
 - Headless screenshots: Playwright + Chromium with `--use-gl=angle --use-angle=swiftshader`.
 - Orin-like env for testing: Python 3.12, numpy 1.26.4, opencv-python-headless 4.6.0.66.
 
+## Safety (most important)
+- `beamcell/safety.py` is the only thing that decides motion; the browser asks it 5x/s
+  (`/api/safety/tick`) and moves only when `may_move`, at `speed_factor`. Keep: latching stops,
+  reset never restarts, start separate, checklist, watchdogs, Manual 250 mm/s hold-to-run.
+- Never weaken a stop to make a demo easier. Tests in `tests/test_safety.py` and the browser test
+  cover the procedures. Say plainly in docs/UI that software stops are not safety-rated.
+- The AI advisor (`assistant.py`, Claude via the `anthropic` SDK, off by default) is advisory only and
+  must never get a path to move/reset/start anything.
+- Settings live in `config/cell.toml` (tomllib); `python3 -m beamcell.doctor` checks a machine.
+
 ## Key design points
 - Parts are described like NC1: per-face outlines (DSTV faces v/o/u/h) + holes + inner contours.
   Manual copes/mitres are converted to outlines (`Part.face_outline`). Cut paths = outline edges
