@@ -33,7 +33,6 @@ beginner-friendly; lessons are numbered and build on each other.
 | `test_scripts_load.py` | Smoke test: each window script loads headless up to its main loop. Must print PASS. |
 | `.github/workflows/tests.yml` | CI on every push: py_compile, both tests above, exercises 8/8, and compiles the Arduino sketches for the UNO. Keep it green. |
 | `arduino/servo_joint/servo_joint.ino` | Servo pin 9, knob A0. Serial 115200. Orin->Arduino `S<0..180>\n`; Arduino->Orin `K<0..180>\n` every 50 ms (smoothed) |
-| `arduino/encoder_test/encoder_test.ino` | Rotary encoder wiring test (CLK 2, DT 3, SW 4) |
 
 Angle mapping everywhere: robot J1 -90..+90 deg  <->  servo 0..180 deg.
 Target angle 0 = straight out along -X (where the arm points at J1 = 0).
