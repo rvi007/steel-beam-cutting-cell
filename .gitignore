@@ -1,5 +1,8 @@
 __pycache__/
 *.pyc
 *.log
-waypoints.json
-my_job.json
+jobs/
+exports/
+models/*.onnx
+models/*.engine
+node_modules/

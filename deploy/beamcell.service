@@ -1,0 +1,19 @@
+# Starts Beam Cell automatically when the Jetson boots.
+# Install (once):
+#   sudo cp deploy/beamcell.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now beamcell
+# Check it:  systemctl status beamcell      Logs:  journalctl -u beamcell -f
+[Unit]
+Description=Beam Cell - steel cutting cell web app
+After=network-online.target
+
+[Service]
+User=ravi
+WorkingDirectory=/home/ravi/robot_arm
+ExecStart=/usr/bin/python3 -m beamcell.server --port 8080
+Restart=on-failure
+# keep it from using much memory on the 4 GB Orin
+MemoryMax=600M
+
+[Install]
+WantedBy=multi-user.target
