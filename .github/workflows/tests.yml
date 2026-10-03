@@ -1,65 +1,81 @@
-# Runs the headless tests on GitHub every time code is pushed.
-# No Arduino and no screen here - hardware tests still happen on the Jetson.
+# Runs the tests on GitHub on every push.
+#   orin-like : the same versions as the Jetson Orin (Python 3.12, numpy 1.26.4, OpenCV 4.6)
+#   latest    : the newest Python libraries
+#   browser   : the real web app in headless Chromium (no JavaScript errors, plan, import, STL)
 name: tests
 
 on:
   push:
   pull_request:
-  workflow_dispatch:   # lets you press "Run workflow" on the Actions tab
+  workflow_dispatch:   # "Run workflow" button on the Actions tab
 
 jobs:
-  test:
-    name: test (${{ matrix.name }})
+  python:
+    name: python (${{ matrix.name }})
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         include:
-          # same library versions as the Jetson (JetPack 6 / Ubuntu 22.04 packages)
-          - name: jetson-like
-            python: "3.10"
-            libs: numpy==1.21.5 matplotlib==3.5.1 pyserial
-          - name: latest
+          - name: orin-like
             python: "3.12"
-            libs: numpy matplotlib pyserial
+            libs: numpy==1.26.4 opencv-python-headless==4.6.0.66
+          - name: latest
+            python: "3.13"
+            libs: numpy opencv-python-headless
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-
       - name: Install libraries
         run: pip install ${{ matrix.libs }}
+      - name: Every file is valid Python
+        run: python -m compileall -q beamcell tests
+      - name: Unit tests (sections, UK rules, NC1, planner, server, camera)
+        run: python -m unittest discover -s tests -t . -v
 
-      - name: Check every file has valid Python
-        run: python -m py_compile *.py gantry/*.py
-
-      - name: Window scripts load
-        run: python test_scripts_load.py
-
-      - name: Exercises (must be 8/8)
-        run: |
-          python exercises.py all --quick --solution | tee exercises.out
-          grep -q "Score: 8/8" exercises.out
-
-      - name: Inverse kinematics (300 random jumps)
-        run: python test_ik_target.py
-
-      - name: Gantry cell (planner, collisions, app)
-        run: python test_gantry.py
-
-  arduino:
+  browser:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: arduino/setup-arduino-cli@v2
-      - name: Compile the Arduino sketches for the UNO
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install
         run: |
-          arduino-cli core update-index
-          arduino-cli core install arduino:avr
-          arduino-cli lib install Servo
-          for sketch in arduino/*/; do
-            arduino-cli compile --fqbn arduino:avr:uno "$sketch"
-          done
+          pip install numpy==1.26.4
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Start the app
+        run: |
+          python -m beamcell.server --port 8099 > server.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:8099/api/info > /dev/null && break; sleep 1; done
+      - name: Browser test
+        run: |
+          mkdir -p shots
+          node tests/ui_smoke.mjs http://localhost:8099 shots
+      - name: Keep the screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: shots/
+
+  every-section:
+    # slow (~4 min): every cuttable UK section; runs when started by hand from the Actions tab
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy==1.26.4
+      - run: python tests/sweep_sections.py

@@ -1,0 +1,271 @@
+"""
+The web server: serves the app in web/ and a small JSON API. Python standard library only
+(plus numpy), so it runs on the Jetson as it is.
+
+    python3 -m beamcell.server            # then open http://localhost:8080
+    python3 -m beamcell.server --port 8000 --camera 0
+
+API (all JSON):
+    GET  /api/info                  machine, UK code tables, section families, system info
+    GET  /api/sections              every section in the UK library (sizes)
+    GET  /api/section?title=...     one section with its exact outline and plates
+    GET  /api/examples              example NC1 files;  GET /api/examples/<file> -> parsed part
+    POST /api/nc1                   {filename, text} -> part + import report + checks
+    POST /api/nc1/export            {part} -> NC1 text
+    POST /api/part                  {part} -> checks, face outlines, weight
+    POST /api/nest                  {parts, stock_length} -> bars
+    POST /api/plan                  {parts, stock_length, bar} -> motion plan for one bar
+    GET  /api/jobs, GET/POST /api/jobs/<name>   saved jobs (jobs/ folder)
+    GET  /api/camera, POST /api/camera, GET /camera.mjpg   camera + person detection
+"""
+import argparse
+import json
+import mimetypes
+import os
+import re
+import socket
+import sys
+import time
+import traceback
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import parse_qs, unquote, urlparse
+
+from beamcell import collisions, machine, nc1, sections as S, uk_codes as UK
+from beamcell.parts import Part, nest_all
+from beamcell.planner import Plan
+from beamcell.vision import Vision
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WEB = os.path.join(ROOT, "web")
+EXAMPLES = os.path.join(ROOT, "examples", "nc1")
+JOBS = os.path.join(ROOT, "jobs")
+VISION = Vision(os.path.join(ROOT, "models"))
+
+
+def system_info():
+    info = {"python": sys.version.split()[0], "host": socket.gethostname()}
+    try:
+        with open("/proc/device-tree/model") as fh:
+            info["board"] = fh.read().strip("\x00\n")
+    except OSError:
+        info["board"] = "not a Jetson"
+    try:
+        mem = {}
+        with open("/proc/meminfo") as fh:
+            for line in fh:
+                k, v = line.split(":")
+                mem[k] = int(v.split()[0]) // 1024
+        info["memory_mb"] = {"total": mem.get("MemTotal"), "available": mem.get("MemAvailable"),
+                             "swap_free": mem.get("SwapFree")}
+    except OSError:
+        pass
+    info.update(VISION.capabilities())
+    return info
+
+
+def part_view(part):
+    """Everything the browser needs to draw a part."""
+    s = part.sec
+    outer, holes = S.outline(s)
+    return {"part": part.to_dict(), "weight": round(part.weight, 1),
+            "section": dict(S.summary(s), outline=outer, holes=holes, plates=S.plates(s)),
+            "faces": {f: part.face_outline(f) for f in part.faces()},
+            "checks": part.check()}
+
+
+def parts_from(body):
+    return [Part.from_dict(p) for p in body.get("parts", [])]
+
+
+def plan_bar(body):
+    parts = parts_from(body)
+    stock = float(body.get("stock_length", UK.DEFAULT_STOCK_M * 1000))
+    bars = nest_all(parts, stock)
+    if not bars:
+        return {"error": "nothing to cut - add parts (that fit the bar and have no errors)"}
+    i = max(0, min(int(body.get("bar", 0)), len(bars) - 1))
+    bar = bars[i]
+    t0 = time.time()
+    plan = Plan(bar).build()
+    planned = time.time() - t0
+    hits = collisions.check_plan(plan, step=0.4) if body.get("check", True) else []
+    out = plan.to_json()
+    out.update({
+        "bar_index": i, "bar_count": len(bars), "bar": bar.to_dict(),
+        "placements": [dict(part_view(bar.parts[pl["part"]]), x0=pl["x0"], x1=pl["x1"]) for pl in bar.placements],
+        "stock_section": dict(S.summary(bar.parts[0].sec), outline=S.outline(bar.parts[0].sec)[0],
+                              plates=S.plates(bar.parts[0].sec)) if bar.parts else None,
+        "collisions": len(hits), "planning_s": round(planned, 2),
+    })
+    return out
+
+
+class Handler(BaseHTTPRequestHandler):
+    server_version = "beamcell/1.0"
+
+    def log_message(self, fmt, *args):            # quiet: only errors
+        pass
+
+    # ---------------------------------------------------------------- responses
+    def _send(self, code, body, ctype="application/json"):
+        data = body if isinstance(body, bytes) else (json.dumps(body, default=float) if ctype == "application/json"
+                                                    else body).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _body(self):
+        n = int(self.headers.get("Content-Length") or 0)
+        return json.loads(self.rfile.read(n) or b"{}") if n else {}
+
+    def _static(self, path):
+        rel = "index.html" if path in ("", "/") else path.lstrip("/")
+        full = os.path.normpath(os.path.join(WEB, rel))
+        if not full.startswith(WEB) or not os.path.isfile(full):
+            return self._send(404, {"error": "not found"})
+        ctype = mimetypes.guess_type(full)[0] or "application/octet-stream"
+        if full.endswith(".js"):
+            ctype = "text/javascript"
+        with open(full, "rb") as fh:
+            self._send(200, fh.read(), ctype)
+
+    # ---------------------------------------------------------------- routes
+    def do_GET(self):
+        url = urlparse(self.path)
+        path = unquote(url.path)
+        try:
+            if path == "/api/info":
+                return self._send(200, {
+                    "machine": machine.describe(), "families": S.FAMILY_NAMES,
+                    "codes": {"bolts": UK.BOLTS, "standard_bolt": UK.STANDARD_BOLT, "hole_types": UK.HOLE_TYPES,
+                              "hole_sizes": {b: {k: UK.hole_size(b, k) for k in UK.HOLE_TYPES} for b in UK.BOLTS},
+                              "grades": UK.GRADES, "default_grade": UK.DEFAULT_GRADE,
+                              "stock_lengths_m": UK.STOCK_LENGTHS_M, "default_stock_m": UK.DEFAULT_STOCK_M,
+                              "cope_radius": UK.DEFAULT_COPE_RADIUS, "min_corner_radius": UK.MIN_CORNER_RADIUS},
+                    "system": system_info()})
+            if path == "/api/sections":
+                return self._send(200, {fam: [S.summary(s) for s in rows] for fam, rows in S.library().items()})
+            if path == "/api/section":
+                s = S.get(parse_qs(url.query)["title"][0])
+                outer, holes = S.outline(s)
+                return self._send(200, dict(S.summary(s), outline=outer, holes=holes, plates=S.plates(s)))
+            if path == "/api/examples":
+                return self._send(200, sorted(f for f in os.listdir(EXAMPLES) if f.lower().endswith(".nc1")))
+            if path.startswith("/api/examples/"):
+                name = os.path.basename(path)
+                with open(os.path.join(EXAMPLES, name)) as fh:
+                    part, report = nc1.read(fh.read(), name)
+                return self._send(200, dict(part_view(part), report=report))
+            if path == "/api/jobs":
+                os.makedirs(JOBS, exist_ok=True)
+                return self._send(200, sorted(f[:-5] for f in os.listdir(JOBS) if f.endswith(".json")))
+            if path.startswith("/api/jobs/"):
+                name = _safe_name(os.path.basename(path))
+                with open(os.path.join(JOBS, name + ".json")) as fh:
+                    return self._send(200, json.load(fh))
+            if path == "/api/camera":
+                return self._send(200, VISION.status())
+            if path == "/camera.mjpg":
+                return self._mjpeg()
+            if path == "/api/system":
+                return self._send(200, system_info())
+            return self._static(path)
+        except (KeyError, FileNotFoundError) as e:
+            return self._send(404, {"error": f"not found: {e}"})
+        except Exception as e:                             # noqa: BLE001 - report anything to the browser
+            traceback.print_exc()
+            return self._send(500, {"error": str(e)})
+
+    def do_POST(self):
+        path = urlparse(self.path).path
+        try:
+            body = self._body()
+            if path == "/api/nc1":
+                part, report = nc1.read(body["text"], body.get("filename", "part.nc1"))
+                return self._send(200, dict(part_view(part), report=report))
+            if path == "/api/nc1/export":
+                return self._send(200, nc1.write(Part.from_dict(body["part"])), "text/plain")
+            if path == "/api/part":
+                return self._send(200, part_view(Part.from_dict(body["part"])))
+            if path == "/api/nest":
+                bars = nest_all(parts_from(body), float(body.get("stock_length", 12000)))
+                return self._send(200, [dict(b.to_dict(), marks=[b.parts[pl["part"]].mark for pl in b.placements])
+                                        for b in bars])
+            if path == "/api/plan":
+                return self._send(200, plan_bar(body))
+            if path.startswith("/api/jobs/"):
+                name = _safe_name(os.path.basename(path))
+                os.makedirs(JOBS, exist_ok=True)
+                with open(os.path.join(JOBS, name + ".json"), "w") as fh:
+                    json.dump(body, fh, indent=1)
+                return self._send(200, {"saved": name})
+            if path == "/api/camera":
+                return self._send(200, VISION.configure(body))
+            return self._send(404, {"error": "not found"})
+        except (ValueError, KeyError) as e:
+            return self._send(400, {"error": str(e)})
+        except Exception as e:                             # noqa: BLE001
+            traceback.print_exc()
+            return self._send(500, {"error": str(e)})
+
+    def _mjpeg(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=frame")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        last = None
+        try:
+            while True:
+                frame = VISION.jpeg()
+                if frame is not None and frame is not last:
+                    self.wfile.write(b"--frame\r\nContent-Type: image/jpeg\r\nContent-Length: "
+                                     + str(len(frame)).encode() + b"\r\n\r\n" + frame + b"\r\n")
+                    last = frame
+                time.sleep(0.08)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+
+
+def _safe_name(name):
+    name = re.sub(r"[^A-Za-z0-9_. -]", "", name).strip(". ")
+    if not name:
+        raise ValueError("bad name")
+    return name
+
+
+def lan_address():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("10.255.255.255", 1))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except OSError:
+        return "localhost"
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description="Beam cutting cell - web app")
+    ap.add_argument("--port", type=int, default=8080)
+    ap.add_argument("--host", default="0.0.0.0", help="0.0.0.0 = other computers on the network can open it")
+    ap.add_argument("--camera", default=None, help="camera to start with: 0 (USB), 'csi', or a video file")
+    args = ap.parse_args(argv)
+    if args.camera is not None:
+        print(VISION.configure({"enabled": True, "source": args.camera}).get("message", ""))
+    httpd = ThreadingHTTPServer((args.host, args.port), Handler)
+    print(f"Beam cutting cell running:\n  on this computer:   http://localhost:{args.port}\n"
+          f"  from the network:   http://{lan_address()}:{args.port}\nPress Ctrl+C to stop.")
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\nStopping.")
+    finally:
+        VISION.configure({"enabled": False})
+        httpd.server_close()
+
+
+if __name__ == "__main__":
+    main()
