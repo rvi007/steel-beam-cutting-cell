@@ -1,0 +1,28 @@
+# 6-Axis Robot Arm - Learn Step by Step
+
+Fully offline: uses only numpy, matplotlib and scipy (already installed).
+No downloads needed, so it's safe on a mobile hotspot.
+
+Robot: 6 joints with geometry like a Universal Robots UR5 (reach about 0.85 m).
+
+## Run a lesson
+```
+cd ~/robot_arm
+python3 lesson01_joints.py
+```
+
+## Roadmap
+| # | Lesson | You learn |
+|---|--------|-----------|
+| 1 | Joint control (sliders) | What each of the 6 axes does |
+| 2 | Forward kinematics | How joint angles give the tool position (DH transforms) |
+| 3 | Inverse kinematics | Ask for a position, robot computes joint angles |
+| 4 | Joint-space motion | Smooth moves between poses (trajectories) |
+| 5 | Cartesian straight-line motion | Moving the tool along a straight line (Jacobian) |
+| 6 | Pick-and-place program | Chaining moves into a real robot task |
+
+## Files
+- `robot.py` - the robot model (DH parameters, kinematics, drawing). Shared by all lessons.
+- `lessonNN_*.py` - one file per lesson.
+- `exercises.py` - 8 practice exercises with automatic checking (`python3 exercises.py 1`, or `all --quick`).
+- `solutions.py` - model answers (`python3 exercises.py 1 --solution`).
