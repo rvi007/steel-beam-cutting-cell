@@ -20,6 +20,7 @@ SCRIPTS = {  # script -> the line where it starts waiting for the user
     "digital_twin.py": "# Main loop",
     "teach_replay.py": "# Main loop",
     "ik_target.py": "# Main loop",
+    "gantry_cell.py": "# Main loop",
 }
 
 failed = []

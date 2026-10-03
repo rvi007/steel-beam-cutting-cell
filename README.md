@@ -17,7 +17,16 @@ GitHub runs these automatically on every push (Actions tab). You can also run th
 python3 test_scripts_load.py                  # every window script starts
 python3 exercises.py all --quick --solution   # must say 8/8
 python3 test_ik_target.py                     # inverse kinematics, must say PASS
+python3 test_gantry.py --quick                # the gantry cell, must say PASS
 ```
+
+## Big project: the gantry cell
+```
+python3 gantry_cell.py
+```
+A 12 m steel-beam cutting cell with two robot hands on an overhead gantry: a plasma
+**Cutter** and a magnet **Handler**. Click on the beam layout to place holes, slots,
+notches and cuts, press PLAN, then RUN. The full plan and how it works: [GANTRY.md](GANTRY.md).
 
 ## Roadmap
 | # | Lesson | You learn |
@@ -28,6 +37,7 @@ python3 test_ik_target.py                     # inverse kinematics, must say PAS
 | 4 | Joint-space motion | Smooth moves between poses (trajectories) |
 | 5 | Cartesian straight-line motion | Moving the tool along a straight line (Jacobian) |
 | 6 | Pick-and-place program | Chaining moves into a real robot task |
+| 7 | Gantry cell (`gantry_cell.py`) | Two 9-axis hands, path planning, collision avoidance, a real process |
 
 ## Files
 - `robot.py` - the robot model (DH parameters, kinematics, drawing). Shared by all lessons.
