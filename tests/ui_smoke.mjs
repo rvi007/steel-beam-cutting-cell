@@ -11,10 +11,23 @@ const fail = (msg) => { console.error("FAIL:", msg); process.exit(1); };
 
 const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
 const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+if (process.env.SLOW) {                                 // SLOW=4: act like a 4x slower computer
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: +process.env.SLOW });
+}
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 // screenshots are for people to look at; a slow one (software WebGL on CI) must not fail the test
+// wait for a condition instead of a fixed time: CI runners are much slower than a desk PC
+const state = () => page.evaluate(() => fetch("/api/safety").then((r) => r.json()));
+const until = async (what, fn, arg, timeout = 20000) => {
+  try { await page.waitForFunction(fn, arg, { timeout, polling: 200 }); } catch (e) { fail(what); }
+};
+const untilState = async (want) => {
+  for (let i = 0; i < 100; i++) { if ((await state()).state === want) return; await page.waitForTimeout(200); }
+  fail("safety state never became " + want + " (is " + (await state()).state + ")");
+};
 const shot = async (name) => {
   if (!shots) return;
   try { await page.screenshot({ path: `${shots}/${name}.png`, timeout: 60000 }); }
@@ -39,14 +52,14 @@ await page.click(".tabs button[data-tab=safety]");
 await page.click("#sf-reset");
 for (const box of await page.$$("[data-ck]")) await box.check();
 await page.click("#sf-check-ok");
-await page.waitForTimeout(400);
+await untilState("READY");
 await page.click(".tabs button[data-tab=cell]");
 await page.click("#btn-play");
-await page.waitForTimeout(1500);
-if (!(await page.evaluate(() => app.t > 0))) fail("time didn't move after Reset + checklist + Run");
+await until("time didn't move after Reset + checklist + Run", () => app.t > 0);
 
 // E-stop: everything stops at once, release alone doesn't restart, reset + start does
 await page.keyboard.press("Escape");
+await untilState("ESTOP");
 await page.waitForTimeout(300);
 const t1 = await page.evaluate(() => app.t);
 await page.waitForTimeout(800);
@@ -56,26 +69,30 @@ await page.click("#btn-release");
 await page.waitForTimeout(600);
 if ((await page.evaluate(() => app.t)) !== t1) fail("machine restarted on E-stop release");
 await page.click("#btn-safety-reset");
-await page.waitForTimeout(400);
+await untilState("READY");
 await page.click("#btn-play");
-await page.waitForTimeout(1200);
-if (!((await page.evaluate(() => app.t)) > t1)) fail("didn't restart after reset + start");
+await until("didn't restart after reset + start", (t) => app.t > t, t1);
 await shot("2_running");
 
 // opening the gate in Auto = protective stop
 await page.click(".tabs button[data-tab=safety]");
 await page.click("[data-input=gate_closed]");
-await page.waitForTimeout(600);
-const st = await page.evaluate(() => fetch("/api/safety").then((r) => r.json()));
+await untilState("FAULT");
+const st = await state();
 if (st.state !== "FAULT" || !st.latched.some((f) => f.code === "GATE")) fail("gate open didn't stop: " + st.state);
 await shot("2b_safety_tab");
 await page.click("[data-input=gate_closed]");
+await page.waitForTimeout(500);
 await page.click("#sf-reset");
+await untilState("READY");
 
 // Manual mode: moves only while "Hold to move" is held
 await page.click("[data-mode=MANUAL]");
+await page.waitForTimeout(400);
 await page.click("#sf-reset");
+await untilState("READY");
 await page.click("#sf-start");
+await untilState("RUNNING");
 await page.click(".tabs button[data-tab=cell]");
 const t2 = await page.evaluate(() => app.t);
 await page.waitForTimeout(700);
