@@ -9,20 +9,32 @@ on:
 
 jobs:
   test:
+    name: test (${{ matrix.name }})
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # same library versions as the Jetson (JetPack 6 / Ubuntu 22.04 packages)
+          - name: jetson-like
+            python: "3.10"
+            libs: numpy==1.21.5 matplotlib==3.5.1 pyserial
+          - name: latest
+            python: "3.12"
+            libs: numpy matplotlib pyserial
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.10"   # same as the Jetson (JetPack 6 / Ubuntu 22.04)
+          python-version: ${{ matrix.python }}
 
       - name: Install libraries
-        run: pip install numpy matplotlib scipy pyserial
+        run: pip install ${{ matrix.libs }}
 
       - name: Check every file has valid Python
-        run: python -m py_compile *.py
+        run: python -m py_compile *.py gantry/*.py
 
       - name: Window scripts load
         run: python test_scripts_load.py
@@ -34,6 +46,9 @@ jobs:
 
       - name: Inverse kinematics (300 random jumps)
         run: python test_ik_target.py
+
+      - name: Gantry cell (planner, collisions, app)
+        run: python test_gantry.py
 
   arduino:
     runs-on: ubuntu-latest

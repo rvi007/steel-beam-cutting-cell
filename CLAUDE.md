@@ -31,26 +31,32 @@ beginner-friendly; lessons are numbered and build on each other.
 | `ik_target.py` | Inverse kinematics: knob swings a target around the base, IK solves all 6 joints (tool down), servo follows J1, clamps at ±90° and shows "SERVO LIMIT". Tested headless; hardware test pending. |
 | `test_ik_target.py` | Headless test for `ik_target.py` (no window/Arduino). Must print PASS. |
 | `test_scripts_load.py` | Smoke test: each window script loads headless up to its main loop. Must print PASS. |
-| `.github/workflows/tests.yml` | CI on every push: py_compile, both tests above, exercises 8/8, and compiles the Arduino sketches for the UNO. Keep it green. |
+| `.github/workflows/tests.yml` | CI on every push, twice: with the Jetson's library versions (Python 3.10, numpy 1.21.5, matplotlib 3.5.1) and with the latest. Runs py_compile, all tests, exercises 8/8, and compiles the Arduino sketch for the UNO. Keep it green. |
+| `gantry_cell.py` + `gantry/` | **Big project**: 12 m beam-cutting gantry, two 9-axis hands (Cutter = plasma, Handler = magnet). Layout editor, planner, collision check, solid 3D view with blitting. Full design in `GANTRY.md`. |
+| `test_gantry.py` | Headless tests for the gantry (IK, every profile, random jobs, rules, app clicks). Must print PASS. |
 | `arduino/servo_joint/servo_joint.ino` | Servo pin 9, knob A0. Serial 115200. Orin->Arduino `S<0..180>\n`; Arduino->Orin `K<0..180>\n` every 50 ms (smoothed) |
 
 Angle mapping everywhere: robot J1 -90..+90 deg  <->  servo 0..180 deg.
 Target angle 0 = straight out along -X (where the arm points at J1 = 0).
 
 ## Current status / next task
-`ik_target.py` has a `solve()` fallback: warm-start IK from the previous answer, and
-if it fails (error >= 2 mm) or the base flips (> 45 deg from the aimed guess), re-solve
-from `fresh_seed(target)` (J1 aimed at target minus asin(0.10915 / r) shoulder offset).
-**Tested headless (cloud):** `python3 test_ik_target.py` -> 300 random jumps, 0 failures,
-0 flips, worst 0.10 mm. The old bad cases are fixed: (-90, 0.6, 0.1) now 0.0 mm (was 740 mm),
-unreachable (30, 0.95, 0.2) stretches toward the target with J1 offset -7 deg (was a
--174 deg flip). `exercises.py all --quick --solution` still 8/8.
-Next: hardware test on the Jetson (knob -> target, servo follows J1, SERVO LIMIT at ±90).
+- `ik_target.py` solve() fallback: tested headless and on the Jetson (`test_ik_target.py` PASS).
+  Hardware check of the servo still to report back.
+- **Gantry cell** (`gantry_cell.py`, `gantry/`, `GANTRY.md`): working in simulation. Demo job
+  plans on all 4 profiles at 12 m and 6 m, random jobs plan with no collisions, the bridges
+  stay >= 1 m apart. About 80 ms per frame on the cloud runner thanks to blitting, so expect
+  roughly 6-10 fps on the Jetson. Not yet run on the Jetson screen.
+- Gantry design notes: arms hang upside down (`FLIP`), elbow-up poses come from
+  `Hand.preference` (seeded by `ELBOW_UP_SEEDS`, cached in `_PREFS`); the Cutter's torch is
+  300 mm long so the wrist clears a 300 mm HEB flange on the 45 deg bottom-flange cuts;
+  `Plan._commit` checks the bridge gap against everything the other hand has planned from
+  then on. Keep `test_gantry.py` green; `gantry/check.py` must find 0 collisions.
+- Next ideas for the gantry are in GANTRY.md section 6 (DSTV/NC1 import first).
 
 ## Roadmap (README.md)
 1 joints (done), 2 forward kinematics, 3 inverse kinematics (ik_target.py), 4 joint-space
 trajectories (teach_replay.py covers basics), 5 Cartesian straight-line motion (Jacobian),
-6 pick-and-place. Ideas the user was offered: second servo for J2, PID/velocity control
+6 pick-and-place, 7 gantry cell (the user's "big project"). Ideas the user was offered: second servo for J2, PID/velocity control
 with live graphs.
 
 ## Jetson setup notes
