@@ -8,10 +8,18 @@ import { initParts, renderPartList } from "./parts.js";
 import { initLibrary } from "./library.js";
 import { initCamera } from "./camera.js";
 import { initHelp } from "./help.js";
+import { initSafety, safety, connected, startMachine, stopMachine, jobFinished } from "./safety.js";
 
 export const app = {
   info: null, sections: null, job: { stock_length: 12000, parts: [] }, bars: [], barIndex: 0,
-  plan: null, t: 0, playing: false, speed: 20, safetyStop: false, scene: null,
+  plan: null, t: 0, playing: false, speed: 20, scene: null, motion: 0,
+  // what the safety controller and the advisor are told about the job
+  playbackFacts() {
+    if (!app.plan) return { cutter: "", handler: "", bar: "" };
+    const b = app.plan.bar, dur = app.plan.summary.duration_s;
+    return { t: Math.round(app.t), bar: `${b.section} bar ${app.plan.bar_index + 1} of ${app.plan.bar_count}`,
+      progress: (100 * app.t) / dur, cutter: stepAt(app.t, "Cutter"), handler: stepAt(app.t, "Handler") };
+  },
 };
 window.app = app;                         // handy in the browser console
 const $ = (id) => document.getElementById(id);
@@ -70,8 +78,8 @@ function renderBars() {
 
 // ---------------------------------------------------------------- planning
 function clearPlan() {
+  if (app.playing) stopMachine("job changed");
   app.plan = null;
-  app.playing = false;
   app.t = 0;
   $("plan-info").innerHTML = "";
   $("plan-warnings").innerHTML = "";
@@ -93,9 +101,9 @@ async function planBar() {
 }
 
 function loadPlan(plan) {
+  if (app.playing) stopMachine("new plan loaded");
   app.plan = plan;
   app.t = 0;
-  app.playing = false;
   const s = plan.summary;
   $("plan-info").innerHTML = `<table>
     <tr><td>Cycle time</td><td><b>${fmtTime(s.duration_s)}</b></td></tr>
@@ -248,7 +256,8 @@ function updateTransport() {
   $("time").textContent = `${fmtTime(app.t)} / ${fmtTime(dur)}`;
   $("scrub").value = app.t;
   const pill = $("pill-machine");
-  if (app.safetyStop) { pill.textContent = "STOPPED"; pill.className = "pill bad"; }
+  const st = safety.status;
+  if (st && ["ESTOP", "FAULT"].includes(st.state)) { pill.textContent = "STOPPED"; pill.className = "pill bad"; }
   else if (!plan) { pill.textContent = "Idle - plan a bar"; pill.className = "pill"; }
   else if (app.playing) { pill.textContent = "Running"; pill.className = "pill run"; }
   else if (app.t >= dur - 1e-6) { pill.textContent = "Bar finished"; pill.className = "pill ok"; }
@@ -266,31 +275,29 @@ function updateHud() {
   }
 }
 
-export function setSafetyStop(on, detail = "") {
-  app.safetyStop = on;
-  $("safety-banner").hidden = !on;
-  $("safety-detail").textContent = detail;
-  const pill = $("pill-safety");
-  pill.textContent = on ? "SAFETY STOP" : "Safety OK";
-  pill.className = "pill " + (on ? "bad" : "ok");
-  if (on) app.playing = false;
-  updateTransport();
-}
-
 let last = performance.now(), hudTimer = 0;
 function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.1);
   last = now;
   const plan = app.plan, scene = app.scene;
-  if (plan && app.playing && !app.safetyStop) {
-    app.t = Math.min(app.t + dt * app.speed, plan.summary.duration_s);
-    if (app.t >= plan.summary.duration_s) app.playing = false;
+  // motion only when the safety controller allows it, at the speed it allows;
+  // category 0 (E-stop) stops at once, category 1/2 slow down over 0.6 s
+  const st = safety.status;
+  const allowed = plan && st && st.may_move && connected() && !safety.estopLocal;
+  const target = allowed ? st.speed_factor : 0;
+  if (target < app.motion) {
+    const instant = !st || !connected() || safety.estopLocal || st.stop_category === 0 || st.state === "ESTOP";
+    app.motion = instant ? target : Math.max(target, app.motion - dt / 0.6);
+  } else app.motion = Math.min(target, app.motion + dt / 0.4);
+  if (plan && app.motion > 0) {
+    app.t = Math.min(app.t + dt * app.speed * app.motion, plan.summary.duration_s);
+    if (app.t >= plan.summary.duration_s && st.state === "RUNNING") jobFinished();
   }
   if (plan) {
     for (const key of ["cutter", "handler"]) scene.pose(key, ...trackAt(plan.tracks[key], app.t));
     updateSteel(app.t);
     const on = plan.cuts.some((c) => c.t_on <= app.t && app.t <= c.times[c.times.length - 1]);
-    scene.torch(on, dt, app.playing && !app.safetyStop);
+    scene.torch(on && app.motion > 0 && st && st.torch_allowed, dt, app.motion > 0);
   } else {
     for (const key of ["cutter", "handler"]) {
       const h = app.info.machine.hands[key];
@@ -323,15 +330,20 @@ async function start() {
     document.querySelectorAll(".speeds button").forEach((x) => x.classList.toggle("on", x === b));
   }));
   $("btn-plan").onclick = planBar;
-  $("btn-play").onclick = () => {
-    if (!app.plan) return planBar().then(() => { if (app.plan) { app.playing = true; updateTransport(); } });
-    if (app.safetyStop) return toast("Reset the safety stop first", true);
+  $("btn-play").onclick = async () => {
+    if (app.playing) return stopMachine("pause button");
+    if (!app.plan) await planBar();
+    if (!app.plan) return;
     if (app.t >= app.plan.summary.duration_s - 1e-6) app.t = 0;
-    app.playing = !app.playing;
+    const r = await startMachine();
+    if (r && r.ok === false) toast("Can't start: " + r.why.join("; ") + " (see the Safety tab)", true);
+  };
+  $("btn-restart").onclick = () => { if (app.playing) stopMachine("back to start"); app.t = 0; updateTransport(); };
+  $("scrub").oninput = (e) => {
+    if (app.playing) { e.target.value = app.t; return toast("Stop the machine before jumping in time", true); }
+    app.t = +e.target.value;
     updateTransport();
   };
-  $("btn-restart").onclick = () => { app.t = 0; app.playing = false; updateTransport(); };
-  $("scrub").oninput = (e) => { app.t = +e.target.value; updateTransport(); };
   sel.onchange = () => { app.job.stock_length = +sel.value; jobChanged(); };
   window.addEventListener("keydown", (e) => {
     if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
@@ -354,6 +366,7 @@ async function start() {
   initLibrary();
   initCamera();
   initHelp();
+  await initSafety();
   await jobChanged();
   requestAnimationFrame(frame);
   memoryPill();

@@ -4,9 +4,11 @@ Camera + person detection for the safety zone (optional - the cell runs without 
     Camera   USB webcam (source 0, 1, ...), Jetson CSI camera (source "csi"), or a video file.
     Detector YOLO (an ONNX model in models/, run with OpenCV's DNN module - no PyTorch needed)
              or, with no model, OpenCV's built-in HOG people detector (no download at all).
-    Safety   if a person's feet are inside the zone, a SAFETY STOP latches. The app pauses
-             the machine; it only restarts after the zone is clear AND someone presses Reset -
-             the same as a light curtain on a real machine.
+    Zones    WARNING zone: someone near the cell - the machine slows down.
+             DANGER zone: someone at the machine - protective stop (the safety controller,
+             beamcell/safety.py, latches it until the zone is clear and Reset is pressed).
+             A person counts as "in" a zone when their feet (bottom of the box) are inside it.
+             This is an extra layer of protection, not a safety-rated device.
 
 Everything heavy (OpenCV, the camera) is only loaded when the camera is switched on, to keep
 memory free on a 4 GB Jetson.
@@ -78,10 +80,11 @@ class Vision:
         self.lock = threading.Lock()
         self.enabled = False
         self.source = None
-        self.zone = [0.15, 0.25, 0.85, 1.0]     # x0, y0, x1, y1 as fractions of the image
+        self.zones = {"warning": [0.05, 0.15, 0.95, 1.0], "danger": [0.25, 0.35, 0.75, 1.0]}
         self.people = []                        # [(x, y, w, h, score)] in the last frame
-        self.in_zone = False
-        self.latched = False
+        self.in_warning = False
+        self.in_danger = False
+        self.last_frame = 0.0
         self.detector = "none"
         self.message = "camera off"
         self.fps = 0.0
@@ -100,9 +103,10 @@ class Vision:
     def status(self):
         with self.lock:
             return {"enabled": self.enabled, "source": self.source, "detector": self.detector,
-                    "people": len(self.people), "in_zone": self.in_zone, "safety_stop": self.latched,
-                    "zone": self.zone, "fps": round(self.fps, 1), "message": self.message,
-                    "has_frame": self._jpeg is not None}
+                    "people": len(self.people), "in_warning": self.in_warning, "in_danger": self.in_danger,
+                    "zones": self.zones, "fps": round(self.fps, 1), "message": self.message,
+                    "has_frame": self._jpeg is not None,
+                    "frame_age": round(time.time() - self.last_frame, 2) if self.last_frame else None}
 
     def jpeg(self):
         with self.lock:
@@ -110,17 +114,10 @@ class Vision:
 
     # ---------------------------------------------------------------- control
     def configure(self, body):
-        if "zone" in body:
-            z = [float(v) for v in body["zone"]]
-            if len(z) == 4 and 0 <= z[0] < z[2] <= 1 and 0 <= z[1] < z[3] <= 1:
-                self.zone = z
-        if body.get("reset"):
-            with self.lock:
-                if self.in_zone:
-                    self.message = "can't reset: someone is still in the zone"
-                else:
-                    self.latched = False
-                    self.message = "safety reset"
+        for name, z in (body.get("zones") or {}).items():
+            z = [float(v) for v in z]
+            if name in self.zones and len(z) == 4 and 0 <= z[0] < z[2] <= 1 and 0 <= z[1] < z[3] <= 1:
+                self.zones[name] = z
         if "enabled" in body:
             if body["enabled"]:
                 self._start(body.get("source", self.source if self.source is not None else 0), body.get("model"))
@@ -138,7 +135,8 @@ class Vision:
             self.enabled = False
             self._jpeg = None
             self.people = []
-            self.in_zone = False
+            self.in_warning = self.in_danger = False
+            self.last_frame = 0.0
 
     def _start(self, source, model=None):
         self._halt()
@@ -166,7 +164,10 @@ class Vision:
 
     def _make_detector(self, cv2, model):
         models = self.models()
-        name = model if model in models else (models[0] if models else None)
+        if model == "none":                              # the operator picked the built-in detector
+            name = None
+        else:
+            name = model if model in models else (models[0] if models else None)
         if name:
             try:
                 net = cv2.dnn.readNetFromONNX(os.path.join(self.models_dir, name))
@@ -229,23 +230,30 @@ class Vision:
                 frame = cv2.resize(frame, (640, int(frame.shape[0] * 640 / frame.shape[1])))
             people = detect(frame)
             H, W = frame.shape[:2]
-            zx0, zy0, zx1, zy1 = self.zone
-            in_zone = any(zx0 * W <= x + w / 2 <= zx1 * W and zy0 * H <= y + h <= zy1 * H for x, y, w, h, _ in people)
-            colour = (0, 0, 255) if in_zone else (0, 200, 0)
-            cv2.rectangle(frame, (int(zx0 * W), int(zy0 * H)), (int(zx1 * W) - 1, int(zy1 * H) - 1), colour, 2)
+            feet = [(x + w / 2, y + h) for x, y, w, h, _ in people]
+
+            def inside(z):
+                return any(z[0] * W <= fx <= z[2] * W and z[1] * H <= fy <= z[3] * H for fx, fy in feet)
+            in_warning, in_danger = inside(self.zones["warning"]), inside(self.zones["danger"])
+            for name, colour in (("warning", (0, 190, 255)), ("danger", (0, 0, 255))):
+                z = self.zones[name]
+                hit = in_danger if name == "danger" else in_warning
+                cv2.rectangle(frame, (int(z[0] * W), int(z[1] * H)), (int(z[2] * W) - 1, int(z[3] * H) - 1),
+                              colour if hit else (0, 200, 0), 3 if hit else 1)
+                cv2.putText(frame, name.upper(), (int(z[0] * W) + 4, int(z[1] * H) + 16), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.5, colour if hit else (0, 200, 0), 1)
             for x, y, w, h, s in people:
-                cv2.rectangle(frame, (int(x), int(y)), (int(x + w), int(y + h)), (0, 165, 255), 2)
+                cv2.rectangle(frame, (int(x), int(y)), (int(x + w), int(y + h)), (255, 120, 0), 2)
                 cv2.putText(frame, f"person {s:.2f}", (int(x), max(12, int(y) - 4)), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.45, (0, 165, 255), 1)
+                            0.45, (255, 120, 0), 1)
             ok, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
             now = time.time()
             with self.lock:
                 self.people = people
-                self.in_zone = in_zone
-                if in_zone:
-                    self.latched = True
+                self.in_warning, self.in_danger = in_warning or in_danger, in_danger
                 if ok:
                     self._jpeg = buf.tobytes()
+                    self.last_frame = now
                 self.fps = 0.8 * self.fps + 0.2 / max(now - t_last, 1e-3)
             t_last = now
             if is_file:

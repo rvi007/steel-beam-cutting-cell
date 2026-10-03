@@ -53,6 +53,29 @@ class Server(unittest.TestCase):
         self.assertEqual(plan["bar"]["section"], "UB 305x165x40")
         self.assertIn("ST", self.post("/api/nc1/export", {"part": t1["part"]}, raw=True))
 
+    def test_safety_flow(self):
+        st = self.post("/api/safety/tick", {"client": "test"})
+        self.assertIn(st["state"], ("NOT_RESET", "READY", "ESTOP", "FAULT"))
+        self.post("/api/safety/estop", {"source": "test"})
+        self.assertEqual(self.get("/api/safety")["state"], "ESTOP")
+        r = self.post("/api/safety/reset", {})
+        self.assertFalse(r["ok"])                                  # still pressed
+        self.post("/api/safety/release", {"source": "test"})
+        self.assertTrue(self.post("/api/safety/reset", {})["ok"])
+        self.post("/api/safety/checklist", {})
+        self.post("/api/safety/tick", {"client": "test"})
+        self.assertTrue(self.post("/api/safety/start", {})["ok"])
+        self.assertTrue(self.post("/api/safety/tick", {"client": "test"})["may_move"])
+        self.post("/api/safety/input", {"name": "gate_closed", "value": False})
+        self.assertEqual(self.get("/api/safety")["state"], "FAULT")
+        self.post("/api/safety/input", {"name": "gate_closed", "value": True})
+        self.assertIn("text", self.get("/api/situation"))
+        cfg = self.get("/api/config")
+        self.assertEqual(cfg["problems"], [])
+        with self.assertRaises(urllib.error.HTTPError) as e:
+            self.post("/api/safety/mode", {"mode": "MAINTENANCE"})  # lock-out not confirmed
+        self.assertEqual(e.exception.code, 400)
+
     def test_bad_requests(self):
         with self.assertRaises(urllib.error.HTTPError) as e:
             self.post("/api/nc1", {"text": "not nc1"})

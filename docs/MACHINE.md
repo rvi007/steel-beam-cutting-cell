@@ -65,7 +65,8 @@ real machine's coordinated axes do; short ones (holes) use the arm alone.
 - **Collision check** (`beamcell/collisions.py`): the whole plan is replayed every 0.4 s and every
   arm link and tool is checked against the steel (each plate following its real outline, so
   notches count; offcuts until they drop; carried parts where they are) and the bed.
-- **Camera** (optional): a person in the zone stops the machine until reset (see `JETSON_SETUP.md`).
+- **Safety controller** (`beamcell/safety.py`): E-stop, gate, light curtain, extraction, camera
+  zones, modes, watchdogs - every stop latches; Reset then Start (see `SAFETY.md`).
 
 `tests/sweep_sections.py` plans a typical part on **every one of the 267 cuttable UK
 sections** (from a 20x20 angle to UB 1016x305x584) and checks all of the above: 0 problems.
@@ -88,7 +89,12 @@ Plasma speeds follow typical 130 A values: 50 mm/s up to 6 mm thick down to 10 m
 | `beamcell/machine.py` | the cell's sizes, the two hands, comfortable elbow-up poses |
 | `beamcell/planner.py` | turns a bar into timed tracks for both hands |
 | `beamcell/collisions.py` | replays a plan and checks arms against the steel |
-| `beamcell/vision.py` | camera, YOLO / HOG person detection, safety zone |
+| `beamcell/vision.py` | camera, YOLO / HOG person detection, warning + danger zones |
+| `beamcell/safety.py` | safety controller: E-stop, interlocks, modes, reset/start, watchdogs, ISO 13855 distance |
+| `beamcell/gpio_inputs.py` | optional wired E-stop / gate / curtain / reset on the Jetson's pins (fail-safe) |
+| `beamcell/assistant.py` | plain-English situation + optional Claude advisor |
+| `beamcell/doctor.py` | system check and setup plan |
+| `beamcell/config.py` | reads `config/cell.toml` |
 | `beamcell/server.py` | web server and JSON API |
 | `web/js/scene.js` | the 3D cell (three.js) |
 | `web/js/geometry.js` | steel parts plate by plate, with real holes and notches |

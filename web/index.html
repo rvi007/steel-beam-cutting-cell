@@ -16,15 +16,17 @@
     <button data-tab="cell" class="on">Machine</button>
     <button data-tab="parts">Parts &amp; NC1</button>
     <button data-tab="library">Section library</button>
+    <button data-tab="safety">Safety</button>
     <button data-tab="camera">Camera</button>
     <button data-tab="help">Help</button>
   </nav>
   <div class="pills">
     <span id="pill-machine" class="pill">Idle</span>
-    <span id="pill-safety" class="pill ok">Safety OK</span>
+    <span id="pill-safety" class="pill">Safety: not reset</span>
     <span id="pill-camera" class="pill dim">Camera off</span>
     <span id="pill-memory" class="pill dim"></span>
   </div>
+  <button id="btn-estop" class="estop" title="Emergency stop (Esc key)">E-STOP</button>
 </header>
 
 <main>
@@ -39,6 +41,8 @@
       <button id="btn-plan" class="primary big">Plan this bar</button>
       <div id="plan-info"></div>
       <div id="plan-warnings"></div>
+      <h3>What's happening</h3>
+      <div id="situation" class="situation muted">-</div>
     </aside>
     <div class="viewport">
       <canvas id="cell-canvas"></canvas>
@@ -54,8 +58,11 @@
         <div class="card cutter"><b>CUTTER</b> <span class="muted small">plasma</span><div id="hud-cutter"></div></div>
         <div class="card handler"><b>HANDLER</b> <span class="muted small">magnet</span><div id="hud-handler"></div></div>
       </div>
+      <div class="stacklight" title="Stack light: red = stopped, amber = caution / reduced speed, green = running, blue = reset needed">
+        <i id="lamp-red"></i><i id="lamp-amber"></i><i id="lamp-green"></i><i id="lamp-blue"></i></div>
       <div id="safety-banner" class="banner" hidden>
-        <b>SAFETY STOP</b> &ndash; person in the cell. <span id="safety-detail"></span>
+        <div><b id="safety-title">STOPPED</b><div id="safety-detail" class="small"></div></div>
+        <button id="btn-release" hidden>Release E-stop</button>
         <button id="btn-safety-reset">Reset</button>
       </div>
       <div id="loading" class="loading" hidden>Planning both hands&hellip;</div>
@@ -63,6 +70,7 @@
     <footer class="transport">
       <button id="btn-play" class="primary big play">&#9654; Run</button>
       <button id="btn-restart" class="big" title="Back to the start">&#10226;</button>
+      <button id="btn-hold" class="big hold" hidden title="Manual mode: hold to move">Hold to move</button>
       <div class="speeds">
         <span class="muted small">Speed</span>
         <button data-speed="1">1&times;</button><button data-speed="5">5&times;</button>
@@ -119,6 +127,45 @@
     </div>
   </section>
 
+  <!-- ============================================================ SAFETY -->
+  <section id="tab-safety" class="tab">
+    <div class="safety-main">
+      <div class="safety-state">
+        <div id="sf-state" class="sf-state">-</div>
+        <div id="sf-why" class="small"></div>
+        <div class="toolbar">
+          <button id="sf-release" class="big">Release E-stop</button>
+          <button id="sf-reset" class="big reset">Reset</button>
+          <button id="sf-start" class="big primary">Start</button>
+          <button id="sf-stop" class="big">Stop</button>
+        </div>
+      </div>
+      <div class="box"><h3>Mode</h3>
+        <div class="toolbar" id="sf-modes">
+          <button data-mode="AUTO">Auto</button>
+          <button data-mode="MANUAL">Manual (250 mm/s, hold-to-run)</button>
+          <button data-mode="MAINTENANCE">Maintenance (isolated)</button>
+        </div>
+      </div>
+      <div class="box"><h3>Pre-start checklist</h3><div id="sf-checklist"></div>
+        <button id="sf-check-ok" class="primary">All checked - confirm</button> <span id="sf-check-state" class="small"></span></div>
+      <div class="box"><h3>Safety inputs</h3>
+        <table class="inputs"><tbody id="sf-inputs"></tbody></table>
+        <p class="muted small">In the prototype these switches are simulated here. Wire real ones to the Jetson's GPIO
+          ([gpio] in config/cell.toml) and the screen can no longer change them.</p></div>
+      <div class="box"><h3>Light curtain safety distance (BS EN ISO 13855)</h3><div id="sf-distance"></div></div>
+    </div>
+    <aside class="side">
+      <h2>Advisor</h2>
+      <div id="adv-status" class="muted small"></div>
+      <textarea id="adv-q" rows="3" class="full" placeholder="Ask about the cell, e.g. 'why did it stop?' or 'what does the camera see?'"></textarea>
+      <button id="adv-ask" class="primary">Ask</button>
+      <div id="adv-answer" class="report"></div>
+      <h3>Event log</h3>
+      <div id="sf-log" class="log"></div>
+    </aside>
+  </section>
+
   <!-- ============================================================ CAMERA -->
   <section id="tab-camera" class="tab">
     <div class="cam-view"><img id="cam-img" alt=""><div id="cam-empty" class="muted">Camera is off</div></div>
@@ -130,12 +177,19 @@
       <input id="cam-file" placeholder="/home/ravi/video.mp4" class="full" hidden>
       <label class="row">Detector <select id="cam-model"></select></label>
       <div class="toolbar"><button id="btn-cam-on" class="primary">Start camera</button><button id="btn-cam-off">Stop</button></div>
-      <label class="check"><input id="cam-link" type="checkbox" checked> Person in the zone stops the machine</label>
-      <h3>Zone (part of the picture)</h3>
-      <label class="row">Left <input id="z0" type="range" min="0" max="1" step="0.01"></label>
-      <label class="row">Top <input id="z1" type="range" min="0" max="1" step="0.01"></label>
-      <label class="row">Right <input id="z2" type="range" min="0" max="1" step="0.01"></label>
-      <label class="row">Bottom <input id="z3" type="range" min="0" max="1" step="0.01"></label>
+      <p class="muted small">Amber WARNING zone: someone near - the machine slows to 25%.<br>
+        Red DANGER zone: someone at the machine - protective stop until clear + Reset.<br>
+        Extra protection only - a camera with AI is not a safety-rated device (see Safety tab).</p>
+      <h3>Warning zone</h3>
+      <label class="row">Left <input data-zone="warning" data-i="0" type="range" min="0" max="1" step="0.01"></label>
+      <label class="row">Top <input data-zone="warning" data-i="1" type="range" min="0" max="1" step="0.01"></label>
+      <label class="row">Right <input data-zone="warning" data-i="2" type="range" min="0" max="1" step="0.01"></label>
+      <label class="row">Bottom <input data-zone="warning" data-i="3" type="range" min="0" max="1" step="0.01"></label>
+      <h3>Danger zone</h3>
+      <label class="row">Left <input data-zone="danger" data-i="0" type="range" min="0" max="1" step="0.01"></label>
+      <label class="row">Top <input data-zone="danger" data-i="1" type="range" min="0" max="1" step="0.01"></label>
+      <label class="row">Right <input data-zone="danger" data-i="2" type="range" min="0" max="1" step="0.01"></label>
+      <label class="row">Bottom <input data-zone="danger" data-i="3" type="range" min="0" max="1" step="0.01"></label>
       <div id="cam-status" class="report"></div>
     </aside>
   </section>

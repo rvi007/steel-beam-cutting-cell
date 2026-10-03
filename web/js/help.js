@@ -8,6 +8,7 @@ overhead gantry: the <b>Cutter</b> (orange, plasma torch) cuts holes, slots, not
 
 <h2>Quick start</h2>
 <ol>
+<li><b>Safety</b>: press <b>Reset</b>, tick the pre-start checklist and confirm. Nothing moves until you do.</li>
 <li><b>Parts &amp; NC1</b>: drop NC1 files from Tekla / Advance Steel / SDS2 onto the page, pick an example, or press <b>+ New part</b>.</li>
 <li>Check each part: the <b>Checks</b> box lists anything that breaks a UK rule, with the clause. The drawing shows every face.</li>
 <li><b>Machine</b>: parts are nested onto stock bars (pick the stock length). Click a bar, then <b>Plan this bar</b>.</li>
@@ -40,8 +41,16 @@ profile, length, end-cut angles), holes and slots (BO), outer contours (AK - not
 contours (IK - openings). Hard stamping and marking blocks are listed in the import report but not cut. If a profile
 name isn't in the UK library, the sizes in the file are used. More detail: <code>docs/NC1_FILES.md</code>.</p>
 
+<h2>Safety</h2>
+<p><b>E-STOP</b> (top right, or the <code>Esc</code> key) stops everything at once. Releasing it does not restart the
+machine: press <b>Reset</b> (blue lamp), then <b>Start</b>. The gate, light curtain, fume extraction and camera
+danger zone cause a protective stop the same way. Manual mode runs at 250 mm/s and only while you hold
+<b>Hold to move</b>. Maintenance mode isolates the machine (Lock Out Tag Out). Full details and the UK
+regulations: <code>docs/SAFETY.md</code>. These software stops are a prototype - a real machine needs them in
+certified safety hardware.</p>
+
 <h2>Keyboard</h2>
-<p><code>Space</code> run / pause. Mouse: left-drag to turn the view, right-drag to move it, wheel to zoom.</p>
+<p><code>Esc</code> E-STOP. <code>Space</code> run / pause. Mouse: left-drag to turn the view, right-drag to move it, wheel to zoom.</p>
 
 <h2>Graphics too slow?</h2>
 <p><button id="q-low">Use low graphics (no shadows)</button> <button id="q-high">Use high graphics</button></p>

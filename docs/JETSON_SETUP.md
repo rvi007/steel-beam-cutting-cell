@@ -5,6 +5,15 @@ Your board (see `JETSON_SPECS.md`): Orin Nano Super, **4 GB RAM**, JetPack 7.2.1
 uses only Python's standard library, numpy and (for the camera) OpenCV, and the 3D library
 (three.js) is inside the repo.
 
+## Check the Orin first
+
+```
+python3 -m beamcell.doctor --save
+git add docs/SYSTEM_CHECK.md && git commit -m "System check" && git push
+```
+It lists what's ready and what's missing (camera, YOLO model, GPIO, memory...) with a plan, and
+the saved report lets a cloud session see your exact setup.
+
 ## Start it
 
 ```
@@ -77,12 +86,21 @@ ONNX files work too. Then pick it in the **Camera** tab's *Detector* list.
 The YOLO path was tested here with synthetic model output, not with a real model on your
 board - if OpenCV 4.6 refuses the file, export again with `opset=11`.
 
-## Safety zone
+## Camera zones
 
-The green box on the camera picture is the zone (set it with the sliders). When a person's
-feet are inside it the box turns red, the machine **stops**, and it stays stopped until the
-zone is clear **and** someone presses **Reset** - the same as a light curtain. Turn off
-*Person in the zone stops the machine* to just watch.
+Two boxes on the camera picture (set them with the sliders, defaults in `config/cell.toml`):
+- **Warning** (amber): someone's feet inside - the machine slows to 25%.
+- **Danger** (red): protective stop, latched until the zone is clear **and** Reset is pressed.
 
-This is a demo of the idea. A real machine needs certified safety hardware (light curtains,
-interlocked gates, a safety PLC) - a camera and YOLO are not a safety device.
+Set `require_camera = true` in `config/cell.toml` to stop the machine if the camera fails.
+This is an extra layer only - see `SAFETY.md`.
+
+## Real E-stop and buttons
+
+You can wire a real E-stop, gate switch, light-curtain relay and reset button to the 40-pin
+header - wiring and settings in `SAFETY.md` section 6.
+
+## AI advisor (optional)
+
+See `ASSISTANT.md` - it runs in the cloud only when you ask a question, because the Orin's
+4 GB can't hold a vision-language model next to the cell.

@@ -1,21 +1,21 @@
-// Camera tab: live picture with the people the detector finds, the safety zone, and the link
-// to the machine (a person in the zone stops it, like a light curtain).
+// Camera tab: live picture with the people the detector finds and the two zones (warning:
+// slow down, danger: protective stop). The safety controller on the server reads the zones.
 import { get, post } from "./api.js";
-import { app, setSafetyStop, toast } from "./app.js";
+import { app } from "./app.js";
 
 const $ = (id) => document.getElementById(id);
-let status = null;
 
 function show(st) {
-  status = st;
   $("cam-status").innerHTML = `<div>Status: <b>${st.message}</b></div><div>Detector: ${st.detector}</div>
-    <div>People seen: ${st.people} ${st.in_zone ? '<b class="bad">- in the zone</b>' : ""}</div><div>${st.fps} pictures/s</div>`;
+    <div>People seen: ${st.people} ${st.in_danger ? '<b class="bad">- in the DANGER zone</b>' : st.in_warning ? '<b class="warn">- in the warning zone</b>' : ""}</div>
+    <div>${st.fps} pictures/s</div>`;
   const pill = $("pill-camera");
-  pill.textContent = st.enabled ? (st.in_zone ? "Person in zone" : "Camera on") : "Camera off";
-  pill.className = "pill " + (st.enabled ? (st.in_zone ? "bad" : "ok") : "dim");
+  pill.textContent = st.enabled ? (st.in_danger ? "Person: danger zone" : st.in_warning ? "Person: warning zone" : "Camera on") : "Camera off";
+  pill.className = "pill " + (st.enabled ? (st.in_danger ? "bad" : st.in_warning ? "run" : "ok") : "dim");
   $("cam-empty").hidden = st.enabled && st.has_frame;
-  ["z0", "z1", "z2", "z3"].forEach((id, i) => { if (document.activeElement !== $(id)) $(id).value = st.zone[i]; });
-  if ($("cam-link").checked && st.enabled && st.safety_stop && !app.safetyStop) setSafetyStop(true, "Camera saw someone in the zone.");
+  document.querySelectorAll("[data-zone]").forEach((el) => {
+    if (document.activeElement !== el) el.value = st.zones[el.dataset.zone][+el.dataset.i];
+  });
 }
 
 async function poll() {
@@ -36,16 +36,11 @@ export async function initCamera() {
     $("cam-img").src = "/camera.mjpg?" + Date.now();
   };
   $("btn-cam-off").onclick = async () => { show(await post("/api/camera", { enabled: false })); $("cam-img").removeAttribute("src"); };
-  ["z0", "z1", "z2", "z3"].forEach((id) => ($(id).onchange = () =>
-    post("/api/camera", { zone: ["z0", "z1", "z2", "z3"].map((z) => +$(z).value) }).then(show)));
-  $("btn-safety-reset").onclick = async () => {
-    if (status && status.enabled) {
-      const st = await post("/api/camera", { reset: true });
-      show(st);
-      if (st.safety_stop) return toast("Can't reset: " + st.message, true);
-    }
-    setSafetyStop(false);
-  };
+  document.querySelectorAll("[data-zone]").forEach((el) => (el.onchange = () => {
+    const zone = el.dataset.zone;
+    const values = [...document.querySelectorAll(`[data-zone=${zone}]`)].map((x) => +x.value);
+    post("/api/camera", { zones: { [zone]: values } }).then(show);
+  }));
   await poll();
   setInterval(poll, 600);
 }
