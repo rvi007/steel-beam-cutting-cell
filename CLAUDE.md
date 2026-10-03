@@ -5,6 +5,8 @@ plus a real hardware "joint" (one servo + one potentiometer on an Arduino UNO),
 running on an NVIDIA Jetson Orin (Linux, aarch64). Keep explanations simple and
 beginner-friendly; lessons are numbered and build on each other.
 
+Full Jetson hardware/software specs and memory limits: see `JETSON_SPECS.md`.
+
 ## Where code runs
 - **Jetson (local):** the only place the Arduino, servo, knob and the 3D windows exist.
   All hardware tests must be done there.
