@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 *.log
 waypoints.json
+my_job.json
