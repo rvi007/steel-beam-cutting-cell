@@ -21,11 +21,12 @@ API (all JSON):
     POST /api/cad/part              {part} -> STEP solid of the part (needs CadQuery: a PC, not the Jetson)
     GET  /api/jobs, GET/POST /api/jobs/<name>   saved jobs (jobs/ folder)
     GET  /api/camera, POST /api/camera, GET /camera.mjpg   camera + person detection
+    GET  /api/camera/devices        the cameras Linux can see
     GET  /api/safety                safety controller status
     POST /api/safety/<action>       tick (watchdog + hold-to-run), estop, release, reset, start,
                                     stop, finished, mode, checklist, input
     GET  /api/situation             plain-English "what's happening" (no AI)
-    POST /api/assistant             {question} -> optional Claude advisor (advisory only)
+    POST /api/assistant             {question} -> optional AI advisor (advisory only)
     GET  /api/config                settings from config/cell.toml and any problems in them
 """
 import argparse
@@ -253,6 +254,10 @@ class Handler(BaseHTTPRequestHandler):
                     return self._send(200, json.load(fh))
             if path == "/api/camera":
                 return self._send(200, VISION.status())
+            if path == "/api/camera/devices":
+                from beamcell.vision import in_video_group, list_cameras
+                return self._send(200, {"cameras": list_cameras(), "video_group": in_video_group(),
+                                        "opencv": VISION.capabilities()["opencv"]})
             if path == "/api/safety":
                 return self._send(200, dict(SAFETY.status(), gpio=GPIO.status()))
             if path == "/api/situation":
@@ -388,7 +393,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="Beam cutting cell - web app")
     ap.add_argument("--port", type=int, default=CONFIG["server"]["port"])
     ap.add_argument("--host", default="0.0.0.0", help="0.0.0.0 = other computers on the network can open it")
-    ap.add_argument("--camera", default=None, help="camera to start with: 0 (USB), 'csi', or a video file")
+    ap.add_argument("--camera", default=None, help="camera to start with: auto, 0 / 1 (USB), 'csi', or a video file")
     args = ap.parse_args(argv)
     for p in config_problems(CONFIG):
         print("CONFIG PROBLEM:", p)

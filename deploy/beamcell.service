@@ -9,7 +9,7 @@ After=network-online.target
 
 [Service]
 User=ravi
-WorkingDirectory=/home/ravi/robot_arm
+WorkingDirectory=/home/ravi/steel-beam-cutting-cell
 ExecStart=/usr/bin/python3 -m beamcell.server --port 8080
 Restart=on-failure
 # keep it from using much memory on the 4 GB Orin

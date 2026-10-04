@@ -1,7 +1,8 @@
 """
 Camera + person detection for the safety zone (optional - the cell runs without it).
 
-    Camera   USB webcam (source 0, 1, ...), Jetson CSI camera (source "csi"), or a video file.
+    Camera   "auto" (finds one: USB cameras first, then a Jetson CSI camera), a USB camera
+             number (0, 1, ... = /dev/video0, /dev/video1 ...), "csi", or a video file.
     Detector YOLO (an ONNX model in models/, run with OpenCV's DNN module - no PyTorch needed)
              or, with no model, OpenCV's built-in HOG people detector (no download at all).
     Zones    WARNING zone: someone near the cell - the machine slows down.
@@ -23,6 +24,42 @@ import numpy as np
 CSI_PIPELINE = ("nvarguscamerasrc ! video/x-raw(memory:NVMM),width=1280,height=720,framerate=30/1 ! "
                 "nvvidconv ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=BGR ! appsink drop=1")
 PERSON = 0                 # COCO class number for "person"
+CSI_NAMES = ("vi-output", "imx", "ov5", "ar0", "tegra")   # how Jetson CSI sensors name their /dev/video node
+
+
+def list_cameras():
+    """The cameras Linux can see: [{dev, index, name, kind: usb|csi, main}].
+    `main` is False for the extra metadata node a USB camera adds (it can't give pictures)."""
+    out = []
+    for dev in sorted(glob.glob("/dev/video*"), key=lambda d: int("".join(c for c in d if c.isdigit()) or 0)):
+        n = dev.replace("/dev/video", "")
+        if not n.isdigit():
+            continue
+        sysfs = f"/sys/class/video4linux/video{n}"
+        name = _read(os.path.join(sysfs, "name")) or "camera"
+        main = _read(os.path.join(sysfs, "index")) in ("", "0")
+        kind = "csi" if any(k in name.lower() for k in CSI_NAMES) else "usb"
+        out.append({"dev": dev, "index": int(n), "name": name, "kind": kind, "main": main})
+    return out
+
+
+def _read(path):
+    try:
+        with open(path) as fh:
+            return fh.read().strip()
+    except OSError:
+        return ""
+
+
+def in_video_group():
+    """Can this user open cameras? (Linux: member of the 'video' group, or root.)"""
+    try:
+        import grp
+        if os.geteuid() == 0:
+            return True
+        return grp.getgrnam("video").gr_gid in os.getgroups()
+    except (ImportError, KeyError, AttributeError):
+        return True
 
 
 def _cv2():
@@ -141,26 +178,98 @@ class Vision:
     def _start(self, source, model=None):
         self._halt()
         if _cv2() is None:
-            self.message = "OpenCV (cv2) isn't installed - camera not available"
+            self.message = ("OpenCV (cv2) isn't installed for this Python - on the Jetson: sudo apt install python3-opencv")
             return
         self._stop.clear()
         self.source = source
-        self._thread = threading.Thread(target=self._run, args=(source, model), daemon=True)
-        self._thread.start()
-        with self.lock:
+        with self.lock:                                   # before the thread: it may fail at once
             self.enabled = True
             self.message = "starting camera..."
+        self._thread = threading.Thread(target=self._run, args=(source, model), daemon=True)
+        self._thread.start()
 
     # ---------------------------------------------------------------- the camera loop
     def _open(self, cv2, source):
-        if str(source).lower() == "csi":
-            return cv2.VideoCapture(CSI_PIPELINE, cv2.CAP_GSTREAMER)
-        if str(source).isdigit():
-            cap = cv2.VideoCapture(int(source))
+        """Open a camera. Returns (capture or None, what was tried / why it failed)."""
+        src = str(source).strip().lower()
+        if src in ("", "auto"):
+            cams = list_cameras()
+            tried = []
+            for cam in [c for c in cams if c["kind"] == "usb" and c["main"]]:
+                cap = self._open_usb(cv2, cam["index"])
+                if cap is not None:
+                    self.source = cam["index"]
+                    return cap, f"USB camera {cam['dev']} ({cam['name']})"
+                tried.append(f"{cam['dev']} ({cam['name']}) gave no picture")
+            if any(c["kind"] == "csi" for c in cams) or not cams:
+                cap, why = self._open_csi(cv2)
+                if cap is not None:
+                    self.source = "csi"
+                    return cap, "Jetson CSI camera"
+                tried.append(why)
+            return None, self._no_camera_help(cams, tried)
+        if src == "csi":
+            return self._open_csi(cv2)
+        if src.isdigit():
+            cam = next((c for c in list_cameras() if c["index"] == int(src)), None)
+            if cam and cam["kind"] == "csi":
+                return None, (f"/dev/video{src} is a CSI camera ({cam['name']}) - it can't be read like a webcam. "
+                              "Choose 'Jetson CSI camera' (or Auto).")
+            if cam and not cam["main"]:
+                return None, f"/dev/video{src} is the extra info channel of a USB camera - try /dev/video{int(src) - 1}"
+            cap = self._open_usb(cv2, int(src))
+            return (cap, f"USB camera /dev/video{src}") if cap is not None else \
+                (None, self._no_camera_help(list_cameras(), [f"/dev/video{src} didn't open or gave no picture"]))
+        if not os.path.exists(str(source)):
+            return None, f"no such video file: {source}"
+        cap = cv2.VideoCapture(str(source))
+        return (cap, f"video file {source}") if cap.isOpened() else (None, f"can't read the video file {source}")
+
+    @staticmethod
+    def _open_usb(cv2, index):
+        """A USB (UVC) camera through V4L2 - the direct way on Linux - asking for MJPG 640x480,
+        which every webcam can do without filling the USB bus. It must give a picture to count."""
+        for backend in ([cv2.CAP_V4L2] if hasattr(cv2, "CAP_V4L2") else []) + [cv2.CAP_ANY]:
+            cap = cv2.VideoCapture(index, backend)
+            if not cap.isOpened():
+                cap.release()
+                continue
+            cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
             cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
             cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-            return cap
-        return cv2.VideoCapture(str(source))
+            for _ in range(20):                           # cameras need a moment to warm up
+                ok, _frame = cap.read()
+                if ok:
+                    return cap
+                time.sleep(0.05)
+            cap.release()
+        return None
+
+    @staticmethod
+    def _open_csi(cv2):
+        if "GStreamer:                   YES" not in cv2.getBuildInformation() and \
+                "GStreamer: YES" not in cv2.getBuildInformation().replace("  ", ""):
+            return None, ("this OpenCV was built without GStreamer, so it can't read a CSI camera - use the Jetson's "
+                          "own OpenCV (sudo apt install python3-opencv), not 'pip install opencv-python'")
+        cap = cv2.VideoCapture(CSI_PIPELINE, cv2.CAP_GSTREAMER)
+        if cap.isOpened():
+            ok, _frame = cap.read()
+            if ok:
+                return cap, "Jetson CSI camera"
+        cap.release()
+        return None, ("the CSI camera didn't start - check the ribbon cable (blue side), that the camera is "
+                      "enabled (sudo /opt/nvidia/jetson-io/jetson-io.py), and try: nvgstcapture-1.0")
+
+    @staticmethod
+    def _no_camera_help(cams, tried):
+        parts = list(tried)
+        if not cams:
+            parts.append("Linux sees no camera (no /dev/video*): plug the USB camera in (try another port, "
+                         "not through an unpowered hub) or check the CSI ribbon cable, then reboot")
+        if not in_video_group():
+            parts.append("your user isn't in the 'video' group: sudo usermod -aG video $USER, then log out and in")
+        parts.append("python3 -m beamcell.doctor lists what it can see")
+        return "no camera found: " + "; ".join(parts)
 
     def _make_detector(self, cv2, model):
         models = self.models()
@@ -206,26 +315,32 @@ class Vision:
 
     def _loop(self, source, model):
         cv2 = _cv2()
-        cap = self._open(cv2, source)
-        if not cap or not cap.isOpened():
+        cap, what = self._open(cv2, source)
+        if cap is None:
             with self.lock:
                 self.enabled = False
-                self.message = f"can't open camera {source!r}"
+                self.message = what
             return
         detect = self._make_detector(cv2, model)
         with self.lock:
-            self.message = "camera on"
-        is_file = not str(source).isdigit() and str(source).lower() != "csi"
+            self.message = f"camera on - {what}"
+        is_file = what.startswith("video file")
         t_last = time.time()
+        misses = 0
         while not self._stop.is_set():
             ok, frame = cap.read()
             if not ok:
                 if is_file:                               # loop a video file
                     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                     continue
+                misses += 1
+                if misses < 30:                           # a few dropped frames are normal
+                    time.sleep(0.05)
+                    continue
                 with self.lock:
-                    self.message = "camera stopped sending pictures"
+                    self.message = "camera stopped sending pictures (unplugged? USB power?)"
                 break
+            misses = 0
             if frame.shape[1] > 640:
                 frame = cv2.resize(frame, (640, int(frame.shape[0] * 640 / frame.shape[1])))
             people = detect(frame)

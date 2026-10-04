@@ -113,7 +113,7 @@ Plasma speeds follow typical 130 A values: 50 mm/s up to 6 mm thick down to 10 m
 | `beamcell/vision.py` | camera, YOLO / HOG person detection, warning + danger zones |
 | `beamcell/safety.py` | safety controller: E-stop, interlocks, modes, reset/start, watchdogs, ISO 13855 distance |
 | `beamcell/gpio_inputs.py` | optional wired E-stop / gate / curtain / reset on the Jetson's pins (fail-safe) |
-| `beamcell/assistant.py` | plain-English situation + optional Claude advisor |
+| `beamcell/assistant.py` | plain-English situation + optional AI advisor |
 | `beamcell/doctor.py` | system check and setup plan |
 | `beamcell/config.py` | reads `config/cell.toml` |
 | `beamcell/server.py` | web server and JSON API |

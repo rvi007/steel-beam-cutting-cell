@@ -17,7 +17,7 @@ the saved report lets a cloud session see your exact setup.
 ## Start it
 
 ```
-cd ~/robot_arm
+cd ~/steel-beam-cutting-cell
 git pull
 ./start.sh
 ```
@@ -79,7 +79,7 @@ To get the ONNX file, on any PC with Python (not the Jetson - it saves memory an
 pip install ultralytics
 yolo export model=yolo11n.pt format=onnx imgsz=320 opset=12
 ```
-Copy `yolo11n.onnx` to `~/robot_arm/models/` and rename it `yolo11n_320.onnx` (the `320` in
+Copy `yolo11n.onnx` to `~/steel-beam-cutting-cell/models/` and rename it `yolo11n_320.onnx` (the `320` in
 the name tells the app the picture size). It's about 10 MB. YOLOv8 (`yolov8n.pt`) and YOLOv5
 ONNX files work too. Then pick it in the **Camera** tab's *Detector* list.
 

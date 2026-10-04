@@ -131,7 +131,7 @@ async function situation() {
   try {
     const s = await get("/api/situation");
     $("situation").textContent = s.text || "-";
-    $("adv-status").textContent = s.advisor ? "Claude advisor is on - advisory only, it can't move or reset anything."
+    $("adv-status").textContent = s.advisor ? "AI advisor is on - advisory only, it can't move or reset anything."
       : s.advisor_why + " The plain-English summary on the Machine tab works without it.";
     $("adv-ask").disabled = !s.advisor;
   } catch (e) { /* ignore */ }

@@ -63,7 +63,19 @@ class Camera(unittest.TestCase):
             if not v.status()["enabled"]:
                 break
             time.sleep(0.1)
-        self.assertIn("can't open", v.status()["message"])
+        self.assertIn("no such video file", v.status()["message"])
+
+
+
+class Finding(unittest.TestCase):
+    def test_list_cameras_and_help(self):
+        from beamcell.vision import Vision, list_cameras
+        cams = list_cameras()                                 # whatever this computer has (often none)
+        self.assertTrue(all(c["kind"] in ("usb", "csi") for c in cams))
+        msg = Vision._no_camera_help([], ["tried /dev/video0"])
+        self.assertIn("no camera found", msg)
+        self.assertIn("/dev/video", msg)
+        self.assertIn("doctor", msg)
 
 
 if __name__ == "__main__":

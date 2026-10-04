@@ -1,9 +1,11 @@
-# Beam Cell - context for Claude Code
+# Developer notes
+
+Steel Beam Cutting Cell - by Ravi Mahadeva. How the code fits together and how to change it safely.
 
 A prototype 12 m structural-steel beam cutting cell (UK codes) with two overhead robot hands:
 Cutter (plasma) and Handler (magnet). Python engine (`beamcell/`, stdlib + numpy only) serving
-a three.js web app (`web/`). The user runs it on a Jetson Orin Nano (4 GB, see
-`docs/JETSON_SPECS.md`) and demos it in a browser. README.md has the folder map.
+a three.js web app (`web/`). It runs on a Jetson Orin Nano (4 GB, see
+`docs/JETSON_SPECS.md`) and is used from a browser. README.md has the folder map.
 
 ## Rules for changes
 - No new Python dependencies (Jetson is offline-ish, 4 GB RAM). numpy only; OpenCV optional (camera).
@@ -15,7 +17,7 @@ a three.js web app (`web/`). The user runs it on a Jetson Orin Nano (4 GB, see
   source in every check message (`ref`).
 - Units: mm for parts/sections/NC1, metres for the machine and the 3D scene. Machine axes: X along
   the 12 m bar, Y across (+Y = Cutter side), Z up.
-- Keep plain-English UI text; the user is learning.
+- Keep plain-English UI text.
 
 ## How to check your work
 - `python3 -m unittest discover -s tests -t .` (about 40 s) - must pass.
@@ -31,7 +33,7 @@ a three.js web app (`web/`). The user runs it on a Jetson Orin Nano (4 GB, see
   reset never restarts, start separate, checklist, watchdogs, Manual 250 mm/s hold-to-run.
 - Never weaken a stop to make a demo easier. Tests in `tests/test_safety.py` and the browser test
   cover the procedures. Say plainly in docs/UI that software stops are not safety-rated.
-- The AI advisor (`assistant.py`, Claude via the `anthropic` SDK, off by default) is advisory only and
+- The AI advisor (`assistant.py`, via the `anthropic` SDK, off by default) is advisory only and
   must never get a path to move/reset/start anything.
 - Settings live in `config/cell.toml` (tomllib); `python3 -m beamcell.doctor` checks a machine.
 
@@ -55,6 +57,6 @@ a three.js web app (`web/`). The user runs it on a Jetson Orin Nano (4 GB, see
 - Manual cutting (`manual.py`): ManualBar placements with `keep` (rest of bar) / `scrap` flags.
 
 ## Status
-Working in simulation, tested headless. Not yet run on the user's Orin screen. The 1:5 prototype
+Working in simulation, tested headless. The 1:5 prototype
 (docs/PROTOTYPE.md, cad/prototype_1to5.step) needs: a FluidNC G-code streamer for the gantry
 axes and SO-101 (5-DOF) arm maths - not written yet.

@@ -67,7 +67,7 @@ def checks():
     add("Python", OK if v >= (3, 11) else FAIL, sys.version.split()[0],
         "" if v >= (3, 11) else "Python 3.11 or newer is needed (it reads config/cell.toml)")
     for name, need, why in (("numpy", True, "the planner"), ("cv2", False, "the camera"),
-                            ("anthropic", False, "the optional Claude advisor"), ("Jetson.GPIO", False, "real E-stop / gate wiring")):
+                            ("anthropic", False, "the optional AI advisor"), ("Jetson.GPIO", False, "real E-stop / gate wiring")):
         try:
             mod = importlib.import_module(name)
             add(f"{name}", OK, f"version {getattr(mod, '__version__', getattr(mod, 'VERSION', '?'))} - for {why}")
@@ -87,9 +87,13 @@ def checks():
         pass
 
     # ---------------------------------------------------------------- cameras, models, GPIO
-    vids = sorted(glob.glob("/dev/video*"))
-    add("Cameras", OK if vids else WARN, ", ".join(vids) or "no /dev/video* devices",
-        "" if vids else "Plug in a USB camera, or connect a CSI camera and reboot")
+    from beamcell.vision import in_video_group, list_cameras
+    cams = list_cameras()
+    seen = "; ".join(f"{c['dev']} {c['kind'].upper()}{'' if c['main'] else ' (info channel)'} - {c['name']}" for c in cams)
+    add("Cameras", OK if cams else WARN, seen or "no /dev/video* devices",
+        "" if cams else "Plug in a USB camera (not through an unpowered hub), or connect a CSI camera, then reboot")
+    if cams and not in_video_group():
+        add("Camera access", FAIL, "your user isn't in the 'video' group", "sudo usermod -aG video $USER, then log out and in")
     if shutil.which("gst-inspect-1.0"):
         csi = "nvarguscamerasrc" in _run(["gst-inspect-1.0", "nvarguscamerasrc"])
         add("CSI camera support", OK if csi else INFO, "nvarguscamerasrc found" if csi else "nvarguscamerasrc not found")
