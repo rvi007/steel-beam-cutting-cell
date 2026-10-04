@@ -7,7 +7,7 @@ import * as THREE from "three";
 
 export const MAT = {
   // mill-scale steel is dull blue-grey, not a mirror: low metalness reads right from every side
-  steel: new THREE.MeshStandardMaterial({ color: 0x6f777f, metalness: 0.3, roughness: 0.62 }),
+  steel: new THREE.MeshStandardMaterial({ color: 0x86909a, metalness: 0.3, roughness: 0.6 }),
   done: new THREE.MeshStandardMaterial({ color: 0x86929c, metalness: 0.35, roughness: 0.5 }),
   scrap: new THREE.MeshStandardMaterial({ color: 0x6d5f52, metalness: 0.3, roughness: 0.7 }),
   library: new THREE.MeshStandardMaterial({ color: 0x8e979f, metalness: 0.4, roughness: 0.45 }),

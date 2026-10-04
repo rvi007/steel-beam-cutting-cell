@@ -4,12 +4,8 @@ import * as THREE from "three";
 import { OrbitControls } from "orbit";
 import { RoomEnvironment } from "room";
 import { handFrames } from "./kinematics.js";
-import { MAT, stockMesh } from "./geometry.js";
 
-const C = {
-  structure: 0x7d8a96, rail: 0x2b2f33, bridge: 0xf2b632, bridgeDark: 0x23272b, carriage: 0x3a4148,
-  housing: 0x2e3338, floor: 0xb9bcb8, fence: 0xf2c230, rack: 0x2f7d4f, bed: 0x6b4a2b, roller: 0x9aa3ab,
-};
+const C = { floor: 0xb9bcb8 };
 
 export class CellScene {
   constructor(canvas, machine) {
@@ -42,7 +38,7 @@ export class CellScene {
     this._building();
     this._cell();
     this.hands = {};
-    for (const key of ["cutter", "handler"]) this.hands[key] = this._hand(machine.hands[key]);
+    for (const key of ["cutter", "handler"]) this.hands[key] = { cfg: machine.hands[key], tip: new THREE.Vector3(), dir: new THREE.Vector3() };
     this._effects();
     this.steel = new THREE.Group();
     this.scene.add(this.steel);
@@ -115,15 +111,6 @@ export class CellScene {
     return mesh;
   }
 
-  _cyl(r, len, color, opts = {}) {
-    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(opts.r2 ?? r, r, len, opts.seg || 20),
-      opts.material || new THREE.MeshStandardMaterial({ color, metalness: opts.metal ?? 0.4, roughness: opts.rough ?? 0.5 }));
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    (opts.parent || this.scene).add(mesh);
-    return mesh;
-  }
-
   _building() {
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 34), new THREE.MeshStandardMaterial({ color: C.floor, roughness: 0.95 }));
     floor.position.set(6, 0, 0);
@@ -139,120 +126,103 @@ export class CellScene {
     for (const y of [-2.45, 2.45]) this._box(17.5, 0.08, 0.004, 0xf2c230, 6, y, 0.003, { noShadow: true });
   }
 
-  // ---------------------------------------------------------------- the fixed cell
-  _cell() {
-    const m = this.m, [xa, xb] = m.x_limits, L = xb - xa + 0.6, W = m.width;
-    const runway = { outline: ubOutline(457.0, 190.0, 9.0, 14.5, 10.2), holes: [] };
-    for (const y of [-W / 2, W / 2]) {
-      // runway beam (a UB on its side) with a crane rail on top
-      const beam = stockMesh(runway, 0, L * 1000, new THREE.MeshStandardMaterial({ color: C.structure, metalness: 0.45, roughness: 0.55 }),
-        { x: xa - 0.3, y, z: m.rail_z - 0.55 });
-      this.scene.add(beam);
-      this._box(L, 0.06, 0.05, C.rail, (xa + xb) / 2, y, m.rail_z - 0.07, { metal: 0.8, rough: 0.3 });
-      // UC columns every ~3.5 m
-      const col = { outline: ubOutline(254.1, 254.6, 8.6, 14.2, 12.7), holes: [] };
-      for (let i = 0; i <= 4; i++) {
-        const x = xa + (i * (xb - xa)) / 4;
-        const c = stockMesh(col, 0, (m.rail_z - 0.55) * 1000, new THREE.MeshStandardMaterial({ color: C.structure, metalness: 0.45, roughness: 0.55 }), { x: 0, y: 0, z: 0 });
-        c.rotation.set(0, -Math.PI / 2, 0);
-        c.position.set(x, y, 0);
-        this.scene.add(c);
-        this._box(0.5, 0.5, 0.025, 0x777777, x, y, 0.012);          // base plate
-      }
+  // ---------------------------------------------------------------- the machine, from the CAD model
+  // web/models/*.glb are made by `python3 -m beamcell.cad cell` from the same solids as
+  // cad/beam_cell.step, so what you see here is the CAD model. Moving bodies (bridges, carriages,
+  // masts, arm links, the gate) are modelled in their own frames and posed here by the kinematics.
+  async load() {
+    const { GLTFLoader } = await import("gltf");
+    const loader = new GLTFLoader();
+    const [cell, moving, info] = await Promise.all([
+      loader.loadAsync("models/cell.glb"), loader.loadAsync("models/moving.glb"),
+      fetch("models/labels.json").then((r) => r.json())]);
+    this.labels = info.labels;
+    const prep = (root) => {
+      for (const c of root.children) c.quaternion.identity();   // the GLB's root node turns Z-up into Y-up: undo it
+      root.traverse((o) => {
+        if (!o.isMesh) return;
+        o.castShadow = o.receiveShadow = true;
+        const m = o.material;
+        m.metalness = Math.min(m.metalness ?? 0.3, 0.45);
+        m.roughness = Math.max(m.roughness ?? 0.6, 0.45);
+        const n = this._name(o);
+        if (/^(fence_mesh|gate_mesh)/.test(n)) { o.material = m.clone(); Object.assign(o.material, { transparent: true, opacity: 0.2, depthWrite: false }); o.castShadow = false; }
+      });
+    };
+    prep(cell.scene);
+    this.scene.add(cell.scene);
+    this.cell = cell.scene;
+    // stack light lamps: their own materials, so the safety state can light them
+    this.lamps = {};
+    for (const name of ["red", "amber", "green", "blue"]) {
+      const node = cell.scene.getObjectByName("lamp_" + name);
+      node?.traverse((o) => {
+        if (!o.isMesh) return;
+        o.material = o.material.clone();
+        o.material.emissive = o.material.color.clone();
+        o.material.emissiveIntensity = 0.05;
+        this.lamps[name] = o.material;
+      });
     }
-    // roller bed: side rails on legs, a roller every metre turning in bearing blocks.
-    // The top of every roller is exactly at bed height - the bar rests on them.
-    const by = m.beam_y, bz = m.bed_z, rr = m.roller_r, x0 = -0.3, x1 = m.work_length + 0.3;
-    const frame = new THREE.MeshStandardMaterial({ color: C.bed, metalness: 0.35, roughness: 0.6 });
-    for (const dy of [-0.4, 0.4]) {
-      this._box(x1 - x0, 0.08, 0.12, 0, (x0 + x1) / 2, by + dy, bz - rr - 0.1, { material: frame });            // side rail
-      for (let x = x0 + 0.1; x <= x1; x += 2) this._box(0.08, 0.08, bz - rr - 0.16, 0, x, by + dy, (bz - rr - 0.16) / 2, { material: frame });   // legs
+    // moving bodies: each becomes a group whose matrix the kinematics set every frame
+    prep(moving.scene);
+    const body = (name) => {
+      const node = moving.scene.getObjectByName(name);
+      const g = new THREE.Group();
+      g.matrixAutoUpdate = false;
+      if (node) { node.position.set(0, 0, 0); node.quaternion.identity(); g.add(node); }
+      this.scene.add(g);
+      return g;
+    };
+    for (const key of ["cutter", "handler"]) {
+      const H = this.hands[key];
+      H.bridge = body(`${key}_bridge`);
+      H.carriage = body(`${key}_carriage`);
+      H.mast = body(`${key}_mast`);
+      H.links = [0, 1, 2, 3, 4, 5, 6].map((k) => body(`${key}_link${k}`));
     }
-    for (const x of m.roller_x) {
-      const roller = this._cyl(rr, 0.72, C.roller, { metal: 0.8, rough: 0.25 });   // axis along Y
-      roller.position.set(x, by, bz - rr);
-      for (const dy of [-0.4, 0.4]) this._box(0.1, 0.08, 0.1, 0x30363c, x, by + dy, bz - rr - 0.02);   // bearing blocks
-    }
-    // scrap tray under the bed, between the legs: offcuts fall into it
-    const trayMat = new THREE.MeshStandardMaterial({ color: 0x2e5e8c, metalness: 0.3, roughness: 0.6 });
-    const tz = m.scrap_tray_z;
-    this._box(x1 - x0, 0.6, 0.04, 0, (x0 + x1) / 2, by, tz - 0.02, { material: trayMat });
-    for (const dy of [-0.3, 0.3]) this._box(x1 - x0, 0.03, 0.22, 0, (x0 + x1) / 2, by + dy, tz + 0.09, { material: trayMat });
-    for (const x of [x0, x1]) this._box(0.03, 0.6, 0.22, 0, x, by, tz + 0.09, { material: trayMat });
-    for (let x = x0 + 0.6; x < x1; x += 3) for (const dy of [-0.25, 0.25]) this._box(0.06, 0.06, tz - 0.04, 0x222222, x, by + dy, (tz - 0.04) / 2);
-    this.trayZ = tz;
-    // outfeed table: a steel grating deck on a frame, top at bed height - finished parts are put down on it
-    const [ox0, ox1, oy0, oy1] = m.outfeed_deck;
-    const deckMat = new THREE.MeshStandardMaterial({ color: C.rack, metalness: 0.4, roughness: 0.55 });
-    this._box(ox1 - ox0, oy1 - oy0, 0.03, 0, (ox0 + ox1) / 2, (oy0 + oy1) / 2, bz - 0.015, { material: deckMat });
-    for (let x = ox0 + 0.25; x < ox1; x += 0.25) this._box(0.012, oy1 - oy0, 0.004, 0x2a3a2a, x, (oy0 + oy1) / 2, bz + 0.0005, { noShadow: true });
-    for (const y of [oy0 + 0.04, oy1 - 0.04]) {
-      this._box(ox1 - ox0, 0.08, 0.1, 0, (ox0 + ox1) / 2, y, bz - 0.08, { material: frame });
-      for (let x = ox0 + 0.1; x <= ox1; x += 2) this._box(0.08, 0.08, bz - 0.13, 0, x, y, (bz - 0.13) / 2, { material: frame });
-    }
-    // safety fence with a gate at the front, light-curtain posts at the gate
-    const fenceMat = new THREE.MeshStandardMaterial({ color: C.fence, metalness: 0.2, roughness: 0.6 });
-    const meshMat = new THREE.MeshStandardMaterial({ color: 0x222222, transparent: true, opacity: 0.18, side: THREE.DoubleSide });
-    const fx0 = xa - 0.6, fx1 = xb + 0.6, fy = W / 2 + 0.6;
-    // front run: gap for the gate; infeed end (-X): gap where the stock comes in, guarded by a light curtain
-    const runs = [[fx0, -fy, fx1, -fy, "gate"], [fx0, fy, fx1, fy], [fx0, -fy, fx0, fy, "curtain"], [fx1, -fy, fx1, fy]];
-    for (const [x0, y0, x1, y1, gap] of runs) {
-      const len = Math.hypot(x1 - x0, y1 - y0), n = Math.round(len / 2);
-      for (let i = 0; i < n; i++) {
-        if (gap === "gate" && i === Math.floor(n / 2)) continue;           // the gate opening
-        if (gap === "curtain" && i === 0) continue;                        // the infeed opening
-        const a = i / n, b = (i + 1) / n;
-        const cx = x0 + (x1 - x0) * (a + b) / 2, cy = y0 + (y1 - y0) * (a + b) / 2;
-        const panel = new THREE.Mesh(new THREE.PlaneGeometry(len / n - 0.06, 1.9), meshMat);
-        panel.position.set(cx, cy, 1.1);
-        panel.rotation.set(Math.PI / 2, Math.atan2(y1 - y0, x1 - x0), 0);
-        this.scene.add(panel);
-        this._box(0.06, 0.06, 2.1, 0, x0 + (x1 - x0) * a, y0 + (y1 - y0) * a, 1.05, { material: fenceMat });
-      }
-    }
-    const nFront = Math.round((fx1 - fx0) / 2);
-    const gx = fx0 + (fx1 - fx0) * (Math.floor(nFront / 2) + 0.5) / nFront, gw = (fx1 - fx0) / nFront - 0.06;
-    // interlocked gate (hinged on its left post) - swings open when the gate input opens
+    const [hx, hy] = info.gate_hinge_m;
+    const gate = moving.scene.getObjectByName("gate");
     this.gate = new THREE.Group();
-    this.gate.position.set(gx - gw / 2, -fy, 0);
-    const gatePanel = new THREE.Mesh(new THREE.PlaneGeometry(gw, 1.9), meshMat);
-    gatePanel.rotation.x = Math.PI / 2;
-    gatePanel.position.set(gw / 2, 0, 1.1);
-    this.gate.add(gatePanel);
-    for (const [w, h, x, z] of [[gw, 0.05, gw / 2, 2.05], [gw, 0.05, gw / 2, 0.15], [0.05, 1.95, gw - 0.03, 1.1]])
-      this._box(w, 0.05, h, 0, x, 0, z, { parent: this.gate, material: fenceMat });
-    this._box(0.08, 0.06, 0.12, 0xd91e18, gw - 0.1, -0.06, 1.1, { parent: this.gate });   // interlock switch
+    this.gate.position.set(hx, hy, 0);
+    if (gate) { gate.position.set(0, 0, 0); gate.quaternion.identity(); this.gate.add(gate); }
     this.scene.add(this.gate);
-    // light curtain across the infeed opening: two posts and its beams
+    this.loaded = true;
+    for (const key of ["cutter", "handler"]) if (this.hands[key].last) this.pose(key, ...this.hands[key].last);
+  }
+
+  // the CAD name of a mesh: the nearest node (itself or a parent) that has a label
+  _name(o) {
+    for (let n = o; n; n = n.parent) if (n.name && this.labels && this.labels[n.name]) return n.name;
+    for (let n = o; n; n = n.parent) if (n.name) return n.name;
+    return "";
+  }
+
+  // what is under the mouse: the CAD label of that solid, or null
+  labelAt(ndc) {
+    if (!this.loaded) return null;
+    const ray = new THREE.Raycaster();
+    ray.setFromCamera(ndc, this.camera);
+    const targets = [this.cell, this.gate, ...Object.values(this.hands).flatMap((H) => [H.bridge, H.carriage, H.mast, ...H.links])];
+    const hit = ray.intersectObjects([this.steel, ...targets], true).find((h) => h.object.isMesh && h.object.visible && !h.object.material.transparent);
+    if (!hit) return null;
+    if (this.steel.getObjectById(hit.object.id)) return "Steel on the machine";
+    return this.labels[this._name(hit.object)] || null;
+  }
+
+  _cell() {
+    // light curtain beams across the infeed opening (drawn here: they light up when broken)
+    const m = this.m, [xa, xb] = m.x_limits, W = m.width;
+    const fx0 = xa - 0.6, fy = W / 2 + 0.6;
     const cy0 = -fy, cy1 = -fy + (2 * fy) / Math.round((2 * fy) / 2);
-    for (const y of [cy0 + 0.05, cy1 - 0.05]) this._box(0.06, 0.06, 1.8, 0x111111, fx0 - 0.12, y, 0.9);
     this.beams = new THREE.Group();
     for (let z = 0.25; z <= 1.65; z += 0.07) {
       const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(fx0 - 0.12, cy0 + 0.05, z), new THREE.Vector3(fx0 - 0.12, cy1 - 0.05, z)]);
       this.beams.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xff3020, transparent: true, opacity: 0.18 })));
     }
     this.scene.add(this.beams);
-    // operator desk and the camera mast (where the real camera watches the gate)
-    this._box(1.2, 0.6, 0.9, 0x39424b, gx + 2.6, -fy - 1.1, 0.45);
-    const screen = this._box(0.7, 0.04, 0.42, 0x0b1a2a, gx + 2.6, -fy - 1.0, 1.25, { noShadow: true });
-    screen.rotation.x = -0.25;
-    this._box(0.06, 0.06, 3.0, 0x39424b, gx - 1.6, -fy - 0.4, 1.5);
-    this._box(0.16, 0.1, 0.1, 0x111111, gx - 1.6, -fy - 0.32, 2.95);
-    // E-stop on the desk (yellow box, red mushroom head)
-    this._box(0.12, 0.12, 0.08, 0xf2c230, gx + 2.15, -fy - 1.05, 0.94);
-    const head = this._cyl(0.045, 0.04, 0xd91e18, { seg: 24 });
-    head.rotation.x = Math.PI / 2;
-    head.position.set(gx + 2.15, -fy - 1.05, 1.0);
-    // stack light on a pole by the desk: red, amber, green, blue (top to bottom)
-    this._box(0.04, 0.04, 1.2, 0x2b2f33, gx + 3.35, -fy - 1.0, 1.5);
+    this.trayZ = m.scrap_tray_z;
     this.lamps = {};
-    [["red", 0xff2a1f], ["amber", 0xffb000], ["green", 0x22d36b], ["blue", 0x2f7bff]].forEach(([name, colour], i) => {
-      const mat = new THREE.MeshStandardMaterial({ color: colour, emissive: colour, emissiveIntensity: 0.05, transparent: true, opacity: 0.9 });
-      const lamp = this._cyl(0.06, 0.11, 0, { material: mat });
-      lamp.rotation.x = Math.PI / 2;
-      lamp.position.set(gx + 3.35, -fy - 1.0, 2.6 - i * 0.12);
-      this.lamps[name] = mat;
-    });
   }
 
   // Show the safety state in the 3D cell: stack light, gate, light curtain.
@@ -263,110 +233,24 @@ export class CellScene {
       mat.emissiveIntensity = on ? 2.2 : 0.05;
     }
     const open = !st.inputs.gate_closed;
-    this.gate.rotation.z += ((open ? -1.4 : 0) - this.gate.rotation.z) * 0.5;
+    if (this.gate) this.gate.rotation.z += ((open ? -1.4 : 0) - this.gate.rotation.z) * 0.5;
     const broken = !st.inputs.curtain_clear;
     this.beams.children.forEach((l) => { l.material.opacity = broken ? 0.95 : 0.18; });
-  }
-
-  // ---------------------------------------------------------------- a hand
-  _hand(h) {
-    const color = new THREE.Color(h.color);
-    const paint = new THREE.MeshStandardMaterial({ color, metalness: 0.35, roughness: 0.45 });
-    const dark = new THREE.MeshStandardMaterial({ color: C.housing, metalness: 0.5, roughness: 0.45 });
-    const yellow = new THREE.MeshStandardMaterial({ color: C.bridge, metalness: 0.3, roughness: 0.5 });
-    const W = this.m.width;
-    const root = new THREE.Group();
-    this.scene.add(root);
-    // bridge: box girder spanning the rails, with end trucks and wheels
-    const bridge = new THREE.Group();
-    root.add(bridge);
-    this._box(0.32, W + 0.5, 0.42, 0, 0, 0, 0.3, { parent: bridge, material: yellow });
-    this._box(0.34, W + 0.52, 0.03, 0, 0, 0, 0.52, { parent: bridge, material: dark });
-    for (const y of [-W / 2, W / 2]) {
-      this._box(0.9, 0.24, 0.24, 0, 0, y, 0.08, { parent: bridge, material: yellow });
-      for (const dx of [-0.32, 0.32]) {
-        const wheel = this._cyl(0.09, 0.08, 0x222222, { parent: bridge, metal: 0.8 });
-        wheel.position.set(dx, y, -0.02);
-      }
-      const motor = this._cyl(0.08, 0.22, 0x1d2329, { parent: bridge });
-      motor.rotation.z = Math.PI / 2;
-      motor.position.set(0.45, y + (y > 0 ? -0.18 : 0.18), 0.12);
-    }
-    // carriage on the bridge, column through it
-    const carriage = new THREE.Group();
-    root.add(carriage);
-    this._box(0.62, 0.5, 0.36, 0, 0, 0, 0, { parent: carriage, material: dark });
-    const cm = this._cyl(0.085, 0.3, 0x1d2329, { parent: carriage });
-    cm.position.set(0, 0, 0.32);
-    const label = this._box(0.63, 0.51, 0.06, 0, 0, 0, -0.12, { parent: carriage, material: paint });
-    label.castShadow = false;
-    const column = this._box(0.2, 0.2, 1, 0, 0, 0, 0, { material: paint });
-    const columnInner = this._box(0.15, 0.15, 1, 0, 0, 0, 0, { material: dark });
-    // arm: joint housings + links + tool
-    const sc = h.a[1] ? Math.abs(h.a[1]) / 0.425 : 1;
-    const r = 0.055 * sc;
-    const housings = [], links = [];
-    for (let i = 0; i < 6; i++) {
-      const rr = r * (i < 3 ? 1.35 : 1.0);
-      const m = new THREE.Mesh(new THREE.CylinderGeometry(rr, rr, rr * 2.3, 24), i % 2 ? paint : dark);
-      m.castShadow = true;
-      this.scene.add(m);
-      housings.push(m);
-    }
-    for (let i = 0; i < 6; i++) {
-      const rr = r * (i < 3 ? 1.0 : 0.75);
-      const m = new THREE.Mesh(new THREE.CylinderGeometry(rr, rr, 1, 20), i === 0 ? dark : paint);
-      m.castShadow = true;
-      this.scene.add(m);
-      links.push(m);
-    }
-    const tool = new THREE.Group();
-    this.scene.add(tool);
-    if (h.tool === "torch") {
-      const body = this._cyl(0.022, 0.26, 0x1a1a1a, { parent: tool, metal: 0.6 });
-      body.position.y = 0.13;
-      const sleeve = this._cyl(0.03, 0.06, 0x3a3a3a, { parent: tool });
-      sleeve.position.y = 0.02;
-      const nozzle = this._cyl(0.006, 0.04, 0xb87333, { parent: tool, r2: 0.016, metal: 0.9, rough: 0.25 });
-      nozzle.position.y = 0.28;
-    } else {
-      const stem = this._cyl(0.03, 0.09, 0x5d6d7e, { parent: tool });
-      stem.position.y = 0.045;
-      const pad = this._cyl(0.11, 0.03, 0xb22222, { parent: tool, seg: 32 });
-      pad.position.y = 0.105;
-    }
-    return { cfg: h, root, bridge, carriage, column, columnInner, housings, links, tool, tip: new THREE.Vector3(), dir: new THREE.Vector3(), r };
   }
 
   // Put a hand at gantry g and joints q.
   pose(key, g, q) {
     const H = this.hands[key], rz = this.m.rail_z;
-    H.bridge.position.set(g[0], 0, rz);
-    H.carriage.position.set(g[0], g[1], rz - 0.12);
-    const top = rz - 0.3, len = Math.max(top - g[2], 0.05);
-    H.column.scale.z = len;
-    H.column.position.set(g[0], g[1], g[2] + len / 2);
-    H.columnInner.scale.z = len + 0.1;
-    H.columnInner.position.set(g[0], g[1], g[2] + len / 2 - 0.05);
+    H.last = [g, q];
     const F = handFrames(H.cfg, g, q);
-    const P = F.map((f) => new THREE.Vector3().setFromMatrixPosition(f));
-    const Z = F.map((f) => new THREE.Vector3().setFromMatrixColumn(f, 2));
-    const up = new THREE.Vector3(0, 1, 0);
-    for (let i = 0; i < 6; i++) {
-      H.housings[i].position.copy(P[i]);
-      H.housings[i].quaternion.setFromUnitVectors(up, Z[i]);
-      const a = P[i], b = P[i + 1], d = new THREE.Vector3().subVectors(b, a), L = d.length();
-      H.links[i].visible = L > 1e-4;
-      if (L > 1e-4) {
-        H.links[i].position.copy(a).addScaledVector(d, 0.5);
-        H.links[i].quaternion.setFromUnitVectors(up, d.normalize());
-        H.links[i].scale.set(1, L, 1);
-      }
-    }
-    H.tool.position.copy(P[6]);
-    H.tool.quaternion.setFromUnitVectors(up, Z[6]);
-    H.tip.copy(P[7]);
-    H.dir.copy(Z[7]);
+    H.tip.setFromMatrixPosition(F[7]);
+    H.dir.setFromMatrixColumn(F[7], 2);
+    if (!this.loaded) return;
+    H.bridge.matrix.makeTranslation(g[0], 0, rz);
+    H.carriage.matrix.makeTranslation(g[0], g[1], rz - 0.12);
+    H.mast.matrix.makeTranslation(g[0], g[1], g[2]);
+    for (let k = 0; k < 7; k++) H.links[k].matrix.copy(F[k]);
+    for (const b of [H.bridge, H.carriage, H.mast, ...H.links]) b.matrixWorldNeedsUpdate = true;
   }
 
   // ---------------------------------------------------------------- effects
@@ -430,17 +314,4 @@ export class CellScene {
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
   }
-}
-
-// I-section outline (mm) for the building's own steelwork
-export function ubOutline(h, b, tw, tf, r) {
-  const pts = [[-b / 2, 0], [b / 2, 0], [b / 2, tf]];
-  const arc = (cx, cy, a0, a1) => { for (let i = 0; i <= 6; i++) { const a = a0 + (a1 - a0) * i / 6; pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); } };
-  arc(tw / 2 + r, tf + r, -Math.PI / 2, -Math.PI);
-  arc(tw / 2 + r, h - tf - r, Math.PI, Math.PI / 2);
-  pts.push([b / 2, h - tf], [b / 2, h], [-b / 2, h], [-b / 2, h - tf]);
-  arc(-tw / 2 - r, h - tf - r, Math.PI / 2, 0);
-  arc(-tw / 2 - r, tf + r, 0, -Math.PI / 2);
-  pts.push([-b / 2, tf]);
-  return pts;
 }
