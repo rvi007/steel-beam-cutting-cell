@@ -1,0 +1,36 @@
+name: Sponsor or partner
+description: Offer parts, workshop space, steel, expertise or funding for the prototype.
+title: "Sponsor / partner: "
+labels: ["sponsor"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you! Tell me a little about what you could offer and I'll get back to you.
+        **This message is public** - please don't add private contact details; I will reply here first.
+  - type: input
+    id: name
+    attributes:
+      label: Your name and organisation
+    validations:
+      required: true
+  - type: dropdown
+    id: offer
+    attributes:
+      label: What could you help with?
+      multiple: true
+      options:
+        - Parts or materials
+        - Steel for testing
+        - Workshop space
+        - Engineering expertise
+        - Funding
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+    validations:
+      required: true
