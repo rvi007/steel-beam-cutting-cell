@@ -1,0 +1,54 @@
+name: Request access to the code
+description: Ask for access to the private source code, CAD files and build tools.
+title: "Access request: "
+labels: ["access request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your interest in BEAM CELL. The code is private; I read every request.
+        If it is approved, GitHub will send an invitation to your account.
+        **This request is public** - please don't add a phone number, address or other private details.
+  - type: input
+    id: name
+    attributes:
+      label: Your name
+    validations:
+      required: true
+  - type: input
+    id: github
+    attributes:
+      label: Your GitHub username
+      description: The invitation goes to this account.
+      placeholder: e.g. octocat
+    validations:
+      required: true
+  - type: input
+    id: organisation
+    attributes:
+      label: Company, university or organisation (if any)
+  - type: dropdown
+    id: who
+    attributes:
+      label: Which best describes you?
+      options:
+        - Steel fabricator
+        - Engineer / designer
+        - Student or researcher
+        - Possible sponsor or investor
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What would you like to use it for?
+    validations:
+      required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Terms
+      options:
+        - label: I will not share, publish or sell the code or the design without written permission from Ravi Mahadeva.
+          required: true

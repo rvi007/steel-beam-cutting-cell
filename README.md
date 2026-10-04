@@ -1,197 +1,192 @@
-# Steel Beam Cutting Cell
+# BEAM CELL - source code
 
-**A 12 m gantry cell that cuts UK structural steel sections - holes, slots, notches, mitres
-and cut-to-length - with two robot hands on an overhead gantry.**
+### Robotic cutting of UK structural steel
 
-By **Ravi Mahadeva** · prototype software for the NVIDIA Jetson Orin Nano · UK codes only
+**Two robot arms on an overhead gantry that cut beams to size: bolt holes, slots, notches,
+mitres and cut-to-length. Drawings in, finished beams out.**
 
-A working prototype of a **structural steel beam cutting cell**, to UK codes. Two robot
-"hands" hang from an overhead gantry over a 12 m work area:
+By **Ravi Mahadeva** · UK codes · runs on an NVIDIA Jetson Orin Nano · opens in any web browser
 
-- **Cutter** (orange) - plasma torch: bolt holes, slots, openings, notches (copes), mitres and cut-to-length.
-- **Handler** (blue) - magnet: holds each part while it's cut free and puts it on the outfeed table.
+![BEAM CELL cutting a beam](docs/images/beam_cell.gif)
 
-You give it parts - **NC1 files from Tekla** (or Advance Steel, SDS2), or parts you make on
-screen - and it nests them on stock bars, plans every move of both hands, checks they never
-collide, and plays the whole job in 3D. Or cut by hand: **Manual cut** - click on the steel
-to put a hole or a cut there. A camera with YOLO person detection stops the machine when
-someone walks into the cell.
+▶ [30-second video](docs/video/beam_cell_30s.mp4) · 🌐 Public page: **[github.com/rvi007/beam-cell](https://github.com/rvi007/beam-cell)**
 
-The 3D view **is the CAD model**: the same solids are in `cad/beam_cell.step` (open it in
-Fusion 360, SolidWorks, FreeCAD or Onshape), every part is a STEP solid with its holes and
-notches, and there's a **1:10 desk-top prototype** in CAD with its shopping list and assembly drawing
-([docs/PROTOTYPE.md](docs/PROTOTYPE.md)). Things obey gravity: parts rest on the rollers or
-the outfeed table, offcuts fall into the scrap tray.
+> 🔒 **This repository is private.** You can see it because Ravi has given you access. Please
+> don't share, publish or sell the code or the design. See [LICENSE](LICENSE).
 
-It runs on the **Jetson Orin Nano** with nothing to install, and you open it in a web browser.
+---
 
-**Safety is built in the way a real machine does it**: a red E-STOP on every screen (and the
-Esc key), interlocked gate, light curtain, fume-extraction interlock, camera warning and danger
-zones, Auto / Manual (250 mm/s, hold-to-run) / Maintenance (isolated, Lock Out Tag Out) modes,
-latching stops with separate Reset and Start, a pre-start checklist, watchdogs and an audit log -
-following PUWER, BS EN ISO 13849, BS EN 60204-1, BS EN ISO 13850 and BS EN ISO 10218. It's a
-prototype: real machines need these functions in certified safety hardware (see
-[docs/SAFETY.md](docs/SAFETY.md)).
+## What it does
 
-![The cell: the Handler carries a finished beam to the outfeed table while the Cutter works](docs/images/machine.png)
+Two robot "hands" hang from an overhead gantry above a 12-metre roller bed:
 
-![The 1:10 prototype in CAD, with part numbers](docs/images/assembly_iso.png)
+| | The **Cutter** (orange) | The **Handler** (blue) |
+|---|---|---|
+| Tool | plasma torch | electromagnet |
+| Job | bolt holes, slots, openings, notches (copes), mitres, cut-to-length | holds each part while it is cut free, then carries it to the outfeed table |
+
+You give it parts, as **NC1 files** from Tekla, Advance Steel or SDS2, or drawn on screen. It then:
+
+1. **checks every part against the UK codes**, and tells you what is wrong and why,
+2. **fits the parts onto stock bars** to waste as little steel as possible,
+3. **plans every move of both arms** and checks they never collide,
+4. **plays the whole job in 3D**, with a real safety system around it.
+
+Or use **manual cut**: click on the beam to put a hole or a cut exactly there.
+
+Everything in the 3D view is real CAD: the same solids are in the STEP files in `cad/`. There is
+also a **1:10 desk-top prototype**, about £1,100 to build, with a shopping list and an assembly drawing.
 
 ## Start it
 
+On the Jetson (or any Linux PC or Mac):
+
 ```
-cd ~/steel-beam-cutting-cell
+git clone https://github.com/rvi007/steel-beam-cutting-cell.git
+cd steel-beam-cutting-cell
+sudo apt install python3-numpy python3-opencv     # once; OpenCV is only needed for the camera
 ./start.sh
 ```
-Open **http://localhost:8080**. From a laptop or tablet on the same Wi-Fi, use the address the
-terminal prints (e.g. `http://172.20.10.5:8080`).
 
-Needs Python 3 and numpy (already on the Jetson). OpenCV is only needed for the camera.
+Then open **http://localhost:8080** in a web browser. From a phone, tablet or laptop on the same Wi-Fi,
+use the address the terminal prints (for example `http://192.168.1.20:8080`).
 
-### Camera not working?
+**Every time after that:** `cd steel-beam-cutting-cell`, then `git pull` (to get the latest version), then `./start.sh`.
 
-1. `python3 -m beamcell.doctor` - the **Cameras** line lists every camera Linux can see
-   (`/dev/video0 USB - ...`, `CSI`, ...) and tells you what's wrong.
-2. In the app, Camera tab: leave **Auto** selected (it tries the USB cameras, then the CSI ribbon
-   camera) or pick the exact camera from the list. The status line says why one won't start.
-3. Common fixes:
-   - No `/dev/video*` at all: plug the USB camera straight into the Jetson (not an unpowered hub),
-     or reseat the CSI ribbon (blue side to the latch), then reboot.
-   - "not in the video group": `sudo usermod -aG video $USER`, then log out and in.
-   - CSI camera: it needs the Jetson's own OpenCV (`sudo apt install python3-opencv`), not
-     `pip install opencv-python` (that one has no GStreamer). Test it with `nvgstcapture-1.0`.
-   - Another program (Cheese, a browser tab) is using the camera: close it.
+**Start it automatically when the Jetson boots:** see [docs/JETSON_SETUP.md](docs/JETSON_SETUP.md).
 
-## Show it in 5 minutes
+**Something not working?** Run `python3 -m beamcell.doctor`. It checks everything and tells you what to fix.
 
-0. **Safety** tab - press **Reset**, tick the pre-start checklist and confirm. (The machine
-   won't move until you do, like a real one.)
-1. **Machine** tab - three example parts are already loaded and nested on two UB 305 bars.
-   Press **Plan this bar**, then **Run**. Use *Follow Cutter* to watch the torch cut the holes
-   and notches; *Follow Handler* to see it carry a finished beam to the outfeed table.
+## A 5-minute tour
+
+1. **Safety tab**: press **Reset**, tick the pre-start checklist and confirm. Like a real machine, nothing moves until you do.
+2. **Machine tab**: example parts are already loaded. Press **Plan this bar**, then **Run**.
+   Press **Follow Cutter** to watch the holes and notches being cut, and **Follow Handler** to watch a finished beam carried away.
    Point at anything in 3D to see what it is.
-2. **Parts & NC1** - drag in NC1 files from Tekla (or *Add an example*). Each part shows a
-   drawing of every face and its UK code checks. Click a part to edit it: add a fin-plate bolt
-   group (M20 in 22 mm holes), notch it to clear a UB 457 (Blue Book N x n), see the checks update.
-3. **Section library** - every UK section (993 sizes) in 3D; download any of them as an STL at
-   1:10, 1:20 ... for 3D printing.
-4. **Camera** - start the camera and walk into the amber zone (machine slows to 25%), then the
-   red zone (machine stops until the zone is clear and you press Reset).
-5. Press **E-STOP** (or Esc) while it runs: everything freezes. Release, Reset, Start to carry on.
-   Open the gate on the Safety tab: protective stop. Try Manual mode: it only moves while you hold the button.
-6. **Machine** tab, **Manual cut** (top left) - pick a section and length, click on the web to put a
-   hole there (it snaps to the centre line), **+ Cut** to cut it, check, **Plan these cuts**, Run.
-7. **Section library** - *CAD files*: download the whole cell, the prototype or any example part as STEP.
-8. When a job finishes the **Job finished** window asks what next: next bar, run again, **Delete this
-   job** or keep it. **Job history & saved jobs** (Machine tab) lists every job that ran - when, what,
-   how long - and every saved job, each with its own **Delete** button.
+3. **Parts & NC1 tab**: drag in NC1 files from Tekla, or pick *Add an example*. Every face is drawn,
+   with its UK code checks. Click a part to edit it, for example to add a bolt group or a notch.
+4. **Manual cut** (top left of the Machine tab): pick a section and a length, click on the beam to put a hole there,
+   press **+ Cut** to cut it, then **Plan these cuts** and **Run**.
+5. **E-STOP** (or the Esc key) while it runs: everything stops. Release it, press Reset, then Start to carry on.
+6. When a job finishes, the **Job finished** window asks what next: next bar, run again or **Delete this job**.
+   **Job history & saved jobs** (Machine tab) lists every job that ran, each with a **Delete** button.
+7. **Prototype tab**: the 1:10 prototype in 3D. Every part is numbered, matching the shopping list. Click a part to see what it is and where to buy it.
+8. **Camera tab**: start the camera and walk towards the machine. It slows down when you get close and stops when you get too close.
 
-A 30-second video of the cell (whole job, then following the Cutter, then the Handler) is in
-`docs/video/beam_cell_30s.mp4`; `tools/make_video.mjs` makes it again after a change.
+<details>
+<summary><b>Camera not working?</b></summary>
 
-## What's in each folder
-
-```
-steel-beam-cutting-cell/
-├── start.sh              start the app (./start.sh --camera 0 to start with the camera)
-├── config/cell.toml      ALL settings: safety, camera zones, GPIO wiring, advisor, port
-├── beamcell/             the engine (Python)
-│   ├── server.py         web server + API the browser talks to
-│   ├── safety.py         the safety controller: E-stop, interlocks, modes, reset/start, watchdogs
-│   ├── history.py        job history: every job that ran (jobs/history.json)
-│   ├── gpio_inputs.py    optional real E-stop / gate / light curtain / reset buttons on the Jetson's pins
-│   ├── assistant.py      "what's happening" in plain English + optional AI advisor
-│   ├── doctor.py         system check: python3 -m beamcell.doctor
-│   ├── config.py         reads config/cell.toml
-│   ├── sections.py       UK section library and exact cross-sections
-│   ├── data/uk_sections.json   the section sizes (BS 4-1, BS EN 10056-1, 10210, 10219)
-│   ├── uk_codes.py       UK code values: hole sizes, edge distances, grades
-│   ├── parts.py          parts, notches, mitres, the code checks, nesting on bars
-│   ├── nc1.py            reads / writes DSTV NC1 files (Tekla)
-│   ├── arm.py            6-axis robot arm maths
-│   ├── machine.py        the cell's sizes and the two hands
-│   ├── planner.py        plans every move of both hands for a bar (and where loose pieces fall)
-│   ├── manual.py         manual cutting: holes, cuts and notches by hand
-│   ├── collisions.py     checks the arms never touch the steel
-│   ├── cad.py            makes the CAD: STEP files and the 3D view's model (needs CadQuery, on a PC)
-│   └── vision.py         camera + YOLO person detection + safety zone
-├── web/                  what you see in the browser
-│   ├── index.html        the page
-│   ├── css/style.css     its look
-│   ├── js/               app.js (machine), manual.js, parts.js, library.js, camera.js, safety.js,
-│   │                     scene.js (3D), geometry.js (steel)
-│   ├── models/           the machine for the 3D view (GLB, made by beamcell/cad.py)
-│   └── vendor/           three.js 3D library (MIT licence), kept here so no internet is needed
-├── cad/                  STEP files: beam_cell.step, prototype_1to10.step, parts/*.step, prototype cut list + positions
-├── examples/nc1/         example NC1 files of typical UK parts (tools/make_examples.py writes them)
-├── tools/                make_examples.py, make_bom_pdf.py, make_assembly_pdf.py, assembly_views.mjs, make_video.mjs
-├── models/               put YOLO .onnx models here (see docs/JETSON_SETUP.md)
-├── jobs/                 jobs you save from the app (not in git)
-├── logs/                 safety event log (not in git)
-├── docs/                 how everything works (below)
-├── deploy/               start-at-boot service for the Jetson
-└── tests/                automatic tests (GitHub runs them on every push)
-```
+1. Run `python3 -m beamcell.doctor`. The **Cameras** line lists every camera Linux can see and says what's wrong.
+2. In the app's Camera tab, leave **Auto** selected, or pick the camera from the list.
+3. Common fixes:
+   - **No camera found at all:** plug the USB camera straight into the Jetson (not into an unpowered hub), or reseat the CSI ribbon cable (blue side towards the latch), then reboot.
+   - **"not in the video group":** run `sudo usermod -aG video $USER`, then log out and back in.
+   - **CSI ribbon camera:** it needs the Jetson's own OpenCV (`sudo apt install python3-opencv`), not `pip install opencv-python`. Test the camera with `nvgstcapture-1.0`.
+   - **Camera busy:** close any other program that is using it (Cheese, a browser tab).
+</details>
 
 ## Documents
 
-| Read | For |
+| Read this | To learn about |
 |---|---|
-| [docs/SAFETY.md](docs/SAFETY.md) | **stops, UK law and standards, risk assessment, E-stop wiring** |
-| [docs/ASSISTANT.md](docs/ASSISTANT.md) | "what's happening" and the optional AI advisor - is an LLM/VLM worth it? |
-| [docs/MACHINE.md](docs/MACHINE.md) | the machine, how a bar is cut, safety, code map |
-| [docs/UK_CODES.md](docs/UK_CODES.md) | every UK rule it checks and where it comes from |
-| [docs/NC1_FILES.md](docs/NC1_FILES.md) | NC1 files from Tekla: what's read, faces and coordinates |
-| [docs/JETSON_SETUP.md](docs/JETSON_SETUP.md) | running on the Orin, start at boot, kiosk mode, camera, YOLO, memory |
-| [docs/PROTOTYPE.md](docs/PROTOTYPE.md) | **the 1:10 desk-top prototype: CAD, shopping list (~£1,100), safety wiring, build stages** |
-| [docs/Prototype_Shopping_List.pdf](docs/Prototype_Shopping_List.pdf) | the shopping list to print: part numbers, total cost, buy links |
-| [docs/Prototype_Assembly.pdf](docs/Prototype_Assembly.pdf) | the prototype's assembly drawing: part-number balloons, exploded view, every position |
-| [docs/prototype_bom.csv](docs/prototype_bom.csv) | the shopping list as a spreadsheet |
-| [docs/SCALE_MODEL.md](docs/SCALE_MODEL.md) | a static display model at 1:20 / 1:100: sizes, STL files |
-| [docs/JETSON_SPECS.md](docs/JETSON_SPECS.md) | the Orin's hardware and software |
-| [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | developer notes: how the code fits together, rules for changes |
-
-## Check your computer
-
-```
-python3 -m beamcell.doctor          # what's ready, what's missing, and a plan
-python3 -m beamcell.doctor --save   # also writes docs/SYSTEM_CHECK.md - push it to share your setup
-```
-
-## Tests
-
-```
-python3 -m unittest discover -s tests -t .     # about 45 s
-python3 tests/sweep_sections.py                # every UK section, about 4 min
-```
-GitHub runs the tests on every push with the Orin's versions (Python 3.12, numpy 1.26.4,
-OpenCV 4.6) and the latest ones, a browser test of the whole app, and a CAD job that builds
-every solid with CadQuery.
-
-## Make the CAD again (after changing the machine)
-
-On a PC (CadQuery is big; the Jetson doesn't need it - the files are in the repo):
-```
-pip install cadquery
-python3 -m beamcell.cad                 # everything: parts, the cell (+ the 3D view's model), the prototype
-python3 -m beamcell.cad parts my.nc1    # STEP solids of your own NC1 parts
-```
+| [Safety](docs/SAFETY.md) | **stops, UK law and standards, risk assessment, E-stop wiring** |
+| [How the machine works](docs/MACHINE.md) | the layout, how a bar is cut, and a map of the code |
+| [UK codes](docs/UK_CODES.md) | every UK rule it checks, and where each one comes from |
+| [NC1 files](docs/NC1_FILES.md) | getting parts out of Tekla: what is read, faces and coordinates |
+| [The 1:10 prototype](docs/PROTOTYPE.md) | **what to buy (about £1,100), how to build it, safety wiring** |
+| [Shopping list (PDF)](docs/Prototype_Shopping_List.pdf) | every part with its price and a link to buy it, to print out |
+| [Assembly drawing (PDF)](docs/Prototype_Assembly.pdf) | every part numbered and shown where it goes |
+| [Jetson setup](docs/JETSON_SETUP.md) | running on the Orin: start at boot, full-screen mode, camera, YOLO, memory |
+| [The AI advisor](docs/ASSISTANT.md) | "what's happening" in plain English, and the optional AI advisor |
+| [A scale model](docs/SCALE_MODEL.md) | a static display model at 1:20 or 1:100 |
+| [Jetson specs](docs/JETSON_SPECS.md) | the Orin's hardware and software |
+| [For developers](docs/DEVELOPMENT.md) | how the code fits together, and the rules for changing it |
 
 ## Honest limits
 
-- It's a simulation and a planner, not a machine controller - there are no motor outputs yet
-  (the prototype guide says what's needed: a FluidNC G-code streamer and the small arms' maths).
-- The NC1 face conventions follow the DSTV standard as commonly exported; check one of your
-  own Tekla parts against its drawing (see `docs/NC1_FILES.md`).
-- The software stops behave like a real safety system but are not safety-rated - a real machine
-  needs them in certified hardware, and a camera with AI is never a safety device (docs/SAFETY.md).
-- Section sizes are from the Blue Book data in the `steelsnakes` package (GPL-2.0) - check
-  against current mill data before real fabrication.
+- **It is a simulation and a planner, not yet a machine controller.** It doesn't drive motors yet.
+  The prototype guide explains what's needed for that.
+- **Check NC1 files against their drawings.** The face conventions follow the DSTV standard as
+  usually exported. Check one of your own Tekla parts against its drawing (see [NC1 files](docs/NC1_FILES.md)).
+- **The safety functions are software.** They behave like a real safety system, but a real machine needs
+  them in certified safety hardware, and a camera with AI is never a safety device on its own (see [Safety](docs/SAFETY.md)).
+- **Section sizes come from published Blue Book data.** Check them against current mill data before real fabrication.
 
-## Author
+<details>
+<summary><b>For developers: folders, tests, CAD, the public page and the video</b></summary>
 
-**Ravi Mahadeva** - design, development and the prototype.
+### What's in each folder
 
-Copyright © 2026 Ravi Mahadeva. All rights reserved. The UK section data comes from the
-`steelsnakes` package (GPL-2.0); three.js is MIT-licensed (`web/vendor/LICENSE-three.txt`).
+```
+steel-beam-cutting-cell/
+├── start.sh              starts the app (./start.sh --camera 0 starts it with the camera on)
+├── config/cell.toml      all the settings: safety, camera zones, GPIO wiring, AI advisor, port
+├── beamcell/             the engine (Python)
+│   ├── server.py         web server and the API the browser talks to
+│   ├── safety.py         safety controller: E-stop, interlocks, modes, reset/start, watchdogs
+│   ├── history.py        job history (jobs/history.json)
+│   ├── gpio_inputs.py    real E-stop / gate / light curtain / reset buttons on the Jetson's pins
+│   ├── assistant.py      "what's happening" in plain English + the optional AI advisor
+│   ├── doctor.py         system check: python3 -m beamcell.doctor
+│   ├── sections.py       UK section library and exact cross-sections (data/uk_sections.json)
+│   ├── uk_codes.py       UK code values: hole sizes, edge distances, grades
+│   ├── parts.py          parts, notches, mitres, the code checks, nesting on bars
+│   ├── nc1.py            reads and writes DSTV NC1 files
+│   ├── arm.py, machine.py   the 6-axis arms and the cell's sizes
+│   ├── planner.py        plans every move of both hands for a bar
+│   ├── manual.py         manual cutting
+│   ├── collisions.py     checks the arms never touch the steel
+│   ├── cad.py            makes the CAD: STEP files and the 3D view's models (needs CadQuery)
+│   └── vision.py         camera + YOLO person detection + safety zones
+├── web/                  the app in the browser (index.html, css/, js/, models/, vendor/three.js)
+├── cad/                  STEP files: the whole cell, the 1:10 prototype, every example part
+├── examples/nc1/         example NC1 files of typical UK parts
+├── docs/                 the documents above, images, video, PDFs
+├── public/               the public page's README, LICENSE and request forms
+├── tools/                makes the example files, PDFs, assembly pictures, video and the public page
+├── deploy/               start-at-boot service for the Jetson
+├── tests/                automatic tests (GitHub runs them on every push)
+├── models/               put YOLO .onnx models here (see docs/JETSON_SETUP.md)
+└── jobs/, logs/          your saved jobs, job history and safety log (not in git)
+```
 
+### Tests
+
+```
+python3 -m unittest discover -s tests -t .     # about 1 minute
+python3 tests/sweep_sections.py                # every UK section, about 4 minutes
+```
+GitHub runs the tests on every push: with the Orin's versions (Python 3.12, numpy 1.26.4,
+OpenCV 4.6) and the latest ones, plus a browser test of the whole app and a CAD build.
+
+### Make the CAD again (after changing the machine)
+
+On a PC (CadQuery is big; the Jetson doesn't need it because the files are already in the repo):
+```
+pip install cadquery
+python3 -m beamcell.cad                 # everything: parts, the cell, the prototype
+python3 -m beamcell.cad parts my.nc1    # STEP solids of your own NC1 parts
+```
+
+### Update the public page (github.com/rvi007/beam-cell)
+
+```
+python3 tools/make_public_repo.py ../beam-cell     # copies only the readable pages, pictures, video and PDFs
+cd ../beam-cell && git add -A && git commit -m "Update" && git push
+```
+It never copies code, CAD or tools, and it stops if a page has a broken link.
+
+### Make the video again
+
+```
+python3 -c "import beamcell.server as s; s.SAFETY.cfg['heartbeat_timeout_s'] = 600; s.main(['--port', '8099'])" &
+node tools/make_video.mjs http://localhost:8099 docs/video/beam_cell_30s.mp4
+```
+</details>
+
+## Author and licence
+
+**Ravi Mahadeva**: design, development and the prototype.
+
+© 2026 Ravi Mahadeva. All rights reserved. See [LICENSE](LICENSE). The UK section data comes
+from the `steelsnakes` package (GPL-2.0), and three.js is MIT-licensed (`web/vendor/LICENSE-three.txt`).
