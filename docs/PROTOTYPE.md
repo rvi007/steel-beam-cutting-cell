@@ -7,7 +7,8 @@ the motion planning, the vision and the safety circuit before anything full size
 - **CAD:** `cad/prototype_1to5.step` (open in Fusion 360 / SolidWorks / FreeCAD / Onshape).
   Every solid is named and says what it is (also in `cad/prototype_parts.csv`).
 - **Cut list:** `cad/prototype_cut_list.csv` - every aluminium extrusion length (from the CAD).
-- **Shopping list:** `docs/prototype_bom.csv` (open in Excel / Google Sheets) - the tables
+- **Shopping list:** `docs/Prototype_Shopping_List.pdf` (print it, tick as you buy) or
+  `docs/prototype_bom.csv` (open in Excel / Google Sheets) - the tables
   below are the same list.
 
 Rebuild the CAD after changing the design: `python3 -m beamcell.cad prototype` (on a PC).
