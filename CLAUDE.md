@@ -7,6 +7,9 @@ a three.js web app (`web/`). The user runs it on a Jetson Orin Nano (4 GB, see
 
 ## Rules for changes
 - No new Python dependencies (Jetson is offline-ish, 4 GB RAM). numpy only; OpenCV optional (camera).
+  Exception: `beamcell/cad.py` uses CadQuery, PC-only and optional; its outputs (cad/*.step,
+  web/models/*.glb + labels.json) are committed. After changing machine.py geometry or cad.py,
+  run `python3 -m beamcell.cad` (scratch venv with `pip install cadquery`) and commit the outputs.
 - Browser libraries go in `web/vendor/` (no CDN). three.js r160 is vendored.
 - UK codes only (BS 4-1, BS EN 10056-1, BS EN 1090-2, BS EN 1993-1-8 + UK NA, SCI P358). Cite the
   source in every check message (`ref`).
@@ -42,7 +45,16 @@ a three.js web app (`web/`). The user runs it on a Jetson Orin Nano (4 GB, see
   wide UC flanges clear.
 - `Plan._commit` keeps the bridges >= 1 m apart against everything the other hand has planned.
 - The browser rebuilds a part's plates when its cut state changes (`geometry.partGroup`).
+- The 3D machine is the CAD model: `scene.load()` reads web/models/cell.glb (static) and
+  moving.glb (bridge/carriage/mast/link0..6 per hand, each modelled in its own frame; link k in
+  DH frame k). The GLB root node turns Z-up into Y-up - `scene.js` undoes it. Every solid has a
+  label (labels.json) shown on hover.
+- Gravity: rollers at `machine.ROLLER_X`; loose pieces need two rollers (`supported_on_rollers`)
+  or they fall into the scrap tray (`Plan._drop`, `fall_time`). Carried parts land on the table.
+- Cut order (`planner._in_order`): start cut, holes along the bar by bolt group, cut-off.
+- Manual cutting (`manual.py`): ManualBar placements with `keep` (rest of bar) / `scrap` flags.
 
 ## Status
-Working in simulation, tested headless. Not yet run on the user's Orin screen. Next ideas are in
-docs/MACHINE.md (YOLO for the beam position, bevels, driving a 1:10 model).
+Working in simulation, tested headless. Not yet run on the user's Orin screen. The 1:5 prototype
+(docs/PROTOTYPE.md, cad/prototype_1to5.step) needs: a FluidNC G-code streamer for the gantry
+axes and SO-101 (5-DOF) arm maths - not written yet.

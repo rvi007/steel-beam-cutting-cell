@@ -52,6 +52,11 @@ danger zone cause a protective stop the same way. Manual mode runs at 250 mm/s a
 regulations: <code>docs/SAFETY.md</code>. These software stops are a prototype - a real machine needs them in
 certified safety hardware.</p>
 
+<h2>CAD and the prototype</h2>
+<p>The 3D view is the CAD model - point at anything to see what it is. <b>Section library</b> &rarr; <i>CAD files</i>:
+the whole cell, the 1:5 prototype and the example parts as STEP files (Fusion 360, SolidWorks, FreeCAD, Onshape).
+The prototype's shopping list and build plan: <code>docs/PROTOTYPE.md</code>.</p>
+
 <h2>Keyboard</h2>
 <p><code>Esc</code> E-STOP. <code>Space</code> run / pause. Mouse: left-drag to turn the view, right-drag to move it, wheel to zoom.</p>
 
