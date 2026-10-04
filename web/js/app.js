@@ -9,6 +9,7 @@ import { initLibrary } from "./library.js";
 import { initCamera } from "./camera.js";
 import { initHelp } from "./help.js";
 import { initSafety, safety, connected, startMachine, stopMachine, jobFinished } from "./safety.js";
+import { initManual, manual, manualPreview, planManual } from "./manual.js";
 
 export const app = {
   info: null, sections: null, job: { stock_length: 12000, parts: [] }, bars: [], barIndex: 0,
@@ -17,7 +18,8 @@ export const app = {
   playbackFacts() {
     if (!app.plan) return { cutter: "", handler: "", bar: "" };
     const b = app.plan.bar, dur = app.plan.summary.duration_s;
-    return { t: Math.round(app.t), bar: `${b.section} bar ${app.plan.bar_index + 1} of ${app.plan.bar_count}`,
+    const what = b.manual ? `manual cuts on a ${b.section} bar` : `${b.section} bar ${app.plan.bar_index + 1} of ${app.plan.bar_count}`;
+    return { t: Math.round(app.t), bar: what,
       progress: (100 * app.t) / dur, cutter: stepAt(app.t, "Cutter"), handler: stepAt(app.t, "Handler") };
   },
 };
@@ -77,17 +79,22 @@ function renderBars() {
 }
 
 // ---------------------------------------------------------------- planning
-function clearPlan() {
+export function clearPlan() {
   if (app.playing) stopMachine("job changed");
   app.plan = null;
   app.t = 0;
   $("plan-info").innerHTML = "";
   $("plan-warnings").innerHTML = "";
-  if (app.scene) { clearSteel(); showBarPreview(); }
+  if (app.scene) { clearSteel(); manualPreview(); if (!manual.on) showBarPreview(); }
   updateTransport();
 }
 
 async function planBar() {
+  if (manual.on) {
+    $("loading").hidden = false;
+    try { await planManual(); } catch (e) { toast("Planning failed: " + e.message, true); } finally { $("loading").hidden = true; }
+    return;
+  }
   if (!app.bars.length) return toast("Add some parts first (Parts & NC1 tab)", true);
   $("loading").hidden = false;
   try {
@@ -100,14 +107,14 @@ async function planBar() {
   }
 }
 
-function loadPlan(plan) {
+export function loadPlan(plan) {
   if (app.playing) stopMachine("new plan loaded");
   app.plan = plan;
   app.t = 0;
   const s = plan.summary;
   $("plan-info").innerHTML = `<table>
     <tr><td>Cycle time</td><td><b>${fmtTime(s.duration_s)}</b></td></tr>
-    <tr><td>Parts</td><td>${s.parts}</td></tr>
+    <tr><td>${plan.manual ? "Pieces" : "Parts"}</td><td>${s.parts}</td></tr>
     <tr><td>Torch passes</td><td>${s.passes} (${s.cut_length_m.toFixed(1)} m of cutting)</td></tr>
     <tr><td>Torch on</td><td>${fmtTime(s.torch_on_s)} (${Math.round((100 * s.torch_on_s) / s.duration_s)}%)</td></tr>
     <tr><td>Bridges</td><td>never closer than ${s.min_bridge_gap_m.toFixed(2)} m</td></tr>
@@ -116,6 +123,7 @@ function loadPlan(plan) {
   $("plan-warnings").innerHTML = plan.warnings.map((w) => `<div>&#9888; ${w}</div>`).join("");
   $("scrub").max = s.duration_s;
   buildSteel();
+  manualPreview();                              // hides the manual stock bar: the plan draws the steel now
   updateTransport();
 }
 
@@ -149,7 +157,9 @@ function buildSteel() {
   plan.placements.forEach((view, k) => {
     const kerfGroup = new THREE.Group();
     app.scene.steel.add(kerfGroup);
-    steel.parts.push({ view, k, key: "", group: new THREE.Group(), kerfGroup });
+    // a manual piece too short to keep is drawn as a falling offcut (plan.drops), not as a part
+    const hidden = !!plan.bar.placements[k].scrap;
+    steel.parts.push({ view, k, key: "", group: new THREE.Group(), kerfGroup, hidden });
   });
   for (const c of plan.cuts) {
     const n = c.points.length;
@@ -205,6 +215,7 @@ function partOffset(k, t) {
 function updateSteel(t) {
   const origin = app.scene.origin;
   for (const p of steel.parts) {
+    if (p.hidden) continue;
     const st = partState(p.k, t);
     const free = app.plan.carries.some((c) => c.placement === p.k && t >= c.t_release);
     const key = `${st.start}|${st.end}|${[...st.holes]}|${[...st.openings]}|${free}`;
@@ -372,6 +383,7 @@ async function start() {
   initLibrary();
   initCamera();
   initHelp();
+  initManual();
   await initSafety();
   await jobChanged();
   requestAnimationFrame(frame);

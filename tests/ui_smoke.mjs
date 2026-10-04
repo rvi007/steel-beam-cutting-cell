@@ -49,6 +49,8 @@ await page.click("#btn-play");
 await page.waitForTimeout(800);
 if (await page.evaluate(() => app.t > 0)) fail("machine moved without Reset and checklist");
 await page.click(".tabs button[data-tab=safety]");
+await page.click("[data-mode=AUTO]");                     // the server may still be in another mode
+await page.waitForTimeout(300);
 await page.click("#sf-reset");
 for (const box of await page.$$("[data-ck]")) await box.check();
 await page.click("#sf-check-ok");
@@ -139,10 +141,62 @@ const file = await download.path();
 if (fs.statSync(file).size < 1000) fail("STL too small");
 await shot("4_library");
 
+// manual cutting: a cut and a hole by button, a hole by clicking the web in 3D, check, plan, run
+await page.click(".tabs button[data-tab=cell]");
+await page.click("#mode-manual");
+await page.waitForSelector("#mc-add-cut");
+await page.click("#mc-clear");
+await page.waitForSelector("#mc-add-cut");
+await page.selectOption("#mc-fam", "UB");
+await page.waitForTimeout(300);
+await page.selectOption("#mc-sec", "UB 305x165x40");
+await page.waitForTimeout(300);
+await page.fill("#mc-len", "4000");
+await page.dispatchEvent("#mc-len", "change");
+await page.waitForTimeout(300);
+await page.click("#mc-add-cut");                                   // cut at the middle (2000)
+await page.waitForTimeout(300);
+await page.click("#mc-add-hole");                                  // hole at the middle of the web
+await page.waitForTimeout(300);
+await page.fill(".mc-row[data-i='1'] [data-f=x]", "1000");
+await page.dispatchEvent(".mc-row[data-i='1'] [data-f=x]", "change");
+// click on the web face at x = 3000 mm, mid-depth: work out where that is on the screen
+await page.evaluate(() => { const sc = app.scene, o = sc.origin; sc.camera.position.set(o.x + 3, o.y - 2.5, o.z + 0.4); sc.controls.target.set(o.x + 3, o.y, o.z + 0.15); sc.controls.update(); });
+await page.waitForTimeout(500);
+const spot = await page.evaluate(() => {
+  const sc = app.scene, o = sc.origin, r = document.getElementById("cell-canvas").getBoundingClientRect();
+  sc.camera.updateMatrixWorld();
+  const v = o.clone(); v.x += 3.0; v.y -= 0.004; v.z += 0.15;
+  v.project(sc.camera);
+  return { x: r.left + ((v.x + 1) / 2) * r.width, y: r.top + ((1 - v.y) / 2) * r.height };
+});
+await page.mouse.click(spot.x, spot.y);
+await page.waitForTimeout(800);
+const mc = await page.evaluate(() => JSON.parse(localStorage.getItem("manual")));
+const clicked = mc.cuts.find((c) => c.type === "hole" && Math.abs(c.x - 3000) <= 10);
+if (!clicked || clicked.face !== "v") {
+  await shot("fail_click");
+  fail("clicking the web didn't add a web hole near x = 3000: " + JSON.stringify(mc.cuts) + " toast: " + (await page.textContent("#toast")) +
+    " at " + JSON.stringify(spot) + " element " + (await page.evaluate(({ x, y }) => document.elementFromPoint(x, y).id, spot)));
+}
+await page.waitForFunction(() => document.querySelector("#mc-check").textContent.includes("The bar becomes"), null, { timeout: 15000 });
+const checkText = await page.textContent("#mc-check");
+if (!checkText.includes("stays on the rollers") || !checkText.includes("outfeed table")) fail("manual check: " + checkText);
+await page.click("#btn-plan");
+await until("manual plan didn't load", () => app.plan && app.plan.manual, null, 120000);
+const mplan = await page.evaluate(() => ({ c: app.plan.collisions, w: app.plan.warnings, n: app.plan.bar.placements.length, holes: app.plan.ops.filter((o) => o.kind === "hole").length }));
+if (mplan.c || mplan.w.length || mplan.n !== 2 || mplan.holes !== 2) fail("manual plan: " + JSON.stringify(mplan));
+await page.click("[data-view=overview]");
+await page.evaluate(() => { app.t = app.plan.summary.duration_s * 0.5; });
+await page.waitForTimeout(500);
+await shot("5_manual");
+await page.click("#mode-job");
+await page.waitForTimeout(300);
+
 for (const tab of ["camera", "help", "safety", "cell"]) {
   await page.click(`.tabs button[data-tab=${tab}]`);
   await page.waitForTimeout(500);
 }
 if (errors.length) fail("JavaScript errors:\n" + errors.join("\n"));
-console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; NC1 import; editor checks; STL ${fs.statSync(file).size} bytes`);
+console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; NC1 import; editor checks; manual cut (click, check, plan); STL ${fs.statSync(file).size} bytes`);
 await browser.close();

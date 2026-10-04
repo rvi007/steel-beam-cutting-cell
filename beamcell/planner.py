@@ -555,7 +555,10 @@ class Plan:
                 self._say(self.tc.end, "Cutter", f"{part.mark}: {op['label']}")
                 self._do_op(op)
             end_ops = [o for o in ops if o["kind"] == "end"]
-            heavy = part.weight > self.handler.payload_kg
+            keep = pl.get("keep", False)             # manual cutting: the rest of the bar stays on the bed
+            scrap = pl.get("scrap", False)           # manual cutting: a piece too short to keep
+            loose = keep or scrap
+            heavy = not loose and part.weight > self.handler.payload_kg
             if heavy:
                 self.warnings.append(f"{part.mark} weighs {part.weight:.0f} kg - more than the Handler's "
                                      f"{self.handler.payload_kg:.0f} kg; left on the bed for the crane")
@@ -567,13 +570,13 @@ class Plan:
                 self._say(self.tc.end, "Cutter", f"{part.mark}: cut-off")
                 first = self._cutter_to(op["passes"][0][0], DIRS[op["passes"][0][1]])
                 min_x = min([pl_[0] for pl_ in placements] + [self.tc.g[-1][0]])
-            elif not heavy:
+            elif not heavy and not loose:
                 self._say(self.tc.end, "Cutter", "moving out of the way")
                 self.near = None
                 self._go(self.tc, self.cutter.park, self.tc.q[0])
                 min_x = self.cutter.park[0]
             grip = None
-            if not heavy:
+            if not heavy and not loose:
                 t_hold, grip = self._handler_pick(k, min_x)
                 if t_hold is not None:
                     self.tc.hold(t_hold)
@@ -582,6 +585,8 @@ class Plan:
             if heavy and not supported_on_rollers((pl["x0"]) / 1000, pl["x1"] / 1000):
                 self.warnings.append(f"{part.mark} is too short to stay on the rollers and too heavy to lift - "
                                      "it would fall: support it before the cut-off")
+            if scrap or (keep and not supported_on_rollers(pl["x0"] / 1000, pl["x1"] / 1000)):
+                self._drop(pl["x0"], pl["x1"], self.tc.end, remnant=keep)
             if grip is not None:
                 self._handler_carry(k, self.tc.end, *grip)
 

@@ -13,6 +13,9 @@ overhead gantry: the <b>Cutter</b> (orange, plasma torch) cuts holes, slots, not
 <li>Check each part: the <b>Checks</b> box lists anything that breaks a UK rule, with the clause. The drawing shows every face.</li>
 <li><b>Machine</b>: parts are nested onto stock bars (pick the stock length). Click a bar, then <b>Plan this bar</b>.</li>
 <li>Press <b>Run</b> (or the space bar). Drag the time bar to jump, pick a speed, and use the view buttons to follow either hand.</li>
+<li><b>Manual cut</b> (Machine tab, top left): cut by hand without a file - add holes, cuts (square or mitred) and
+notches, or click on the steel in the 3D view to put a hole or cut there. Holes go on the centre line unless you give y.
+The same UK checks run, then <b>Plan these cuts</b> and <b>Run</b>.</li>
 <li><b>Camera</b>: start the camera to watch the gate. If someone walks into the zone the machine stops until the zone is clear and you press <b>Reset</b>.</li>
 </ol>
 
