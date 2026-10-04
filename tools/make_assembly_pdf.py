@@ -1,5 +1,5 @@
 """
-Writes docs/Prototype_Assembly.pdf: the 1:5 prototype's assembly drawing - views with part-number
+Writes docs/Prototype_Assembly.pdf: the 1:10 prototype's assembly drawing - views with part-number
 balloons, an exploded view, every position, and the parts list with part numbers, positions and
 buy links (the same numbers as docs/Prototype_Shopping_List.pdf and the CAD).
 
@@ -53,19 +53,19 @@ def main():
         canvas.line(x0, y0 + 12 * mm, x0 + bw, y0 + 12 * mm)
         canvas.line(x0 + 95 * mm, y0, x0 + 95 * mm, y0 + bh)
         canvas.setFont("Helvetica-Bold", 10)
-        canvas.drawString(x0 + 3 * mm, y0 + 17 * mm, "Steel Beam Cutting Cell - 1:5 prototype")
+        canvas.drawString(x0 + 3 * mm, y0 + 17 * mm, "Steel Beam Cutting Cell - 1:10 prototype")
         canvas.setFont("Helvetica", 8)
         canvas.drawString(x0 + 3 * mm, y0 + 13.5 * mm, SHEETS.get(doc.page, "Assembly drawing"))
         canvas.drawString(x0 + 3 * mm, y0 + 7 * mm, "Drawn: Ravi Mahadeva")
         canvas.drawString(x0 + 3 * mm, y0 + 3 * mm, f"Date: {time.strftime('%d %b %Y')}   Units: mm   Scale: not to scale")
         canvas.drawString(x0 + 98 * mm, y0 + 17 * mm, "Drawing: BC-P1-GA")
         canvas.drawString(x0 + 98 * mm, y0 + 7 * mm, f"Sheet {doc.page}")
-        canvas.drawString(x0 + 98 * mm, y0 + 3 * mm, "CAD: cad/prototype_1to5.step")
+        canvas.drawString(x0 + 98 * mm, y0 + 3 * mm, "CAD: cad/prototype_1to10.step")
         canvas.restoreState()
 
     doc = SimpleDocTemplate(OUT, pagesize=PAGE, leftMargin=16 * mm, rightMargin=16 * mm, topMargin=14 * mm,
                             bottomMargin=38 * mm, title="Prototype Assembly", author="Ravi Mahadeva",
-                            subject="Steel Beam Cutting Cell - 1:5 prototype assembly drawing")
+                            subject="Steel Beam Cutting Cell - 1:10 prototype assembly drawing")
     story = []
     shown = [b for b in bom if b["part_no"] in by_pn]
 

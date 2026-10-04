@@ -1,48 +1,48 @@
 part_no,stage,category,item,specification / what to look for,qty,approx_gbp_each,where (UK),notes,link
-P01,1,Frame,V-slot 20x40 aluminium extrusion,"cut to size: 4 x 1500, 6 x 600, 4 x 580 mm (cad/prototype_cut_list.csv)",11.9 m,14,"Ooznest (cut to size), Amazon UK",lengths come from the CAD model,https://ooznest.co.uk/product/20x40mm-t-v-slot-aluminium-extrusion-profile-silver-cut-to-size
-P02,1,Frame,V-slot 20x20 aluminium extrusion,"cut to size: 2 x 1300, 2 x 300, 6 x 100, 1 x 720 mm",4.5 m,8,Ooznest,bed rails and legs; Z axes; camera post,https://ooznest.co.uk/?s=20x20mm+V-Slot+cut+to+size&post_type=product
-P03,1,Frame,V-slot 20x60 aluminium extrusion,cut to size: 2 x 660 mm,2,16,Ooznest,the two bridges,https://ooznest.co.uk/?s=20x60mm+V-Slot+cut+to+size&post_type=product
-P04,1,Frame,Corner brackets + M5 T-nuts + M5 bolts,"40 cast corner brackets, 200 drop-in T-nuts, M5x8/M5x10 button heads",1 kit,45,"Ooznest, Amazon UK",,https://ooznest.co.uk/?s=cast+corner+bracket+20+series&post_type=product
-P05,1,Frame,Rubber feet / levelling feet,M8 levelling feet for the base rails,4,3,Amazon UK,stops it walking on the bench,https://www.amazon.co.uk/s?k=M8+levelling+feet
-P06,1,Bed,Bed rollers,"20 mm aluminium tube x 100 mm on 8 mm silver steel shaft, 2 x 608 bearings each",6,4,"Amazon UK, Simply Bearings",or 3D print the rollers,https://www.amazon.co.uk/s?k=608+bearing+8mm+shaft+roller+20mm
-P07,1,Bed,Roller brackets,3D printed in PETG (12 off),12,0.5,print,,
-P08,1,Bed,Outfeed table board,6 mm plywood or MDF 1300 x 180 mm,1,8,builders' merchant,,https://www.amazon.co.uk/s?k=6mm+plywood+sheet+1300mm
-P09,1,Bed,Scrap tray,folded aluminium sheet or 3D printed tray 1300 x 90 mm,1,10,print / sheet,,
-P10,2,Motion,V-wheel gantry plate kits,20-series gantry plate + 4 V-wheels (625 bearings) + eccentric spacers,6,18,Ooznest,2 per bridge end x 2 bridges + 1 per carriage x 2,https://ooznest.co.uk/?s=V-Slot+gantry+plate+20mm&post_type=product
-P11,2,Motion,NEMA 17 stepper motor,"1.5-2 A, 45-48 mm body, 5 mm shaft",4,12,"Ooznest, StepperOnline",X (one per bridge) and Y (one per carriage),https://www.omc-stepperonline.com/search?search=nema+17+stepper+motor+2A
-P12,2,Motion,NEMA 17 with integrated T8 lead screw,"T8 x 2 mm lead, 300 mm screw, with brass anti-backlash nut",2,25,"StepperOnline, Amazon UK",Z axes,https://www.omc-stepperonline.com/search?search=nema+17+lead+screw+T8+300mm
+P01,1,Frame,V-slot 20x20 aluminium extrusion,"cut to size - lengths in cad/prototype_cut_list.csv (frame, bed rails, bridges, Z axes, camera post)",9.5 m,8,"Ooznest (cut to size), Amazon UK",the whole frame is 20x20; lengths come from the CAD model,https://ooznest.co.uk/?s=20x20mm+V-Slot+cut+to+size&post_type=product
+P02,1,Frame,Corner brackets + M5 T-nuts + M5 bolts,"30 cast 20-series corner brackets, 120 drop-in T-nuts, M5x8 button heads",1 kit,30,"Ooznest, Amazon UK",,https://ooznest.co.uk/?s=cast+corner+bracket+20+series&post_type=product
+P03,1,Frame,Rubber feet,stick-on rubber feet 20 mm,4,1,Amazon UK,stops it sliding on the desk,https://www.amazon.co.uk/s?k=rubber+feet+20mm+self+adhesive
+P04,1,Bed,Bed rollers,"10 mm printed sleeves on 3 mm silver steel rod (50 mm), 2 x 623ZZ bearings each",6,2,"Amazon UK, Simply Bearings",print the sleeves; buy rod and bearings,https://www.amazon.co.uk/s?k=623ZZ+bearings+3mm
+P05,1,Bed,Roller brackets (3D printed),"PETG, clip on the 20x20 bed rails",12,0,print,filament counted under Consumables,
+P06,1,Bed,Bed riser blocks (3D printed),PETG blocks that hold the bed rails 60 mm above the base,6,0,print,filament counted under Consumables,
+P07,1,Bed,Outfeed table board,3 mm plywood strip 700 x 90 mm,1,4,"builders' merchant, Amazon UK",,https://www.amazon.co.uk/s?k=3mm+plywood+sheet
+P08,1,Bed,Outfeed table risers (3D printed),PETG,3,0,print,filament counted under Consumables,
+P09,1,Bed,Scrap tray (3D printed),700 x 44 mm tray under the bed,1,0,print,filament counted under Consumables,
+P10,2,Motion,Mini V-wheel gantry plate kits,20-series mini gantry plate + 4 mini V-wheels (625 bearings) + eccentric spacers,6,12,Ooznest,2 per bridge end x 2 bridges + 1 per carriage x 2,https://ooznest.co.uk/?s=mini+V-wheel+gantry+plate&post_type=product
+P11,2,Motion,NEMA 17 stepper motor,"1.5-2 A, 40 mm body, 5 mm shaft (a NEMA 14 is lighter if you prefer)",4,12,"Ooznest, StepperOnline",X (one per bridge) and Y (one per carriage),https://www.omc-stepperonline.com/search?search=nema+17+stepper+motor+40mm
+P12,2,Motion,NEMA 17 with integrated T8 lead screw,"T8 x 2 mm lead, 150 mm screw, with brass nut",2,22,"StepperOnline, Amazon UK",Z axes,https://www.omc-stepperonline.com/search?search=nema+17+lead+screw+T8+150mm
 P13,2,Motion,Z motor bracket (3D printed),"PETG, holds the Z motor on the carriage plate",2,0,print,filament counted under Consumables,
-P14,2,Motion,Lead-screw nut block (3D printed),"PETG block with the brass T8 nut (comes with the motor), fixed to the Z axis",2,0,print,filament counted under Consumables,
-P15,2,Motion,GT2 belt 6 mm,"10 m reel (8 m needed: 2 per bridge along the rails, 1 per carriage)",1,12,Ooznest,,https://ooznest.co.uk/?s=GT2+belt+6mm&post_type=product
-P16,2,Motion,GT2 20T pulleys + idlers,"4 x 20T 8 mm bore (cross shafts), 2 x 20T 5 mm bore (Y), 8 idlers",1 set,25,Ooznest,,https://ooznest.co.uk/?s=GT2+20+tooth+pulley&post_type=product
-P17,2,Motion,8 mm cross shafts + pillow blocks,"2 x 700 mm 8 mm silver steel, 4 x KFL08 bearings, 2 x 5-8 mm couplers",1 set,25,"Amazon UK, Simply Bearings",one motor drives both sides of each bridge,https://www.amazon.co.uk/s?k=8mm+linear+shaft+700mm+KFL08
+P14,2,Motion,Lead-screw nut block (3D printed),"PETG block with the brass T8 nut, fixed to the Z axis",2,0,print,filament counted under Consumables,
+P15,2,Motion,GT2 belt 6 mm,"5 m (2 per bridge along the rails, 1 per carriage)",1,8,Ooznest,,https://ooznest.co.uk/?s=GT2+belt+6mm&post_type=product
+P16,2,Motion,GT2 16T pulleys + idlers,"4 x 16T 5 mm bore (cross shafts), 2 x 16T (Y), 8 idlers",1 set,20,"Ooznest, Amazon UK",,https://ooznest.co.uk/?s=GT2+pulley+16+tooth&post_type=product
+P17,2,Motion,5 mm cross shafts + bearings,"2 x 360 mm 5 mm silver steel, 4 x 625ZZ in printed blocks, 2 x 5-5 mm couplers",1 set,12,"Amazon UK, Simply Bearings",one motor drives both rails of a bridge,https://www.amazon.co.uk/s?k=5mm+linear+shaft+400mm
 P18,2,Motion,Home / limit switches,"mechanical microswitch with lever, NC wiring",8,1.5,Amazon UK,one per axis + 2 spare,https://www.amazon.co.uk/s?k=micro+limit+switch+lever+pack
 P19,2,Controller,FluidNC 6-axis CNC controller (ESP32),"6 driver sockets, USB to the Jetson (e.g. Elecrow / Bart Dring 6x CNC Controller)",1,40,"Elecrow, Tindie",flash once from the web installer - no programming,https://www.elecrow.com/6x-cnc-controller-for-fluidnc.html
-P20,2,Controller,TMC2209 stepper driver modules,"StepStick format, UART or standalone",6,5,"Amazon UK, Ooznest",quiet; one per axis,https://www.amazon.co.uk/s?k=TMC2209+stepper+driver+stepstick
-P21,2,Controller,Shielded 4-core motor cable + drag chain,"10 m 4 x 0.5 mm2 shielded, 2 m 10x15 drag chain",1 set,30,"Amazon UK, RS",,https://www.amazon.co.uk/s?k=4+core+shielded+cable+0.5mm+drag+chain+10x15
-P22,3,Arms,SO-101 6-servo arm kit (follower),6 x Feetech STS3215 serial-bus servos + bus servo driver board; print the arm parts in PLA,2,240,"Unmanned Tech UK (servo kit Pro, unprinted), Seeed",~£120-150 each if you buy the servos and print everything yourself,https://www.unmannedtechshop.co.uk/fr/products/so-arm101-low-cost-ai-arm-servo-motor-kit-pro-for-lerobot-without-3d-printed-parts
+P20,2,Controller,TMC2209 stepper driver modules,StepStick format,6,5,"Amazon UK, Ooznest",quiet; one per axis,https://www.amazon.co.uk/s?k=TMC2209+stepper+driver+stepstick
+P21,2,Controller,Motor cable + drag chain,"5 m 4-core 0.25 mm2, 1 m 7x7 drag chain",1 set,15,Amazon UK,,https://www.amazon.co.uk/s?k=4+core+cable+0.25mm+drag+chain+7x7
+P22,3,Arms,MeArm-type 4-servo arm kit,small 4-servo arm with MG90S metal-gear micro servos (reach ~150 mm); swap the gripper for the pen / magnet,2,37,"Cool Components, Kitronik",about £37 each (MeArm pocket-sized kit),https://coolcomponents.co.uk/collections/kits/robotic-arm
 P23,3,Arms,Arm mount plate (3D printed),PETG plate: bolts the arm base under the Z axis,2,0,print,filament counted under Consumables,
-P24,3,Arms,Bus servo adapter,"Waveshare Bus Servo Adapter (A) - USB to the Jetson, one per arm",2,5,"Waveshare, The Pi Hut",often included in the kit,https://www.waveshare.com/bus-servo-adapter-a.htm
-P25,3,Arms,12 V power supply for the servos,Mean Well LRS-100-12 (12 V 8.5 A) - check your servos are the 12 V version,1,16,"RS, Farnell",,https://uk.rs-online.com/web/c/?searchTerm=Mean+Well+LRS-100-12
-P26,3,Tools,Cutter 'torch' for the prototype,pen in a sprung 3D-printed holder (marks every cut line on the model beam),1,3,print,no real cutting on the prototype: see docs/PROTOTYPE.md,
-P27,3,Tools,Handler magnet,12 V 25 mm lifting electromagnet (~2.5 kg hold) + MOSFET module + flyback diode,1,12,Amazon UK,switch it from a FluidNC output,https://www.amazon.co.uk/s?k=12V+electromagnet+25mm+lifting
-P28,3,Tools,Model beams,"3D printed UB 305x165 at 1:5 (61 x 33 mm), 1 m long, with 0.5 mm steel strip glued on the top flange",4,4,print,the magnet needs steel to grip,
+P24,3,Arms,PCA9685 16-channel servo board,"I2C - wired straight to the Jetson's 40-pin header (pins 3 / 5), drives all 8 servos",1,6,"Amazon UK, kunkune",no extra controller needed for the arms,https://kunkune.co.uk/?p=11021
+P25,3,Arms,5 V power supply for the servos,Mean Well LRS-35-5 (5 V 7 A) - servos and magnet,1,12,"RS, Farnell",,https://uk.rs-online.com/web/c/?searchTerm=Mean+Well+LRS-35-5
+P26,3,Tools,Cutter 'torch' for the prototype (pen holder),fine-liner pen in a sprung 3D-printed holder (marks every cut line on the model beam),1,2,print,no real cutting on the prototype: see docs/PROTOTYPE.md,
+P27,3,Tools,Handler magnet,5 V 20 mm lifting electromagnet (~2.5 kg hold) + MOSFET module + flyback diode,1,8,Amazon UK,switch it from a FluidNC output,https://www.amazon.co.uk/s?k=5V+electromagnet+20mm+lifting
+P28,3,Tools,Model beams (3D printed),"UB 305x165 at 1:10 (30 x 16 mm), 500 mm long, with steel tape on the top flange",4,0,print,the magnet needs steel to grip; filament counted under Consumables,
 P29,4,Vision,USB wide-angle camera (safety zone),"1080p UVC, 90-120 deg view (e.g. Logitech C920/C922 or an Arducam USB wide-angle)",1,50,"Amazon UK, Pimoroni",plug and play on the Jetson; YOLO watches the cell,https://www.amazon.co.uk/s?k=Logitech+C920+webcam
 P30,4,Vision,CSI camera (close-up of the Cutter),"Arducam IMX219 for Jetson Orin Nano (22-pin cable), wide-angle lens",1,25,"Arducam, RobotShop UK",optional; checks the marked lines,https://www.arducam.com/arducam-imx219-pdaf-cdaf-autofocus-camera-module-with-case-for-raspberry-pi-nvidiar-jetson-orin-series.html
-P31,4,Vision,Powered USB 3 hub,"4-port, own power supply",1,20,Amazon UK,controller + 2 servo adapters + camera,https://www.amazon.co.uk/s?k=powered+USB+3.0+hub+4+port
-P32,5,Safety,Emergency stop station,"yellow box, red 40 mm mushroom, turn to release, 2 NC contacts (e.g. Schneider Harmony XALK178 family)",1,42,"RS, Farnell, TME",BS EN ISO 13850; one NC to the safety relay channel 1 (and 2) - add an NO/NC block for the Jetson,https://uk.rs-online.com/web/c/?searchTerm=XALK178
-P33,5,Safety,Safety relay,"Pilz PNOZ s3 24 V DC (dual channel, manual reset) or equivalent",1,180,"RS, Farnell (new) / ~£75 used",cuts the 24 V motor and 12 V servo supplies - this is how a real machine does it,https://uk.farnell.com/search?st=PNOZ+s3+751103
+P31,4,Vision,Powered USB 3 hub,"4-port, own power supply",1,20,Amazon UK,controller + camera (+ spare),https://www.amazon.co.uk/s?k=powered+USB+3.0+hub+4+port
+P32,5,Safety,Emergency stop station,"yellow box, red 40 mm mushroom, turn to release, 2 NC contacts (e.g. Schneider Harmony XALK178 family)",1,42,"RS, Farnell, TME",BS EN ISO 13850; NC contacts to the safety relay - add an NO/NC block for the Jetson,https://uk.rs-online.com/web/c/?searchTerm=XALK178
+P33,5,Safety,Safety relay,"Pilz PNOZ s3 24 V DC (dual channel, manual reset) or equivalent",1,180,"RS, Farnell (new) / ~£75 used",cuts the 24 V motor and 5 V servo supplies - this is how a real machine does it,https://uk.farnell.com/search?st=PNOZ+s3+751103
 P34,5,Safety,Door interlock switch,"non-contact coded magnetic safety switch, NC (e.g. Pilz PSEN or Schmersal BNS)",1,60,"RS, Farnell",BS EN ISO 14119; wired into the safety relay,https://uk.rs-online.com/web/c/?searchTerm=non+contact+safety+switch+coded
 P35,5,Safety,Reset push button,"22 mm blue illuminated, 1 NO",1,8,"RS, Amazon UK",outside the enclosure with a view inside,https://uk.rs-online.com/web/c/?searchTerm=22mm+blue+illuminated+push+button
-P36,5,Safety,Stack light,"24 V LED tower, red / amber / green / blue",1,25,Amazon UK,driven by the Jetson through a relay module,https://www.amazon.co.uk/s?k=24V+LED+stack+light+tower+4+colour
+P36,5,Safety,Stack light,"24 V mini LED tower, red / amber / green",1,15,Amazon UK,driven by the Jetson through a relay module,https://www.amazon.co.uk/s?k=24V+mini+LED+stack+light+3+colour
 P37,5,Safety,4-channel relay module (opto-isolated),"3.3 V logic input, 24 V contacts",1,8,Amazon UK,stack light and magnet,https://www.amazon.co.uk/s?k=4+channel+relay+module+optocoupler+3.3V
 P38,5,Safety,IR break-beam sensor pair,5 mm IR break-beam (demonstrates the light-curtain input),1,6,"Pimoroni, The Pi Hut",NOT a safety light curtain - demo only,https://thepihut.com/search?q=IR+break+beam+sensor
-P39,5,Enclosure,Polycarbonate sheet 3 mm,"front, door and ends (~1.5 m2) - polycarbonate, not acrylic (acrylic shatters)",1.5 m2,40,plastics stockist,,https://www.amazon.co.uk/s?k=3mm+polycarbonate+sheet+clear
-P40,5,Enclosure,Hinges + handle + 20x20 door frame,"2 hinges, 1 handle, 2.4 m 20x20",1 set,25,Ooznest,,https://ooznest.co.uk/?s=hinge+20+series&post_type=product
-P41,6,Electrical,24 V power supply,"Mean Well LRS-150-24 (24 V 6.5 A) - motors, controller, safety circuit",1,16,RS (0424827),,https://uk.rs-online.com/web/p/switching-power-supplies/0424827
-P42,6,Electrical,IEC mains inlet with switch and fuse,"panel mount, 5 A fuse",1,8,"RS, Farnell",have the mains side checked by a competent person,https://uk.rs-online.com/web/c/?searchTerm=IEC+inlet+switch+fuse
-P43,6,Electrical,DIN rail + terminals + fuse holders,"35 mm DIN rail, 20 terminals, 4 x 5x20 fuse holders, end stops",1 set,30,"RS, Farnell",,https://uk.rs-online.com/web/c/?searchTerm=DIN+rail+terminal+block+fuse+holder
-P44,6,Electrical,Control box,ABS or steel enclosure ~300 x 200 x 150 with cable glands,1,30,"RS, CPC",holds the Jetson too,https://uk.rs-online.com/web/c/?searchTerm=ABS+enclosure+300x200x150
-P45,6,Electrical,Wire + ferrules + crimp tool,"0.75 and 1.5 mm2 flexible, ferrule kit",1 set,30,"Amazon UK, CPC",,https://www.amazon.co.uk/s?k=ferrule+crimp+tool+kit
-P46,6,Electrical,Jetson Orin Nano Super (4 GB),you already have it - docs/JETSON_SPECS.md,1,0,-,"runs the app, YOLO and the planner",
-P47,7,Consumables,PETG and PLA filament,1 kg each,2,20,"Amazon UK, 3DJake","brackets, arm parts, model beams",https://www.amazon.co.uk/s?k=PETG+filament+1kg+1.75mm
+P39,5,Enclosure,Polycarbonate sheet 2 mm,"front door, ends and lid (~0.6 m2) - polycarbonate, not acrylic (acrylic shatters)",0.6 m2,35,"plastics stockist, Amazon UK",,https://www.amazon.co.uk/s?k=2mm+polycarbonate+sheet+clear
+P40,5,Enclosure,Hinges + handle,"2 small hinges, 1 handle (20-series)",1 set,12,"Ooznest, Amazon UK",,https://ooznest.co.uk/?s=hinge+20+series&post_type=product
+P41,6,Electrical,24 V power supply,"Mean Well LRS-100-24 (24 V 4.5 A) - motors, controller, safety circuit",1,14,"RS, Farnell",,https://uk.rs-online.com/web/c/?searchTerm=Mean+Well+LRS-100-24
+P42,6,Electrical,IEC mains inlet with switch and fuse,"panel mount, 3 A fuse",1,8,"RS, Farnell",have the mains side checked by a competent person,https://uk.rs-online.com/web/c/?searchTerm=IEC+inlet+switch+fuse
+P43,6,Electrical,DIN rail + terminals + fuse holders,"short 35 mm DIN rail, 12 terminals, 3 x 5x20 fuse holders",1 set,20,"RS, Farnell",,https://uk.rs-online.com/web/c/?searchTerm=DIN+rail+terminal+block+fuse+holder
+P44,6,Electrical,Control box,ABS enclosure ~200 x 160 x 110 with cable glands,1,20,"RS, CPC",holds the Jetson too,https://uk.rs-online.com/web/c/?searchTerm=ABS+enclosure+200x160
+P45,6,Electrical,Wire + ferrules + crimp tool,"0.5 and 0.75 mm2 flexible, ferrule kit",1 set,25,"Amazon UK, CPC",,https://www.amazon.co.uk/s?k=ferrule+crimp+tool+kit
+P46,6,Electrical,Jetson Orin Nano Super (4 GB),you already have it - docs/JETSON_SPECS.md,1,0,-,"runs the app, YOLO, the planner and the arms",
+P47,7,Consumables,PETG and PLA filament,1 kg each,2,20,"Amazon UK, 3DJake","brackets, risers, tray, model beams, arm parts",https://www.amazon.co.uk/s?k=PETG+filament+1kg+1.75mm

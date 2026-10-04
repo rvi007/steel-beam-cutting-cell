@@ -54,7 +54,7 @@ certified safety hardware.</p>
 
 <h2>CAD and the prototype</h2>
 <p>The 3D view is the CAD model - point at anything to see what it is. <b>Section library</b> &rarr; <i>CAD files</i>:
-the whole cell, the 1:5 prototype and the example parts as STEP files (Fusion 360, SolidWorks, FreeCAD, Onshape).
+the whole cell, the 1:10 prototype and the example parts as STEP files (Fusion 360, SolidWorks, FreeCAD, Onshape).
 The prototype's shopping list and build plan: <code>docs/PROTOTYPE.md</code>.</p>
 
 <h2>Keyboard</h2>

@@ -142,9 +142,9 @@ function exportCell() {
 
 const CAD_NAMES = {
   "beam_cell.step": "The whole 12 m cell, full size (every solid named)",
-  "prototype_1to5.step": "The 1:5 desktop prototype - bought parts and printed parts (docs/PROTOTYPE.md)",
+  "prototype_1to10.step": "The 1:10 desk-top prototype - every solid named by part and position (docs/PROTOTYPE.md)",
   "prototype_cut_list.csv": "Prototype: aluminium extrusion cut list",
-  "prototype_parts.csv": "Prototype: every part and what to buy or print",
+  "prototype_positions.csv": "Prototype: every position - part number, what it is, where it goes",
 };
 
 async function renderCad() {

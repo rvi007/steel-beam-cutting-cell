@@ -17,7 +17,7 @@ API (all JSON):
     POST /api/plan                  {parts, stock_length, bar} -> motion plan for one bar
     POST /api/manual/check          {section, length, cuts} -> pieces + UK checks for a manual cut
     POST /api/manual/plan           {section, length, cuts} -> motion plan for the manual cuts
-    GET  /api/prototype             the 1:5 prototype: shopping list with part numbers + every position
+    GET  /api/prototype             the 1:10 prototype: shopping list with part numbers + every position
     GET  /api/cad                   the CAD files in cad/;  GET /cad/<file> downloads one
     POST /api/cad/part              {part} -> STEP solid of the part (needs CadQuery: a PC, not the Jetson)
     GET  /api/jobs, GET/POST /api/jobs/<name>   saved jobs (jobs/ folder); POST /api/jobs-delete/<name> deletes one
@@ -108,7 +108,7 @@ def cad_files():
 
 
 def prototype_info():
-    """The 1:5 prototype: the shopping list (with part numbers) and where every position is."""
+    """The 1:10 prototype: the shopping list (with part numbers) and where every position is."""
     import csv
     with open(os.path.join(ROOT, "docs", "prototype_bom.csv")) as fh:
         bom = list(csv.DictReader(fh))

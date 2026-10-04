@@ -22,7 +22,7 @@ class Files(unittest.TestCase):
     """These run everywhere (the Jetson too): the 3D view and the downloads need these files."""
 
     def test_step_files(self):
-        for rel in ("cad/beam_cell.step", "cad/prototype_1to5.step", "cad/parts/B1.step"):
+        for rel in ("cad/beam_cell.step", "cad/prototype_1to10.step", "cad/parts/B1.step"):
             with open(os.path.join(ROOT, rel)) as fh:
                 head = fh.read(200)
             self.assertTrue(head.startswith("ISO-10303-21"), rel)
@@ -61,7 +61,7 @@ class Files(unittest.TestCase):
         with open(os.path.join(ROOT, "cad", "prototype_cut_list.csv")) as fh:
             rows = fh.read().splitlines()
         self.assertEqual(rows[0], "profile,length_mm,use,quantity")
-        self.assertTrue(any(r.startswith("20x40,1500,top rail,2") for r in rows))
+        self.assertTrue(any(r.startswith("20x20,900,top rail,2") for r in rows))
 
 
 @unittest.skipIf(cad.cq is None, "CadQuery not installed (it's for a PC)")

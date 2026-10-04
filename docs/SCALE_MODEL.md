@@ -20,8 +20,7 @@ The panel tells you the printed size and warns when a wall becomes too thin to p
 
 | Scale | 12 m work area | Cell (with parking) | Rail height | UB 457 beam | Good for |
 |---|---|---|---|---|---|
-| 1:5 | 2400 mm | 2920 x 600 mm | 680 mm | 91 x 38 mm | the working prototype ([PROTOTYPE.md](PROTOTYPE.md)) uses 1:5 with a 1.2 m bed |
-| 1:10 | 1200 mm | 1460 x 300 mm | 340 mm | 45 x 19 mm | a large display model |
+| 1:10 | 1200 mm | 1460 x 300 mm | 340 mm | 45 x 19 mm | the working prototype ([PROTOTYPE.md](PROTOTYPE.md)) - 1:10 with a 600 mm bed |
 | 1:20 | 600 mm | 730 x 150 mm | 170 mm | 23 x 9.5 mm | a desk model, fully 3D printed |
 | 1:25 | 480 mm | 585 x 120 mm | 136 mm | 18 x 7.6 mm | a desk model |
 | 1:50 | 240 mm | 290 x 60 mm | 68 mm | 9 x 3.8 mm | display only (thin parts are fragile) |
@@ -53,9 +52,9 @@ offsets 109 / 95 / 82 mm, torch 400 mm long.
 
 ## 4. A working prototype
 
-For a model that really moves, see **[PROTOTYPE.md](PROTOTYPE.md)**: a 1:5 desktop version
-with its CAD (`cad/prototype_1to5.step`), cut list, shopping list (~£1,900), safety wiring and
-build stages. 1:5 is the scale where small servo arms (SO-101) fit the machine.
+For a model that really moves, see **[PROTOTYPE.md](PROTOTYPE.md)**: a 1:10 desk-top version
+with its CAD (`cad/prototype_1to10.step`), assembly drawing, cut list, shopping list (~£1,100),
+safety wiring and build stages.
 
 This page is for static display models.
 

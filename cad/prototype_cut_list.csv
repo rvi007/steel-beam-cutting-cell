@@ -1,10 +1,9 @@
 profile,length_mm,use,quantity
-20x20,100,bed leg,6
-20x20,300,Z axis,2
-20x20,720,camera post,1
-20x20,1300,bed rail,2
-20x40,580,cross member,4
-20x40,600,upright,6
-20x40,1500,base rail,2
-20x40,1500,top rail,2
-20x60,660,bridge,2
+20x20,200,Z axis,2
+20x20,280,cross member,4
+20x20,300,upright,6
+20x20,340,bridge,2
+20x20,390,camera post,1
+20x20,700,bed rail,2
+20x20,900,base rail,2
+20x20,900,top rail,2

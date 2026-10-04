@@ -19,7 +19,7 @@ someone walks into the cell.
 
 The 3D view **is the CAD model**: the same solids are in `cad/beam_cell.step` (open it in
 Fusion 360, SolidWorks, FreeCAD or Onshape), every part is a STEP solid with its holes and
-notches, and there's a **1:5 working prototype** in CAD with its shopping list
+notches, and there's a **1:10 desk-top prototype** in CAD with its shopping list and assembly drawing
 ([docs/PROTOTYPE.md](docs/PROTOTYPE.md)). Things obey gravity: parts rest on the rollers or
 the outfeed table, offcuts fall into the scrap tray.
 
@@ -35,7 +35,7 @@ prototype: real machines need these functions in certified safety hardware (see
 
 ![The cell: the Handler carries a finished beam to the outfeed table while the Cutter works](docs/images/machine.png)
 
-![The 1:5 prototype in CAD](docs/images/prototype_1to5.png)
+![The 1:10 prototype in CAD, with part numbers](docs/images/assembly_iso.png)
 
 ## Start it
 
@@ -115,7 +115,7 @@ steel-beam-cutting-cell/
 │   │                     scene.js (3D), geometry.js (steel)
 │   ├── models/           the machine for the 3D view (GLB, made by beamcell/cad.py)
 │   └── vendor/           three.js 3D library (MIT licence), kept here so no internet is needed
-├── cad/                  STEP files: beam_cell.step, prototype_1to5.step, parts/*.step, prototype cut list
+├── cad/                  STEP files: beam_cell.step, prototype_1to10.step, parts/*.step, prototype cut list + positions
 ├── examples/nc1/         example NC1 files of typical UK parts (tools/make_examples.py writes them)
 ├── tools/                make_examples.py
 ├── models/               put YOLO .onnx models here (see docs/JETSON_SETUP.md)
@@ -136,7 +136,7 @@ steel-beam-cutting-cell/
 | [docs/UK_CODES.md](docs/UK_CODES.md) | every UK rule it checks and where it comes from |
 | [docs/NC1_FILES.md](docs/NC1_FILES.md) | NC1 files from Tekla: what's read, faces and coordinates |
 | [docs/JETSON_SETUP.md](docs/JETSON_SETUP.md) | running on the Orin, start at boot, kiosk mode, camera, YOLO, memory |
-| [docs/PROTOTYPE.md](docs/PROTOTYPE.md) | **the 1:5 working prototype: CAD, shopping list (~£1,900), safety wiring, build stages** |
+| [docs/PROTOTYPE.md](docs/PROTOTYPE.md) | **the 1:10 desk-top prototype: CAD, shopping list (~£1,100), safety wiring, build stages** |
 | [docs/Prototype_Shopping_List.pdf](docs/Prototype_Shopping_List.pdf) | the shopping list to print: part numbers, total cost, buy links |
 | [docs/Prototype_Assembly.pdf](docs/Prototype_Assembly.pdf) | the prototype's assembly drawing: part-number balloons, exploded view, every position |
 | [docs/prototype_bom.csv](docs/prototype_bom.csv) | the shopping list as a spreadsheet |
@@ -173,7 +173,7 @@ python3 -m beamcell.cad parts my.nc1    # STEP solids of your own NC1 parts
 ## Honest limits
 
 - It's a simulation and a planner, not a machine controller - there are no motor outputs yet
-  (the prototype guide says what's needed: a FluidNC G-code streamer and SO-101 arm maths).
+  (the prototype guide says what's needed: a FluidNC G-code streamer and the small arms' maths).
 - The NC1 face conventions follow the DSTV standard as commonly exported; check one of your
   own Tekla parts against its drawing (see `docs/NC1_FILES.md`).
 - The software stops behave like a real safety system but are not safety-rated - a real machine

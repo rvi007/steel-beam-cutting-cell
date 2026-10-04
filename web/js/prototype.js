@@ -1,4 +1,4 @@
-// Prototype tab: the 1:5 prototype as a 3D assembly. Every solid is named after its part number
+// Prototype tab: the 1:10 prototype as a 3D assembly. Every solid is named after its part number
 // (the shopping-list line, P01 ...) and its position (the copy, P11-2 ...). Balloons show the
 // numbers; click a part or a row to see what it is, where it goes and where to buy it.
 import * as THREE from "three";
