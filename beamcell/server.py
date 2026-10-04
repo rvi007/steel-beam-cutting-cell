@@ -15,6 +15,8 @@ API (all JSON):
     POST /api/part                  {part} -> checks, face outlines, weight
     POST /api/nest                  {parts, stock_length} -> bars
     POST /api/plan                  {parts, stock_length, bar} -> motion plan for one bar
+    POST /api/manual/check          {section, length, cuts} -> pieces + UK checks for a manual cut
+    POST /api/manual/plan           {section, length, cuts} -> motion plan for the manual cuts
     GET  /api/jobs, GET/POST /api/jobs/<name>   saved jobs (jobs/ folder)
     GET  /api/camera, POST /api/camera, GET /camera.mjpg   camera + person detection
     GET  /api/safety                safety controller status
@@ -36,7 +38,7 @@ import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlparse
 
-from beamcell import assistant, collisions, machine, nc1, sections as S, uk_codes as UK
+from beamcell import assistant, collisions, machine, manual, nc1, sections as S, uk_codes as UK
 from beamcell.config import CONFIG, problems as config_problems
 from beamcell.gpio_inputs import GpioInputs
 from beamcell.parts import Part, nest_all
@@ -96,14 +98,39 @@ def plan_bar(body):
     if not bars:
         return {"error": "nothing to cut - add parts (that fit the bar and have no errors)"}
     i = max(0, min(int(body.get("bar", 0)), len(bars) - 1))
-    bar = bars[i]
+    return plan_output(bars[i], body, i, len(bars))
+
+
+def manual_check(body):
+    bar, problems = manual.build(body.get("section", ""), body.get("length", 12000), body.get("cuts", []))
+    pieces = [] if bar is None else [
+        {"mark": bar.parts[pl["part"]].mark, "x0": pl["x0"], "x1": pl["x1"], "length": round(pl["x1"] - pl["x0"], 1),
+         "keep": pl["keep"], "scrap": pl["scrap"], "weight": round(bar.parts[pl["part"]].weight, 1)}
+        for pl in bar.placements]
+    return {"problems": problems, "pieces": pieces, "ok": bar is not None and not any(p["level"] == "error" for p in problems)}
+
+
+def manual_plan(body):
+    bar, problems = manual.build(body.get("section", ""), body.get("length", 12000), body.get("cuts", []))
+    errors = [p for p in problems if p["level"] == "error"]
+    if bar is None or errors:
+        return {"error": "fix these first: " + "; ".join(f"{p['item']}: {p['text']}" for p in errors), "problems": problems}
+    if not body.get("cuts"):
+        return {"error": "add at least one cut", "problems": problems}
+    out = plan_output(bar, body, 0, 1)
+    out["manual"] = True
+    out["problems"] = problems
+    return out
+
+
+def plan_output(bar, body, i, count):
     t0 = time.time()
     plan = Plan(bar).build()
     planned = time.time() - t0
     hits = collisions.check_plan(plan, step=0.4) if body.get("check", True) else []
     out = plan.to_json()
     out.update({
-        "bar_index": i, "bar_count": len(bars), "bar": bar.to_dict(),
+        "bar_index": i, "bar_count": count, "bar": bar.to_dict(),
         "placements": [dict(part_view(bar.parts[pl["part"]]), x0=pl["x0"], x1=pl["x1"]) for pl in bar.placements],
         "stock_section": dict(S.summary(bar.parts[0].sec), outline=S.outline(bar.parts[0].sec)[0],
                               plates=S.plates(bar.parts[0].sec)) if bar.parts else None,
@@ -216,6 +243,10 @@ class Handler(BaseHTTPRequestHandler):
                 bars = nest_all(parts_from(body), float(body.get("stock_length", 12000)))
                 return self._send(200, [dict(b.to_dict(), marks=[b.parts[pl["part"]].mark for pl in b.placements])
                                         for b in bars])
+            if path == "/api/manual/check":
+                return self._send(200, manual_check(body))
+            if path == "/api/manual/plan":
+                return self._send(200, manual_plan(body))
             if path == "/api/plan":
                 return self._send(200, plan_bar(body))
             if path.startswith("/api/jobs/"):

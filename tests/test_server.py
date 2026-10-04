@@ -53,6 +53,18 @@ class Server(unittest.TestCase):
         self.assertEqual(plan["bar"]["section"], "UB 305x165x40")
         self.assertIn("ST", self.post("/api/nc1/export", {"part": t1["part"]}, raw=True))
 
+    def test_manual_cut(self):
+        job = {"section": "UB 305x165x40", "length": 4000,
+               "cuts": [{"type": "cut", "x": 2000}, {"type": "hole", "face": "v", "x": 1000, "d": 22}]}
+        ck = self.post("/api/manual/check", job)
+        self.assertTrue(ck["ok"])
+        self.assertEqual([p["keep"] for p in ck["pieces"]], [False, True])
+        plan = self.post("/api/manual/plan", job)
+        self.assertTrue(plan["manual"])
+        self.assertEqual(plan["collisions"], 0)
+        bad = self.post("/api/manual/plan", dict(job, cuts=[{"type": "cut", "x": 9000}]))
+        self.assertIn("outside the bar", bad["error"])
+
     def test_safety_flow(self):
         st = self.post("/api/safety/tick", {"client": "test"})
         self.assertIn(st["state"], ("NOT_RESET", "READY", "ESTOP", "FAULT"))

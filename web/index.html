@@ -33,11 +33,16 @@
   <!-- ============================================================ MACHINE -->
   <section id="tab-cell" class="tab on">
     <aside class="side">
-      <h2>Job</h2>
-      <div id="job-summary" class="muted"></div>
-      <label class="row">Stock length <select id="stock-length"></select></label>
-      <h3>Bars <span class="muted small">(click one to cut it)</span></h3>
-      <div id="bars"></div>
+      <div class="seg-toggle" role="tablist" title="Cut a job from parts / NC1 files, or cut by hand">
+        <button id="mode-job" class="on">Job (parts / NC1)</button><button id="mode-manual">Manual cut</button></div>
+      <div id="job-panel">
+        <h2>Job</h2>
+        <div id="job-summary" class="muted"></div>
+        <label class="row">Stock length <select id="stock-length"></select></label>
+        <h3>Bars <span class="muted small">(click one to cut it)</span></h3>
+        <div id="bars"></div>
+      </div>
+      <div id="manual-panel" hidden></div>
       <button id="btn-plan" class="primary big">Plan this bar</button>
       <div id="plan-info"></div>
       <div id="plan-warnings"></div>
