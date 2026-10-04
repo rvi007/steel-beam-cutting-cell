@@ -55,7 +55,15 @@ def situation(safety, playback=None, camera=None):
     elif st == "NOT_RESET":
         lines.append("Waiting for Reset.")
     elif st == "READY":
-        lines.append("Reset done - ready to start." + ("" if safety["checklist_ok"] else " Confirm the pre-start checklist first."))
+        job = safety.get("job")
+        if job and job["state"] == "finished":
+            lines.append(f"Job '{job['name']}' finished. Clear the outfeed table and scrap tray, then clear the job "
+                         "or load the next one - the next run needs the checklist again.")
+        elif not job:
+            lines.append("Reset done - plan a job on the Machine tab.")
+        else:
+            lines.append(f"Reset done - ready to start '{job['name']}'." +
+                         ("" if safety["checklist_ok"] else " Confirm the pre-start checklist for this job first."))
     elif st == "PAUSED":
         lines.append("Paused - press Start to carry on.")
     elif st == "RUNNING":

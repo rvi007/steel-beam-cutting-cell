@@ -1,7 +1,7 @@
 // Parts tab: the part list, NC1 import, the part editor (UK bolts, notches, mitres) and a
 // 2D drawing of every face with the code checks.
 import { get, post, download } from "./api.js";
-import { app, jobChanged, toast, saveLocal } from "./app.js";
+import { app, jobChanged, toast, saveLocal, clearJob } from "./app.js";
 import { holeOutline } from "./geometry.js";
 
 const $ = (id) => document.getElementById(id);
@@ -382,13 +382,33 @@ export async function initParts() {
     await jobChanged();
     renderEditor();
   };
-  $("btn-clear-job").onclick = () => { if (confirm("Remove every part from this job?")) { app.job.parts = []; jobChanged().then(renderEditor); } };
+  $("btn-clear-job").onclick = () => clearJob();
+  $("job-delete").onchange = async (e) => {
+    const name = e.target.value;
+    e.target.value = "";
+    if (!name || !confirm(`Delete the saved job "${name}" (jobs/${name}.json)? This can't be undone.`)) return;
+    await post("/api/jobs-delete/" + encodeURIComponent(name), {});
+    toast(`Deleted saved job "${name}"`);
+    refreshJobs();
+  };
   refreshJobs();
   renderEditor();
 }
 
 async function refreshJobs() {
-  const sel = $("job-open");
-  sel.length = 1;
-  for (const j of await get("/api/jobs")) sel.add(new Option(j, j));
+  const names = await get("/api/jobs");
+  for (const id of ["job-open", "job-delete"]) {
+    const sel = $(id);
+    sel.length = 1;
+    for (const j of names) sel.add(new Option(j, j));
+  }
+}
+
+// Remove every part from the job (asks first unless told not to). Used by "Clear all" here and
+// "Clear job" on the Machine tab / the Job finished window.
+export async function clearAllParts() {
+  app.job.parts = [];
+  selected = 0;
+  await jobChanged();
+  renderEditor();
 }

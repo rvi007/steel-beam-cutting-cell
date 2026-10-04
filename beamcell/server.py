@@ -19,12 +19,12 @@ API (all JSON):
     POST /api/manual/plan           {section, length, cuts} -> motion plan for the manual cuts
     GET  /api/cad                   the CAD files in cad/;  GET /cad/<file> downloads one
     POST /api/cad/part              {part} -> STEP solid of the part (needs CadQuery: a PC, not the Jetson)
-    GET  /api/jobs, GET/POST /api/jobs/<name>   saved jobs (jobs/ folder)
+    GET  /api/jobs, GET/POST /api/jobs/<name>   saved jobs (jobs/ folder); POST /api/jobs-delete/<name> deletes one
     GET  /api/camera, POST /api/camera, GET /camera.mjpg   camera + person detection
     GET  /api/camera/devices        the cameras Linux can see
     GET  /api/safety                safety controller status
     POST /api/safety/<action>       tick (watchdog + hold-to-run), estop, release, reset, start,
-                                    stop, finished, mode, checklist, input
+                                    stop, finished, mode, checklist, input, job {name}, clear-job
     GET  /api/situation             plain-English "what's happening" (no AI)
     POST /api/assistant             {question} -> optional AI advisor (advisory only)
     GET  /api/config                settings from config/cell.toml and any problems in them
@@ -306,6 +306,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, part_step(body))
             if path == "/api/plan":
                 return self._send(200, plan_bar(body))
+            if path.startswith("/api/jobs-delete/"):
+                name = _safe_name(os.path.basename(path))
+                os.remove(os.path.join(JOBS, name + ".json"))
+                return self._send(200, {"deleted": name})
             if path.startswith("/api/jobs/"):
                 name = _safe_name(os.path.basename(path))
                 os.makedirs(JOBS, exist_ok=True)
@@ -343,6 +347,9 @@ class Handler(BaseHTTPRequestHandler):
             SAFETY.stop(who, body.get("reason", "stop button"))
         elif action == "finished":
             SAFETY.finished()
+        elif action in ("job", "clear-job"):
+            ok, why = SAFETY.load_job(body.get("name", "job"), who) if action == "job" else SAFETY.clear_job(who)
+            return self._send(200, dict(SAFETY.status(), ok=ok, why=why))
         elif action == "mode":
             SAFETY.set_mode(body["mode"], bool(body.get("lockout_confirmed")))
         elif action == "checklist":

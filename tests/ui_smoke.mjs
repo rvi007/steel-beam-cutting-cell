@@ -55,7 +55,7 @@ if (await page.evaluate(() => app.t > 0)) fail("machine moved without Reset and 
 await page.click(".tabs button[data-tab=safety]");
 await page.click("[data-mode=AUTO]");                     // the server may still be in another mode
 await page.waitForTimeout(300);
-await page.click("#sf-reset");
+if (await page.isEnabled("#sf-reset")) await page.click("#sf-reset");
 for (const box of await page.$$("[data-ck]")) await box.check();
 await page.click("#sf-check-ok");
 await untilState("READY");
@@ -120,6 +120,17 @@ for (const t of [0.3, 0.6, 1.0]) {
   await page.waitForTimeout(400);
 }
 await shot("2c_finished", true);
+
+// a finished job: the "Job finished" window, the checklist is needed again, Clear the job deletes it
+await until("no Job finished window", () => document.getElementById("job-done").open, null, 30000);
+const done = await state();
+if (!done.job || done.job.state !== "finished" || done.checklist_ok) fail("finished job: " + JSON.stringify(done.job) + " checklist " + done.checklist_ok);
+const again = await page.evaluate(() => fetch("/api/safety/start", { method: "POST", body: "{}" }).then((r) => r.json()));
+if (again.ok) fail("a finished job restarted without a new checklist");
+await shot("2d_job_done");
+await page.click("#jd-clear");
+await until("job not cleared", () => app.job.parts.length === 0 && !app.plan);
+if ((await state()).job) fail("the safety controller still has the cleared job");
 
 // import an NC1 file through the file picker
 await page.click(".tabs button[data-tab=parts]");
@@ -205,5 +216,5 @@ for (const tab of ["camera", "help", "safety", "cell"]) {
   await page.waitForTimeout(500);
 }
 if (errors.length) fail("JavaScript errors:\n" + errors.join("\n"));
-console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; NC1 import; editor checks; manual cut (click, check, plan); CAD model + files; STL ${fs.statSync(file).size} bytes`);
+console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; job finished -> checklist again, clear job; NC1 import; editor checks; manual cut (click, check, plan); CAD model + files; STL ${fs.statSync(file).size} bytes`);
 await browser.close();

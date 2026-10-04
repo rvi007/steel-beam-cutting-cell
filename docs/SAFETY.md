@@ -67,14 +67,21 @@ happened.
 
 ## 4. Operating procedure (what the screens enforce)
 
-1. **Pre-start checklist** - tick every item and confirm (fence/gate, walk-round, extraction,
-   E-stop test, screens + PPE, extinguisher, magnet inspection).
-2. **Reset** (blue lamp blinking = reset needed). Refused until every cause is gone.
-3. **Start** (or Run on the Machine tab). Green lamp = running at full speed; amber = reduced
+1. **Plan a job** (a bar, or manual cuts). The safety controller won't start without one.
+2. **Pre-start checklist for that job** - tick every item and confirm (table and scrap tray
+   cleared, fence/gate, walk-round, extraction, E-stop test, screens + PPE, extinguisher, magnet).
+   **Every job needs its own checklist**: when a job finishes (or one that ran is swapped for
+   another) the checklist is cleared, because the cell has changed - parts on the outfeed
+   table, offcuts in the tray, someone may have gone in.
+3. **Reset** (blue lamp blinking = reset needed). Refused until every cause is gone.
+4. **Start** (or Run on the Machine tab). Green lamp = running at full speed; amber = reduced
    speed or paused; red = stopped.
-4. Any stop latches. Find the cause, clear it, **Reset**, then **Start**.
-5. Teaching or checking inside the fence: **Manual** mode - 250 mm/s and hold-to-run.
-6. Maintenance: **Maintenance** mode + isolate + padlock (LOTO). After maintenance, the
+5. **Job finished**: the screen asks what next - *Next bar*, *Run this job again*, *Clear the
+   job* (deletes its parts / manual cuts and its plan) or *Keep it*. Saved jobs can be deleted on
+   the Parts tab. A job can't be swapped or cleared while the machine runs.
+6. Any stop latches. Find the cause, clear it, **Reset**, then **Start**.
+7. Teaching or checking inside the fence: **Manual** mode - 250 mm/s and hold-to-run.
+8. Maintenance: **Maintenance** mode + isolate + padlock (LOTO). After maintenance, the
    checklist must be confirmed again.
 
 Every event is written with a time stamp to `logs/safety_log.jsonl` (and shown on the Safety tab).

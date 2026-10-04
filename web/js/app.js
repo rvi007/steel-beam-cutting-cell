@@ -4,12 +4,12 @@ import { get, post } from "./api.js";
 import { CellScene } from "./scene.js";
 import { trackAt } from "./kinematics.js";
 import { MAT, partGroup, stockMesh, disposeGroup } from "./geometry.js";
-import { initParts, renderPartList } from "./parts.js";
+import { initParts, renderPartList, clearAllParts } from "./parts.js";
 import { initLibrary } from "./library.js";
 import { initCamera } from "./camera.js";
 import { initHelp } from "./help.js";
-import { initSafety, safety, connected, startMachine, stopMachine, jobFinished } from "./safety.js";
-import { initManual, manual, manualPreview, planManual } from "./manual.js";
+import { initSafety, safety, connected, startMachine, stopMachine, jobFinished, loadJob, clearSafetyJob } from "./safety.js";
+import { initManual, manual, manualPreview, planManual, render as renderManual } from "./manual.js";
 
 export const app = {
   info: null, sections: null, job: { stock_length: 12000, parts: [] }, bars: [], barIndex: 0,
@@ -111,6 +111,8 @@ export function loadPlan(plan) {
   if (app.playing) stopMachine("new plan loaded");
   app.plan = plan;
   app.t = 0;
+  plan.jobName = jobName(plan);
+  loadJob(plan.jobName).then(showJobNow);
   const s = plan.summary;
   $("plan-info").innerHTML = `<table>
     <tr><td>Cycle time</td><td><b>${fmtTime(s.duration_s)}</b></td></tr>
@@ -260,6 +262,57 @@ function updateSteel(t) {
   }
 }
 
+// ---------------------------------------------------------------- jobs and safety
+// A job = one planned bar (or a set of manual cuts). The safety controller knows which job is
+// loaded; each one needs its own pre-start checklist, and a finished job asks what to do next.
+function jobName(plan) {
+  const name = ($("job-name") && $("job-name").value.trim()) || "Job";
+  return plan.manual ? `Manual cuts - ${plan.bar.section} x ${plan.bar.length} mm`
+    : `${name} - bar ${plan.bar_index + 1} of ${plan.bar_count} (${plan.bar.section})`;
+}
+
+function showJobNow() {
+  const st = safety.status, el = $("job-now");
+  if (!el) return;
+  const job = st && st.job;
+  el.innerHTML = job ? `Loaded: <b>${job.name}</b> &middot; ${job.state === "finished" ? "finished" : job.state}
+    &middot; checklist ${st.checklist_ok ? '<span class="good">done</span>' : '<span class="warn">needed</span>'}
+    <button id="btn-job-clear" class="danger mini" title="Delete this job">Clear job</button>` : "No job loaded - plan a bar.";
+  if ($("btn-job-clear")) $("btn-job-clear").onclick = () => clearJob();
+}
+setInterval(showJobNow, 1000);
+
+let finishing = false;
+async function finishJob() {
+  if (finishing) return;
+  finishing = true;
+  await jobFinished();
+  const plan = app.plan, dlg = $("job-done");
+  $("job-done-what").innerHTML = `<p><b>${plan.jobName}</b><br>${plan.summary.parts} ${plan.manual ? "piece(s)" : "part(s)"} cut in ${fmtTime(plan.summary.duration_s)}.</p>`;
+  const more = !plan.manual && plan.bar_index + 1 < plan.bar_count;
+  $("jd-next").hidden = !more;
+  $("jd-next").textContent = more ? `Next bar (${plan.bar_index + 2} of ${plan.bar_count})` : "Next bar";
+  $("jd-next").onclick = async () => { dlg.close(); app.barIndex = plan.bar_index + 1; clearPlan(); renderBars(); await planBar(); toast("Next bar planned - confirm the checklist (Safety tab), then Run"); };
+  $("jd-again").onclick = () => { dlg.close(); app.t = 0; loadJob(plan.jobName); updateTransport(); toast("Ready to run again - confirm the checklist first (Safety tab)"); };
+  $("jd-clear").onclick = async () => { dlg.close(); await clearJob(true); };
+  $("jd-keep").onclick = () => dlg.close();
+  dlg.onclose = () => { finishing = false; };
+  if (!dlg.open) dlg.showModal();
+}
+
+// Delete the current job: its parts (or manual cuts), its plan, and the job in the safety controller.
+export async function clearJob(confirmed = false) {
+  if (safety.status && safety.status.state === "RUNNING") return toast("Stop the machine before clearing the job", true);
+  const what = manual.on ? "all the manual cuts" : "every part in this job";
+  if (!confirmed && !confirm(`Clear the job? This removes ${what} and its plan.`)) return;
+  await clearSafetyJob();
+  if (manual.on) { manual.job.cuts = []; try { localStorage.setItem("manual", JSON.stringify(manual.job)); } catch (e) { /* blocked */ } renderManual(); }
+  else await clearAllParts();
+  clearPlan();
+  showJobNow();
+  toast("Job cleared");
+}
+
 // ---------------------------------------------------------------- playback
 function stepAt(t, who) {
   let text = who === "Handler" ? "waiting" : "ready";
@@ -310,8 +363,8 @@ function frame(now) {
   } else app.motion = Math.min(target, app.motion + dt / 0.4);
   if (plan && app.motion > 0) {
     app.t = Math.min(app.t + dt * app.speed * app.motion, plan.summary.duration_s);
-    if (app.t >= plan.summary.duration_s && st.state === "RUNNING") jobFinished();
   }
+  if (plan && app.t >= plan.summary.duration_s && st && st.state === "RUNNING") finishJob();
   if (plan) {
     for (const key of ["cutter", "handler"]) scene.pose(key, ...trackAt(plan.tracks[key], app.t));
     updateSteel(app.t);
