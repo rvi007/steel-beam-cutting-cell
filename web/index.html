@@ -6,7 +6,7 @@
 <title>Beam Cutting Cell</title>
 <link rel="stylesheet" href="css/style.css">
 <script type="importmap">
-{ "imports": { "three": "./vendor/three.module.min.js", "orbit": "./vendor/OrbitControls.js", "stl": "./vendor/STLExporter.js", "room": "./vendor/RoomEnvironment.js" } }
+{ "imports": { "three": "./vendor/three.module.min.js", "orbit": "./vendor/OrbitControls.js", "stl": "./vendor/STLExporter.js", "room": "./vendor/RoomEnvironment.js", "gltf": "./vendor/GLTFLoader.js" } }
 </script>
 </head>
 <body>
@@ -70,6 +70,7 @@
         <button id="btn-release" hidden>Release E-stop</button>
         <button id="btn-safety-reset">Reset</button>
       </div>
+      <div id="hover-label" class="hover-label" hidden></div>
       <div id="loading" class="loading" hidden>Planning both hands&hellip;</div>
     </div>
     <footer class="transport">
@@ -128,6 +129,10 @@
         <div id="stl-size" class="muted small"></div>
         <button id="btn-stl" class="primary">Download section STL</button>
         <button id="btn-stl-cell">Download whole machine STL</button>
+      </div>
+      <div class="box">
+        <h3>CAD files (STEP) <span class="muted small">open in Fusion 360, SolidWorks, FreeCAD, Onshape</span></h3>
+        <div id="cad-files" class="cad-files muted small">loading&hellip;</div>
       </div>
     </div>
   </section>

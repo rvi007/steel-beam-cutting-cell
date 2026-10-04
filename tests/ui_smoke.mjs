@@ -38,6 +38,7 @@ if (process.env.CI) await page.addInitScript(() => localStorage.setItem("quality
 
 await page.goto(base, { waitUntil: "load" });   // the safety check-in never lets the network go idle
 await page.waitForFunction(() => window.app && window.app.bars && window.app.bars.length > 0, null, { timeout: 30000 });
+await until("the machine's CAD model (web/models/*.glb) didn't load", () => app.scene.loaded, null, 60000);
 await shot("1_start");
 
 // the machine can't run until Reset + checklist (like a real machine)
@@ -136,6 +137,7 @@ await page.click(".tabs button[data-tab=library]");
 await page.fill("#lib-search", "203x203x46");
 await page.click("#lib-list tbody tr");
 await page.waitForTimeout(800);
+await until("CAD file list", () => document.getElementById("cad-files").textContent.includes("beam_cell.step"));
 const [download] = await Promise.all([page.waitForEvent("download"), page.click("#btn-stl")]);
 const file = await download.path();
 if (fs.statSync(file).size < 1000) fail("STL too small");
@@ -198,5 +200,5 @@ for (const tab of ["camera", "help", "safety", "cell"]) {
   await page.waitForTimeout(500);
 }
 if (errors.length) fail("JavaScript errors:\n" + errors.join("\n"));
-console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; NC1 import; editor checks; manual cut (click, check, plan); STL ${fs.statSync(file).size} bytes`);
+console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; NC1 import; editor checks; manual cut (click, check, plan); CAD model + files; STL ${fs.statSync(file).size} bytes`);
 await browser.close();

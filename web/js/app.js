@@ -341,6 +341,9 @@ async function start() {
     window.dispatchEvent(new Event("resize"));
   }));
   app.scene = new CellScene($("cell-canvas"), app.info.machine);
+  try { await app.scene.load(); }
+  catch (e) { console.warn(e); toast("The machine's 3D model files are missing (web/models) - run: python3 -m beamcell.cad cell", true); }
+  hoverLabels();
   document.querySelectorAll(".views button").forEach((b) => (b.onclick = () => app.scene.view(b.dataset.view)));
   document.querySelectorAll(".speeds button").forEach((b) => (b.onclick = () => {
     app.speed = +b.dataset.speed;
@@ -389,6 +392,30 @@ async function start() {
   requestAnimationFrame(frame);
   memoryPill();
   setInterval(memoryPill, 15000);
+}
+
+// point at anything in the 3D view to see what it is (the CAD model's labels)
+function hoverLabels() {
+  const canvas = $("cell-canvas"), tip = $("hover-label");
+  let pending = null, buttons = 0;
+  canvas.addEventListener("pointerdown", (e) => { buttons = e.buttons; tip.hidden = true; });
+  canvas.addEventListener("pointerup", () => { buttons = 0; });
+  canvas.addEventListener("pointerleave", () => { tip.hidden = true; });
+  canvas.addEventListener("pointermove", (e) => {
+    if (buttons || pending) return;
+    pending = setTimeout(() => {
+      pending = null;
+      const r = canvas.getBoundingClientRect();
+      const ndc = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      const label = app.scene.labelAt(ndc);
+      tip.hidden = !label;
+      if (label) {
+        tip.textContent = label;
+        tip.style.left = `${e.clientX - r.left + 14}px`;
+        tip.style.top = `${e.clientY - r.top + 12}px`;
+      }
+    }, 120);
+  });
 }
 
 async function memoryPill() {
