@@ -300,10 +300,12 @@ function frame(now) {
   // motion only when the safety controller allows it, at the speed it allows;
   // category 0 (E-stop) stops at once, category 1/2 slow down over 0.6 s
   const st = safety.status;
-  const allowed = plan && st && st.may_move && connected() && !safety.estopLocal;
+  // Manual mode: letting go of "Hold to move" stops at once, here - not when the server next answers
+  const released = st && st.mode === "MANUAL" && !safety.holding;
+  const allowed = plan && st && st.may_move && connected() && !safety.estopLocal && !released;
   const target = allowed ? st.speed_factor : 0;
   if (target < app.motion) {
-    const instant = !st || !connected() || safety.estopLocal || st.stop_category === 0 || st.state === "ESTOP";
+    const instant = !st || !connected() || safety.estopLocal || released || st.stop_category === 0 || st.state === "ESTOP";
     app.motion = instant ? target : Math.max(target, app.motion - dt / 0.6);
   } else app.motion = Math.min(target, app.motion + dt / 0.4);
   if (plan && app.motion > 0) {

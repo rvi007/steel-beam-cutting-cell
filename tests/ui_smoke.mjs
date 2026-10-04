@@ -100,6 +100,8 @@ await untilState("READY");
 await page.click("#sf-start");
 await untilState("RUNNING");
 await page.click(".tabs button[data-tab=cell]");
+const manualSt = await state();
+if (manualSt.state !== "RUNNING" || manualSt.latched.length) fail("Manual mode didn't start: " + manualSt.state + " " + manualSt.latched.map((f) => f.code).join(", "));
 const t2 = await page.evaluate(() => app.t);
 await page.waitForTimeout(700);
 if ((await page.evaluate(() => app.t)) !== t2) fail("Manual mode moved without hold-to-run");
@@ -110,7 +112,7 @@ await page.mouse.down();
 await page.waitForTimeout(1500);
 await page.mouse.up();
 const t3 = await page.evaluate(() => app.t);
-if (!(t3 > t2)) fail("hold-to-run didn't move");
+if (!(t3 > t2)) { const st2 = await state(); fail("hold-to-run didn't move: " + st2.state + " " + st2.latched.map((f) => f.code).join(", ")); }
 await page.waitForTimeout(800);
 if ((await page.evaluate(() => app.t)) - t3 > 0.5) fail("kept moving after letting go");
 for (const t of [0.3, 0.6, 1.0]) {

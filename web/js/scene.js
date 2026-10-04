@@ -312,6 +312,25 @@ export class CellScene {
       this.camera.position.add(delta);
     }
     this.controls.update();
+    const t0 = performance.now();
     this.renderer.render(this.scene, this.camera);
+    this._adapt(performance.now() - t0);
+  }
+
+  // Slow computer (or no GPU)? Draw fewer pixels, then drop shadows, so the page stays responsive -
+  // the safety heartbeat comes from this page, and a frozen page stops the machine.
+  _adapt(ms) {
+    this.frameMs = this.frameMs === undefined ? ms : this.frameMs * 0.9 + ms * 0.1;
+    if (this.frameMs < 120 || performance.now() - (this.adapted || 0) < 2000) return;
+    this.adapted = performance.now();
+    if (this.renderer.shadowMap.enabled) {
+      this.renderer.shadowMap.enabled = false;
+      this.scene.traverse((o) => { if (o.material) o.material.needsUpdate = true; });
+    } else if (this.renderer.getPixelRatio() > 0.45) {
+      this.renderer.setPixelRatio(this.renderer.getPixelRatio() * 0.7);
+      this.resize();
+    } else return;
+    console.info(`3D view: frames took ${Math.round(this.frameMs)} ms - lowered the quality to keep the page responsive`);
+    this.frameMs = 60;
   }
 }
