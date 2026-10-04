@@ -63,6 +63,8 @@ class SafetyController:
         self.inputs = {"gate_closed": True, "curtain_clear": True, "extraction_on": True}
         self.input_source = {"gate_closed": "simulated", "curtain_clear": "simulated", "extraction_on": "simulated"}
         self.checklist_ok = False
+        self.checklist_for = None               # the job the checklist was confirmed for (None: the next job)
+        self.job = None                         # {"name", "state": loaded|running|finished, "started", "runs"}
         self.gpio_ok = True
         self.enable_until = 0.0                 # hold-to-run: enable valid until this time
         self.last_beat = None
@@ -128,7 +130,41 @@ class SafetyController:
     def confirm_checklist(self, who="operator"):
         with self.lock:
             self.checklist_ok = True
-            self._event(f"pre-start checklist confirmed by {who}")
+            self.checklist_for = self.job["name"] if self.job else None
+            self._event(f"pre-start checklist confirmed by {who}" + (f" for job '{self.job['name']}'" if self.job else ""))
+
+    # ---------------------------------------------------------------- jobs: every job gets its own checklist
+    def load_job(self, name, who="screen"):
+        """A job (a planned bar, or manual cuts) is loaded. The checklist done for an earlier job that
+        ran doesn't count: the cell has changed (parts on the table, scrap in the tray)."""
+        with self.lock:
+            if self.state == "RUNNING":
+                return False, ["stop the machine before loading another job"]
+            name = str(name)[:120] or "job"
+            prev = self.job
+            same = prev is not None and prev["name"] == name and prev["state"] != "finished"
+            if not same:
+                if self.checklist_ok and prev and prev["started"]:     # the last job ran: walk round again
+                    self.checklist_ok = False
+                    self.checklist_for = None
+                self.job = {"name": name, "state": "loaded", "started": False, "runs": 0, "loaded_at": time.time()}
+                if self.checklist_ok:                       # nothing has run since it was confirmed: it carries over
+                    self.checklist_for = name
+                self._event(f"job loaded: '{name}'" + ("" if self.checklist_ok else " - confirm the pre-start checklist for it"))
+            return True, []
+
+    def clear_job(self, who="screen"):
+        """The operator deletes the current job."""
+        with self.lock:
+            if self.state == "RUNNING":
+                return False, ["stop the machine before clearing the job"]
+            if self.job:
+                self._event(f"job cleared by {who}: '{self.job['name']}'")
+                if self.job["started"]:
+                    self.checklist_ok = False
+                    self.checklist_for = None
+            self.job = None
+            return True, []
 
     # ---------------------------------------------------------------- commands
     def set_mode(self, mode, lockout_confirmed=False):
@@ -146,6 +182,7 @@ class SafetyController:
             if mode == MAINTENANCE:
                 self.state = "ISOLATED"
                 self.checklist_ok = False
+                self.checklist_for = None
                 self._event("MAINTENANCE: machine isolated and locked off", "warn")
             else:
                 self.state = "NOT_RESET"
@@ -176,8 +213,10 @@ class SafetyController:
                 why.append("machine is isolated for maintenance")
             if self.state in ("ESTOP", "FAULT", "NOT_RESET"):
                 why.append("press Reset first")
-            if not self.checklist_ok:
-                why.append("confirm the pre-start checklist")
+            if self.job is None:
+                why.append("plan a job first (Machine tab)")
+            elif not self.checklist_ok:
+                why.append(f"confirm the pre-start checklist for this job ('{self.job['name']}')")
             why += [b for b in self._reset_blockers() if b not in why]
             if why:
                 self._event("start refused: " + "; ".join(why), "warn")
@@ -185,7 +224,10 @@ class SafetyController:
             if self.state != "RUNNING":
                 self.state = "RUNNING"
                 self.stop_category = None
-                self._event(f"START ({self.mode}) by {who}")
+                if self.job["state"] != "running":
+                    self.job["runs"] += 1
+                self.job.update(state="running", started=True)
+                self._event(f"START ({self.mode}) by {who}: '{self.job['name']}'")
             return True, []
 
     def stop(self, who="panel", reason="stop button"):
@@ -197,10 +239,17 @@ class SafetyController:
                 self._event(f"stop ({reason}) by {who}")
 
     def finished(self):
+        """The job ran to the end. The next run - of this job or another - needs a new checklist:
+        the outfeed table must be cleared, the scrap tray emptied, the cell walked round."""
         with self.lock:
             if self.state in ("RUNNING", "PAUSED"):
                 self.state = "READY"
-                self._event("job finished")
+            if self.job and self.job["state"] != "finished":
+                self.job["state"] = "finished"
+                self.checklist_ok = False
+                self.checklist_for = None
+                self._event(f"job finished: '{self.job['name']}' - clear the outfeed table and scrap tray, "
+                            "then confirm the checklist before the next job")
 
     def tick(self, client="screen", enable=False, playback=None):
         """The operator screen checks in (watchdog) and, in Manual, holds the enable button."""
@@ -315,6 +364,7 @@ class SafetyController:
                 "inputs": dict(self.inputs), "input_source": dict(self.input_source),
                 "camera": {k: cam.get(k) for k in ("enabled", "in_warning", "in_danger", "people", "detector")},
                 "checklist_ok": self.checklist_ok, "checklist": self.cfg["checklist"],
+                "checklist_for": self.checklist_for, "job": dict(self.job) if self.job else None,
                 "can_reset": not blockers and self.mode != MAINTENANCE, "reset_blockers": blockers,
                 "lamps": lamps, "events": list(self.events)[:40],
                 "safety_distance": safety_distance(self.cfg["light_curtain"]),

@@ -38,6 +38,9 @@ export async function estop() {
 export const startMachine = () => act("start");
 export const stopMachine = (reason) => act("stop", { reason });
 export const jobFinished = () => act("finished");
+// every planned job is registered with the safety controller: each one needs its own checklist
+export const loadJob = (name) => act("job", { name });
+export const clearSafetyJob = () => act("clear-job");
 
 function accept(st) {
   safety.status = st;
@@ -89,7 +92,9 @@ function render(st) {
   $("sf-start").disabled = !(st.state === "READY" || st.state === "PAUSED");
   $("sf-stop").disabled = st.state !== "RUNNING";
   document.querySelectorAll("#sf-modes button").forEach((b) => b.classList.toggle("on", b.dataset.mode === st.mode));
-  $("sf-check-state").innerHTML = st.checklist_ok ? '<span class="good">&#10003; confirmed</span>' : '<span class="warn">not confirmed yet</span>';
+  const job = st.job ? `'${st.job.name}'` : "the next job";
+  $("sf-check-state").innerHTML = st.checklist_ok ? `<span class="good">&#10003; confirmed for ${job}</span>`
+    : `<span class="warn">needed for ${job}${st.job && st.job.state === "finished" ? " - the last job finished: clear the table and tray first" : ""}</span>`;
   const inputs = [["gate_closed", "Gate", "closed", "OPEN"], ["curtain_clear", "Light curtain", "clear", "BROKEN"],
     ["extraction_on", "Fume extraction", "on", "OFF"]];
   $("sf-inputs").innerHTML = inputs.map(([k, name, good, bad]) => {

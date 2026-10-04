@@ -42,6 +42,7 @@
         <h3>Bars <span class="muted small">(click one to cut it)</span></h3>
         <div id="bars"></div>
       </div>
+      <div id="job-now" class="job-now muted small"></div>
       <div id="manual-panel" hidden></div>
       <button id="btn-plan" class="primary big">Plan this bar</button>
       <div id="plan-info"></div>
@@ -101,6 +102,7 @@
         <input id="job-name" placeholder="job name" size="12">
         <button id="btn-save-job">Save job</button>
         <select id="job-open"><option value="">Open job&hellip;</option></select>
+        <select id="job-delete"><option value="">Delete a saved job&hellip;</option></select>
         <button id="btn-clear-job" class="danger">Clear all</button>
       </div>
       <div id="import-report" class="report"></div>
@@ -209,6 +211,19 @@
   <section id="tab-help" class="tab"><div class="help" id="help"></div></section>
 </main>
 <div id="toast" class="toast" hidden></div>
+<dialog id="job-done" class="job-done">
+  <h2>&#10004; Job finished</h2>
+  <div id="job-done-what"></div>
+  <div class="box safety-note"><b>Before the next job</b> (it needs the pre-start checklist again):
+    <ol><li>Wait for both hands to park.</li><li>Take the finished parts off the outfeed table.</li>
+    <li>Empty the scrap tray.</li><li>Walk round the cell, then confirm the checklist on the Safety tab.</li></ol></div>
+  <div class="toolbar">
+    <button id="jd-next" class="primary">Next bar</button>
+    <button id="jd-again">Run this job again</button>
+    <button id="jd-clear" class="danger">Clear the job</button>
+    <button id="jd-keep">Keep it, close</button>
+  </div>
+</dialog>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>

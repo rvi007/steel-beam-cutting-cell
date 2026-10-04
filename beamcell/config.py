@@ -20,7 +20,7 @@ DEFAULTS = {
         "estop_category": 0, "protective_stop_category": 1, "require_extraction": True,
         "require_camera": False, "camera_stale_s": 1.5, "heartbeat_timeout_s": 2.0,
         "warning_speed": 0.25, "manual_speed_mm_s": 250, "log_file": "logs/safety_log.jsonl",
-        "checklist": ["Fence and gate closed", "Nobody inside the cell", "Fume extraction running",
+        "checklist": ["Outfeed table and scrap tray cleared from the last job", "Fence and gate closed", "Nobody inside the cell", "Fume extraction running",
                       "E-stops tested this shift", "PPE on"],
         "light_curtain": {"resolution_mm": 30, "response_ms": 20, "machine_stop_ms": 600},
     },

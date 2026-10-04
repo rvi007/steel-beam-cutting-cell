@@ -15,6 +15,7 @@ warning_speed = 0.25            # speed when someone is in the camera's warning 
 manual_speed_mm_s = 250         # Manual mode speed limit (BS EN ISO 10218-1 reduced speed)
 log_file = "logs/safety_log.jsonl"
 checklist = [
+  "Outfeed table and scrap tray cleared from the last job",
   "Fence panels and gate closed, light curtain clear",
   "Walked round the cell - nobody inside",
   "Fume extraction running (LEV examined in the last 14 months)",

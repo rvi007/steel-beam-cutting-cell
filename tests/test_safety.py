@@ -26,6 +26,7 @@ def make(**changes):
 def run(sc):
     sc.tick()
     assert sc.reset()[0], sc.status()["reset_blockers"]
+    sc.load_job("test job")
     sc.confirm_checklist()
     ok, why = sc.start()
     assert ok, why
@@ -42,7 +43,11 @@ class Basics(unittest.TestCase):
         sc.reset()
         ok, why = sc.start()
         self.assertFalse(ok)
-        self.assertIn("confirm the pre-start checklist", why)
+        self.assertIn("plan a job first (Machine tab)", why)
+        sc.load_job("B1 bar")
+        ok, why = sc.start()
+        self.assertFalse(ok)
+        self.assertTrue(any("confirm the pre-start checklist" in w for w in why), why)
         st = run(sc)
         self.assertTrue(st["may_move"])
         self.assertEqual(st["speed_factor"], 1.0)
@@ -216,6 +221,56 @@ class Gpio(unittest.TestCase):
         st = self.sc.tick()
         self.assertIn("GPIO", [f["code"] for f in st["latched"]])
         self.assertFalse(self.sc.reset()[0])
+
+
+class Jobs(unittest.TestCase):
+    """Every job gets its own pre-start checklist; a finished or cleared job is handled safely."""
+
+    def test_checklist_is_needed_again_after_each_job(self):
+        sc, _ = make()
+        st = run(sc)
+        self.assertEqual(st["job"]["state"], "running")
+        sc.finished()
+        st = sc.status()
+        self.assertEqual(st["job"]["state"], "finished")
+        self.assertFalse(st["checklist_ok"])                     # the cell changed: table, scrap tray
+        ok, why = sc.start()                                     # run the same job again: checklist first
+        self.assertFalse(ok)
+        self.assertTrue(any("checklist" in w for w in why), why)
+        sc.load_job("next bar")
+        self.assertFalse(sc.start()[0])
+        sc.confirm_checklist()
+        self.assertEqual(sc.status()["checklist_for"], "next bar")
+        self.assertTrue(sc.start()[0])
+        self.assertTrue(any("job finished" in e["text"] for e in sc.status()["events"]))
+
+    def test_checklist_before_planning_counts_for_the_job_but_not_after_a_run(self):
+        sc, _ = make()
+        sc.tick()
+        sc.reset()
+        sc.confirm_checklist()                                   # confirmed with no job loaded
+        sc.load_job("bar 1")
+        self.assertTrue(sc.status()["checklist_ok"])             # ... it's for this first job
+        sc.load_job("bar 2")                                     # changed the plan before running: still fine
+        self.assertTrue(sc.status()["checklist_ok"])
+        self.assertTrue(sc.start()[0])
+        sc.stop()
+        sc.load_job("bar 3")                                     # bar 2 ran (stopped half way): new checklist
+        self.assertFalse(sc.status()["checklist_ok"])
+
+    def test_cannot_swap_or_clear_a_job_while_running(self):
+        sc, _ = make()
+        run(sc)
+        ok, why = sc.load_job("other job")
+        self.assertFalse(ok)
+        self.assertIn("stop the machine", why[0])
+        self.assertFalse(sc.clear_job()[0])
+        sc.stop()
+        self.assertTrue(sc.clear_job()[0])
+        st = sc.status()
+        self.assertIsNone(st["job"])
+        self.assertFalse(st["checklist_ok"])
+        self.assertFalse(sc.start()[0])                          # nothing to run
 
 
 if __name__ == "__main__":

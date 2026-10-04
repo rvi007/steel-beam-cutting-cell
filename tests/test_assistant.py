@@ -25,6 +25,7 @@ class Situation(unittest.TestCase):
     def test_running_with_playback_and_camera(self):
         sc = SafetyController(config=copy.deepcopy(DEFAULTS["safety"]), log_path="")
         sc.reset()
+        sc.load_job("B1 bar")
         sc.confirm_checklist()
         sc.start()
         st = sc.tick(playback={"cutter": "B1: hole 3 (face v)", "handler": "holding B1", "bar": "UB 305x165x40 bar 1 of 2", "progress": 40})
