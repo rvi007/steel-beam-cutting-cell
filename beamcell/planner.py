@@ -2,9 +2,10 @@
 The planner: turns a nested stock bar into a timed motion plan for BOTH hands.
 
 How a bar runs (part by part, from X = 0 towards the far end):
-  1. Cutter cuts the part's holes, slots and openings.
-  2. Cutter cuts the part's start (trim cut or the cut after a gap), unless it shares
+  1. Cutter squares the part's start (trim cut or the cut after a gap), unless it shares
      the previous part's cut-off.
+  2. Cutter cuts the holes, slots and openings in order along the bar, one bolt group at a
+     time (top hole first) - never jumping back and forth.
   3. Cutter goes to the cut-off and waits; Handler comes in and grips the part (magnet).
   4. Cutter cuts the cut-off through every face.
   5. Handler lifts the free part and puts it on the outfeed rack, while the Cutter is
@@ -225,6 +226,28 @@ def opening_path(points):
 
 
 FACE_ORDER = {"o": 0, "v": 1, "h": 1, "u": 2}
+GROUP_MM = 150.0          # features closer than this along the bar are one group (e.g. a bolt group)
+
+
+def _in_order(ops):
+    """Holes and openings in the order a person would cut them: along the bar from the start,
+    one group at a time; inside a group, one torch direction at a time, top hole first."""
+    if not ops:
+        return ops
+    x = lambda o: float(np.mean(o["passes"][0][0][:, 0]))             # noqa: E731
+    ops = sorted(ops, key=x)
+    groups, cur = [], [ops[0]]
+    for o in ops[1:]:
+        if (x(o) - x(cur[-1])) * 1000 <= GROUP_MM:
+            cur.append(o)
+        else:
+            groups.append(cur)
+            cur = [o]
+    groups.append(cur)
+    out = []
+    for g in groups:
+        out += sorted(g, key=lambda o: ("DSPN".index(o["passes"][0][1]), -round(float(np.max(o["passes"][0][0][:, 2])), 3), x(o)))
+    return out
 
 
 def bar_operations(bar):
@@ -254,7 +277,7 @@ def bar_operations(bar):
                 warnings.append(f"{part.mark}: opening {i + 1} can't be reached by the torch")
                 continue
             ops.append({"kind": "opening", "opening": i, "face": item["face"], "label": f"opening {i + 1}", "passes": ps})
-        ops.sort(key=lambda o: (o["passes"][0][1] != "D", o["passes"][0][1], o["passes"][0][0][0][0]))
+        ops = _in_order(ops)
         for end in ("start", "end"):
             if end == "start" and pl["start_shared"]:
                 continue
@@ -266,7 +289,11 @@ def bar_operations(bar):
                     if ch["end"] == end:
                         passes += sorted(placed.passes(face, ch["points"]), key=lambda p: "DSPN".index(p[1]))
             if passes:
-                ops.append({"kind": end, "label": "start cut" if end == "start" else "cut-off", "passes": passes})
+                op = {"kind": end, "label": "start cut" if end == "start" else "cut-off", "passes": passes}
+                if end == "start":
+                    ops.insert(0, op)                  # square the end first, then the holes, then cut off
+                else:
+                    ops.append(op)
         for i, op in enumerate(ops):
             op["id"] = f"{k}.{i}"
             op["placement"] = k
@@ -511,15 +538,15 @@ class Plan:
         for k, pl in enumerate(bar.placements):
             part = bar.parts[pl["part"]]
             ops = all_ops[k]
-            for op in [o for o in ops if o["kind"] not in ("start", "end")]:
-                self._say(self.tc.end, "Cutter", f"{part.mark}: {op['label']}")
-                self._do_op(op)
             for op in [o for o in ops if o["kind"] == "start"]:
                 self._say(self.tc.end, "Cutter", f"{part.mark}: start cut")
                 self._do_op(op)
                 if round(pl["x0"], 3) in scraps:
                     x0, x1 = scraps[round(pl["x0"], 3)]
                     self.drops.append({"x0": x0, "x1": x1, "t": op["t_done"]})
+            for op in [o for o in ops if o["kind"] not in ("start", "end")]:
+                self._say(self.tc.end, "Cutter", f"{part.mark}: {op['label']}")
+                self._do_op(op)
             end_ops = [o for o in ops if o["kind"] == "end"]
             heavy = part.weight > self.handler.payload_kg
             if heavy:
