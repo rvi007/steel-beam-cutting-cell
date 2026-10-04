@@ -880,11 +880,11 @@
 "item": "V-slot 20x20 aluminium extrusion",
 "base": "bridge",
 "label": "Handler bridge: 20x20 V-slot aluminium extrusion 340 mm",
-"where": "middle, infeed end, 362 mm up",
+"where": "middle, infeed end, 359 mm up",
 "centre": [
 50.0,
 0.0,
-362.0
+359.0
 ],
 "size": [
 20.0,
@@ -898,16 +898,16 @@
 "tag": "P10-1",
 "item": "Mini V-wheel gantry plate kits",
 "base": "gantry_plate",
-"label": "Handler bridge end: mini V-wheel gantry plate (20 series)",
-"where": "front (operator side), infeed end, 350 mm up",
+"label": "Handler bridge end: mini V-wheel gantry plate (20 series), clamps the gantry rail",
+"where": "front (operator side), infeed end, 348 mm up",
 "centre": [
 50.0,
 -150.0,
-350.5
+347.5
 ],
 "size": [
 60.0,
-36.0,
+52.0,
 3.0
 ]
 },
@@ -917,17 +917,17 @@
 "tag": "P10-2",
 "item": "Mini V-wheel gantry plate kits",
 "base": "v_wheel",
-"label": "Mini V-wheel (625 bearing)",
-"where": "front (operator side), infeed end, 343 mm up",
+"label": "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+"where": "front (operator side), infeed end, 330 mm up",
 "centre": [
 32.0,
--150.0,
-343.0
+-165.6,
+330.0
 ],
 "size": [
-16.0,
-12.0,
-16.0
+15.2,
+15.2,
+8.8
 ]
 },
 {
@@ -935,18 +935,18 @@
 "pos": 3,
 "tag": "P10-3",
 "item": "Mini V-wheel gantry plate kits",
-"base": "v_wheel",
-"label": "Mini V-wheel (625 bearing)",
-"where": "front (operator side), infeed end, 343 mm up",
+"base": "wheel_spacer",
+"label": "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+"where": "front (operator side), infeed end, 340 mm up",
 "centre": [
-68.0,
--150.0,
-343.0
+32.0,
+-165.6,
+340.2
 ],
 "size": [
-16.0,
-12.0,
-16.0
+7.0,
+7.0,
+11.6
 ]
 },
 {
@@ -954,18 +954,18 @@
 "pos": 4,
 "tag": "P10-4",
 "item": "Mini V-wheel gantry plate kits",
-"base": "gantry_plate",
-"label": "Handler bridge end: mini V-wheel gantry plate (20 series)",
-"where": "back, infeed end, 350 mm up",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+"where": "front (operator side), infeed end, 330 mm up",
 "centre": [
-50.0,
-150.0,
-350.5
+32.0,
+-134.4,
+330.0
 ],
 "size": [
-60.0,
-36.0,
-3.0
+15.2,
+15.2,
+8.8
 ]
 },
 {
@@ -973,18 +973,18 @@
 "pos": 5,
 "tag": "P10-5",
 "item": "Mini V-wheel gantry plate kits",
-"base": "v_wheel",
-"label": "Mini V-wheel (625 bearing)",
-"where": "back, infeed end, 343 mm up",
+"base": "wheel_spacer",
+"label": "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+"where": "front (operator side), infeed end, 340 mm up",
 "centre": [
 32.0,
-150.0,
-343.0
+-134.4,
+340.2
 ],
 "size": [
-16.0,
-12.0,
-16.0
+7.0,
+7.0,
+11.6
 ]
 },
 {
@@ -993,17 +993,245 @@
 "tag": "P10-6",
 "item": "Mini V-wheel gantry plate kits",
 "base": "v_wheel",
-"label": "Mini V-wheel (625 bearing)",
-"where": "back, infeed end, 343 mm up",
+"label": "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+"where": "front (operator side), infeed end, 330 mm up",
 "centre": [
 68.0,
-150.0,
-343.0
+-165.6,
+330.0
 ],
 "size": [
-16.0,
-12.0,
-16.0
+15.2,
+15.2,
+8.8
+]
+},
+{
+"pn": "P10",
+"pos": 7,
+"tag": "P10-7",
+"item": "Mini V-wheel gantry plate kits",
+"base": "wheel_spacer",
+"label": "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+"where": "front (operator side), infeed end, 340 mm up",
+"centre": [
+68.0,
+-165.6,
+340.2
+],
+"size": [
+7.0,
+7.0,
+11.6
+]
+},
+{
+"pn": "P10",
+"pos": 8,
+"tag": "P10-8",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+"where": "front (operator side), infeed end, 330 mm up",
+"centre": [
+68.0,
+-134.4,
+330.0
+],
+"size": [
+15.2,
+15.2,
+8.8
+]
+},
+{
+"pn": "P10",
+"pos": 9,
+"tag": "P10-9",
+"item": "Mini V-wheel gantry plate kits",
+"base": "wheel_spacer",
+"label": "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+"where": "front (operator side), infeed end, 340 mm up",
+"centre": [
+68.0,
+-134.4,
+340.2
+],
+"size": [
+7.0,
+7.0,
+11.6
+]
+},
+{
+"pn": "P10",
+"pos": 10,
+"tag": "P10-10",
+"item": "Mini V-wheel gantry plate kits",
+"base": "gantry_plate",
+"label": "Handler bridge end: mini V-wheel gantry plate (20 series), clamps the gantry rail",
+"where": "back, infeed end, 348 mm up",
+"centre": [
+50.0,
+150.0,
+347.5
+],
+"size": [
+60.0,
+52.0,
+3.0
+]
+},
+{
+"pn": "P10",
+"pos": 11,
+"tag": "P10-11",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+"where": "back, infeed end, 330 mm up",
+"centre": [
+32.0,
+134.4,
+330.0
+],
+"size": [
+15.2,
+15.2,
+8.8
+]
+},
+{
+"pn": "P10",
+"pos": 12,
+"tag": "P10-12",
+"item": "Mini V-wheel gantry plate kits",
+"base": "wheel_spacer",
+"label": "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+"where": "back, infeed end, 340 mm up",
+"centre": [
+32.0,
+134.4,
+340.2
+],
+"size": [
+7.0,
+7.0,
+11.6
+]
+},
+{
+"pn": "P10",
+"pos": 13,
+"tag": "P10-13",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+"where": "back, infeed end, 330 mm up",
+"centre": [
+32.0,
+165.6,
+330.0
+],
+"size": [
+15.2,
+15.2,
+8.8
+]
+},
+{
+"pn": "P10",
+"pos": 14,
+"tag": "P10-14",
+"item": "Mini V-wheel gantry plate kits",
+"base": "wheel_spacer",
+"label": "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+"where": "back, infeed end, 340 mm up",
+"centre": [
+32.0,
+165.6,
+340.2
+],
+"size": [
+7.0,
+7.0,
+11.6
+]
+},
+{
+"pn": "P10",
+"pos": 15,
+"tag": "P10-15",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+"where": "back, infeed end, 330 mm up",
+"centre": [
+68.0,
+134.4,
+330.0
+],
+"size": [
+15.2,
+15.2,
+8.8
+]
+},
+{
+"pn": "P10",
+"pos": 16,
+"tag": "P10-16",
+"item": "Mini V-wheel gantry plate kits",
+"base": "wheel_spacer",
+"label": "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+"where": "back, infeed end, 340 mm up",
+"centre": [
+68.0,
+134.4,
+340.2
+],
+"size": [
+7.0,
+7.0,
+11.6
+]
+},
+{
+"pn": "P10",
+"pos": 17,
+"tag": "P10-17",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+"where": "back, infeed end, 330 mm up",
+"centre": [
+68.0,
+165.6,
+330.0
+],
+"size": [
+15.2,
+15.2,
+8.8
+]
+},
+{
+"pn": "P10",
+"pos": 18,
+"tag": "P10-18",
+"item": "Mini V-wheel gantry plate kits",
+"base": "wheel_spacer",
+"label": "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+"where": "back, infeed end, 340 mm up",
+"centre": [
+68.0,
+165.6,
+340.2
+],
+"size": [
+7.0,
+7.0,
+11.6
 ]
 },
 {
@@ -1013,11 +1241,11 @@
 "item": "NEMA 17 stepper motor",
 "base": "x_motor",
 "label": "Handler X motor: NEMA 17 driving both rails through a 5 mm cross shaft and GT2 belts",
-"where": "front (operator side), infeed end, 393 mm up",
+"where": "front (operator side), infeed end, 390 mm up",
 "centre": [
 85.0,
 -105.0,
-393.0
+390.0
 ],
 "size": [
 42.0,
@@ -1032,11 +1260,11 @@
 "item": "5 mm cross shafts + bearings",
 "base": "cross_shaft",
 "label": "5 mm cross shaft with GT2 16T pulleys at both ends",
-"where": "middle, infeed end, 382 mm up",
+"where": "middle, infeed end, 379 mm up",
 "centre": [
 85.0,
 0.0,
-382.0
+379.0
 ],
 "size": [
 5.0,
@@ -1046,20 +1274,115 @@
 },
 {
 "pn": "P10",
-"pos": 7,
-"tag": "P10-7",
+"pos": 19,
+"tag": "P10-19",
 "item": "Mini V-wheel gantry plate kits",
 "base": "carriage_plate",
-"label": "Handler carriage: mini V-wheel gantry plate on the bridge (Y axis)",
-"where": "middle, infeed end, 348 mm up",
+"label": "Handler carriage: mini V-wheel gantry plate on the side of the bridge (Y axis)",
+"where": "middle, infeed end, 359 mm up",
 "centre": [
-50.0,
+32.5,
 0.0,
-347.5
+359.0
 ],
 "size": [
+3.0,
 60.0,
-60.0,
+48.0
+]
+},
+{
+"pn": "P10",
+"pos": 20,
+"tag": "P10-20",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot",
+"where": "middle, infeed end, 343 mm up",
+"centre": [
+38.4,
+-18.0,
+343.4
+],
+"size": [
+8.8,
+15.2,
+15.2
+]
+},
+{
+"pn": "P10",
+"pos": 21,
+"tag": "P10-21",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot",
+"where": "middle, infeed end, 375 mm up",
+"centre": [
+38.4,
+-18.0,
+374.6
+],
+"size": [
+8.8,
+15.2,
+15.2
+]
+},
+{
+"pn": "P10",
+"pos": 22,
+"tag": "P10-22",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot",
+"where": "middle, infeed end, 343 mm up",
+"centre": [
+38.4,
+18.0,
+343.4
+],
+"size": [
+8.8,
+15.2,
+15.2
+]
+},
+{
+"pn": "P10",
+"pos": 23,
+"tag": "P10-23",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot",
+"where": "middle, infeed end, 375 mm up",
+"centre": [
+38.4,
+18.0,
+374.6
+],
+"size": [
+8.8,
+15.2,
+15.2
+]
+},
+{
+"pn": "P13",
+"pos": 1,
+"tag": "P13-1",
+"item": "Z motor bracket (3D printed)",
+"base": "z_motor_mount",
+"label": "Handler motor shelf (3D printed): holds the Z and Y motors on top of the carriage plate",
+"where": "middle, infeed end, 384 mm up",
+"centre": [
+10.5,
+0.0,
+384.5
+],
+"size": [
+47.0,
+116.0,
 3.0
 ]
 },
@@ -1070,11 +1393,30 @@
 "item": "NEMA 17 stepper motor",
 "base": "y_motor",
 "label": "Handler Y motor: NEMA 17 + GT2 belt along the bridge",
-"where": "middle, infeed end, 326 mm up",
+"where": "middle, infeed end, 406 mm up",
 "centre": [
-83.0,
-0.0,
-326.0
+10.0,
+-35.0,
+406.0
+],
+"size": [
+42.0,
+42.0,
+40.0
+]
+},
+{
+"pn": "P12",
+"pos": 1,
+"tag": "P12-1",
+"item": "NEMA 17 with integrated T8 lead screw",
+"base": "z_motor",
+"label": "Handler Z motor: NEMA 17 with integrated T8 x 2 mm lead screw (150 mm)",
+"where": "middle, infeed end, 406 mm up",
+"centre": [
+10.0,
+35.0,
+406.0
 ],
 "size": [
 42.0,
@@ -1088,10 +1430,10 @@
 "tag": "P01-18",
 "item": "V-slot 20x20 aluminium extrusion",
 "base": "z_axis",
-"label": "Handler Z axis: 20x20 V-slot aluminium extrusion 200 mm on a T8 lead screw (slides through the carriage)",
+"label": "Handler Z axis: 20x20 V-slot aluminium extrusion 200 mm on a T8 lead screw (slides on the carriage plate)",
 "where": "middle, infeed end, 350 mm up",
 "centre": [
-50.0,
+21.0,
 0.0,
 350.3
 ],
@@ -1103,59 +1445,21 @@
 },
 {
 "pn": "P12",
-"pos": 1,
-"tag": "P12-1",
-"item": "NEMA 17 with integrated T8 lead screw",
-"base": "z_motor",
-"label": "Handler Z motor: NEMA 17 with integrated T8 x 2 mm lead screw (150 mm)",
-"where": "middle, infeed end, 369 mm up",
-"centre": [
-3.0,
-0.0,
-369.0
-],
-"size": [
-42.0,
-42.0,
-40.0
-]
-},
-{
-"pn": "P13",
-"pos": 1,
-"tag": "P13-1",
-"item": "Z motor bracket (3D printed)",
-"base": "z_motor_mount",
-"label": "Handler Z motor bracket (3D printed)",
-"where": "middle, infeed end, 348 mm up",
-"centre": [
-9.0,
-0.0,
-347.5
-],
-"size": [
-58.0,
-48.0,
-3.0
-]
-},
-{
-"pn": "P12",
 "pos": 2,
 "tag": "P12-2",
 "item": "NEMA 17 with integrated T8 lead screw",
 "base": "lead_screw",
 "label": "T8 x 2 mm lead screw, 150 mm",
-"where": "middle, infeed end, 310 mm up",
+"where": "middle, infeed end, 327 mm up",
 "centre": [
-3.0,
-0.0,
-309.7
+10.0,
+35.0,
+326.7
 ],
 "size": [
 8.0,
 8.0,
-78.7
+112.7
 ]
 },
 {
@@ -1167,13 +1471,13 @@
 "label": "Handler lead-screw nut block on the Z axis (3D printed + brass T8 nut)",
 "where": "middle, infeed end, 276 mm up",
 "centre": [
-17.5,
-0.0,
+10.0,
+28.5,
 276.3
 ],
 "size": [
-45.0,
-20.0,
+24.0,
+37.0,
 12.0
 ]
 },
@@ -1186,7 +1490,7 @@
 "label": "Handler arm mount plate (3D printed)",
 "where": "middle, infeed end, 248 mm up",
 "centre": [
-50.0,
+21.0,
 0.0,
 248.3
 ],
@@ -1205,7 +1509,7 @@
 "label": "Handler arm: MeArm-type 4-servo arm kit (MG90S servos) - base",
 "where": "middle, infeed end, 233 mm up",
 "centre": [
-50.0,
+21.0,
 0.0,
 233.3
 ],
@@ -1224,7 +1528,7 @@
 "label": "Handler arm: upper arm (~80 mm)",
 "where": "middle, infeed end, 188 mm up",
 "centre": [
-50.0,
+21.0,
 0.0,
 187.8
 ],
@@ -1243,7 +1547,7 @@
 "label": "Handler arm: forearm (~80 mm)",
 "where": "middle, infeed end, 149 mm up",
 "centre": [
-82.0,
+53.0,
 0.0,
 148.8
 ],
@@ -1262,7 +1566,7 @@
 "label": "Handler arm: wrist / tool holder",
 "where": "middle, infeed end, 136 mm up",
 "centre": [
-120.0,
+91.0,
 0.0,
 136.3
 ],
@@ -1281,7 +1585,7 @@
 "label": "Handler magnet: 5 V 20 mm lifting electromagnet (holds about 2.5 kg)",
 "where": "middle, infeed end, 125 mm up",
 "centre": [
-120.0,
+91.0,
 0.0,
 125.3
 ],
@@ -1298,11 +1602,11 @@
 "item": "V-slot 20x20 aluminium extrusion",
 "base": "bridge",
 "label": "Cutter bridge: 20x20 V-slot aluminium extrusion 340 mm",
-"where": "middle, middle, 362 mm up",
+"where": "middle, middle, 359 mm up",
 "centre": [
 450.0,
 0.0,
-362.0
+359.0
 ],
 "size": [
 20.0,
@@ -1312,116 +1616,344 @@
 },
 {
 "pn": "P10",
-"pos": 8,
-"tag": "P10-8",
+"pos": 24,
+"tag": "P10-24",
 "item": "Mini V-wheel gantry plate kits",
 "base": "gantry_plate",
-"label": "Cutter bridge end: mini V-wheel gantry plate (20 series)",
-"where": "front (operator side), middle, 350 mm up",
+"label": "Cutter bridge end: mini V-wheel gantry plate (20 series), clamps the gantry rail",
+"where": "front (operator side), middle, 348 mm up",
 "centre": [
 450.0,
 -150.0,
-350.5
+347.5
 ],
 "size": [
 60.0,
-36.0,
+52.0,
 3.0
 ]
 },
 {
 "pn": "P10",
-"pos": 9,
-"tag": "P10-9",
+"pos": 25,
+"tag": "P10-25",
 "item": "Mini V-wheel gantry plate kits",
 "base": "v_wheel",
-"label": "Mini V-wheel (625 bearing)",
-"where": "front (operator side), middle, 343 mm up",
+"label": "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+"where": "front (operator side), middle, 330 mm up",
 "centre": [
 432.0,
--150.0,
-343.0
+-165.6,
+330.0
 ],
 "size": [
-16.0,
-12.0,
-16.0
+15.2,
+15.2,
+8.8
 ]
 },
 {
 "pn": "P10",
-"pos": 10,
-"tag": "P10-10",
+"pos": 26,
+"tag": "P10-26",
+"item": "Mini V-wheel gantry plate kits",
+"base": "wheel_spacer",
+"label": "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+"where": "front (operator side), middle, 340 mm up",
+"centre": [
+432.0,
+-165.6,
+340.2
+],
+"size": [
+7.0,
+7.0,
+11.6
+]
+},
+{
+"pn": "P10",
+"pos": 27,
+"tag": "P10-27",
 "item": "Mini V-wheel gantry plate kits",
 "base": "v_wheel",
-"label": "Mini V-wheel (625 bearing)",
-"where": "front (operator side), middle, 343 mm up",
+"label": "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+"where": "front (operator side), middle, 330 mm up",
 "centre": [
-468.0,
--150.0,
-343.0
+432.0,
+-134.4,
+330.0
 ],
 "size": [
-16.0,
-12.0,
-16.0
+15.2,
+15.2,
+8.8
 ]
 },
 {
 "pn": "P10",
-"pos": 11,
-"tag": "P10-11",
+"pos": 28,
+"tag": "P10-28",
+"item": "Mini V-wheel gantry plate kits",
+"base": "wheel_spacer",
+"label": "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+"where": "front (operator side), middle, 340 mm up",
+"centre": [
+432.0,
+-134.4,
+340.2
+],
+"size": [
+7.0,
+7.0,
+11.6
+]
+},
+{
+"pn": "P10",
+"pos": 29,
+"tag": "P10-29",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+"where": "front (operator side), middle, 330 mm up",
+"centre": [
+468.0,
+-165.6,
+330.0
+],
+"size": [
+15.2,
+15.2,
+8.8
+]
+},
+{
+"pn": "P10",
+"pos": 30,
+"tag": "P10-30",
+"item": "Mini V-wheel gantry plate kits",
+"base": "wheel_spacer",
+"label": "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+"where": "front (operator side), middle, 340 mm up",
+"centre": [
+468.0,
+-165.6,
+340.2
+],
+"size": [
+7.0,
+7.0,
+11.6
+]
+},
+{
+"pn": "P10",
+"pos": 31,
+"tag": "P10-31",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+"where": "front (operator side), middle, 330 mm up",
+"centre": [
+468.0,
+-134.4,
+330.0
+],
+"size": [
+15.2,
+15.2,
+8.8
+]
+},
+{
+"pn": "P10",
+"pos": 32,
+"tag": "P10-32",
+"item": "Mini V-wheel gantry plate kits",
+"base": "wheel_spacer",
+"label": "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+"where": "front (operator side), middle, 340 mm up",
+"centre": [
+468.0,
+-134.4,
+340.2
+],
+"size": [
+7.0,
+7.0,
+11.6
+]
+},
+{
+"pn": "P10",
+"pos": 33,
+"tag": "P10-33",
 "item": "Mini V-wheel gantry plate kits",
 "base": "gantry_plate",
-"label": "Cutter bridge end: mini V-wheel gantry plate (20 series)",
-"where": "back, middle, 350 mm up",
+"label": "Cutter bridge end: mini V-wheel gantry plate (20 series), clamps the gantry rail",
+"where": "back, middle, 348 mm up",
 "centre": [
 450.0,
 150.0,
-350.5
+347.5
 ],
 "size": [
 60.0,
-36.0,
+52.0,
 3.0
 ]
 },
 {
 "pn": "P10",
-"pos": 12,
-"tag": "P10-12",
+"pos": 34,
+"tag": "P10-34",
 "item": "Mini V-wheel gantry plate kits",
 "base": "v_wheel",
-"label": "Mini V-wheel (625 bearing)",
-"where": "back, middle, 343 mm up",
+"label": "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+"where": "back, middle, 330 mm up",
 "centre": [
 432.0,
-150.0,
-343.0
+134.4,
+330.0
 ],
 "size": [
-16.0,
-12.0,
-16.0
+15.2,
+15.2,
+8.8
 ]
 },
 {
 "pn": "P10",
-"pos": 13,
-"tag": "P10-13",
+"pos": 35,
+"tag": "P10-35",
 "item": "Mini V-wheel gantry plate kits",
-"base": "v_wheel",
-"label": "Mini V-wheel (625 bearing)",
-"where": "back, middle, 343 mm up",
+"base": "wheel_spacer",
+"label": "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+"where": "back, middle, 340 mm up",
 "centre": [
-468.0,
-150.0,
-343.0
+432.0,
+134.4,
+340.2
 ],
 "size": [
-16.0,
-12.0,
-16.0
+7.0,
+7.0,
+11.6
+]
+},
+{
+"pn": "P10",
+"pos": 36,
+"tag": "P10-36",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+"where": "back, middle, 330 mm up",
+"centre": [
+432.0,
+165.6,
+330.0
+],
+"size": [
+15.2,
+15.2,
+8.8
+]
+},
+{
+"pn": "P10",
+"pos": 37,
+"tag": "P10-37",
+"item": "Mini V-wheel gantry plate kits",
+"base": "wheel_spacer",
+"label": "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+"where": "back, middle, 340 mm up",
+"centre": [
+432.0,
+165.6,
+340.2
+],
+"size": [
+7.0,
+7.0,
+11.6
+]
+},
+{
+"pn": "P10",
+"pos": 38,
+"tag": "P10-38",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+"where": "back, middle, 330 mm up",
+"centre": [
+468.0,
+134.4,
+330.0
+],
+"size": [
+15.2,
+15.2,
+8.8
+]
+},
+{
+"pn": "P10",
+"pos": 39,
+"tag": "P10-39",
+"item": "Mini V-wheel gantry plate kits",
+"base": "wheel_spacer",
+"label": "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+"where": "back, middle, 340 mm up",
+"centre": [
+468.0,
+134.4,
+340.2
+],
+"size": [
+7.0,
+7.0,
+11.6
+]
+},
+{
+"pn": "P10",
+"pos": 40,
+"tag": "P10-40",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+"where": "back, middle, 330 mm up",
+"centre": [
+468.0,
+165.6,
+330.0
+],
+"size": [
+15.2,
+15.2,
+8.8
+]
+},
+{
+"pn": "P10",
+"pos": 41,
+"tag": "P10-41",
+"item": "Mini V-wheel gantry plate kits",
+"base": "wheel_spacer",
+"label": "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+"where": "back, middle, 340 mm up",
+"centre": [
+468.0,
+165.6,
+340.2
+],
+"size": [
+7.0,
+7.0,
+11.6
 ]
 },
 {
@@ -1431,11 +1963,11 @@
 "item": "NEMA 17 stepper motor",
 "base": "x_motor",
 "label": "Cutter X motor: NEMA 17 driving both rails through a 5 mm cross shaft and GT2 belts",
-"where": "front (operator side), middle, 393 mm up",
+"where": "front (operator side), middle, 390 mm up",
 "centre": [
 485.0,
 -105.0,
-393.0
+390.0
 ],
 "size": [
 42.0,
@@ -1450,11 +1982,11 @@
 "item": "5 mm cross shafts + bearings",
 "base": "cross_shaft",
 "label": "5 mm cross shaft with GT2 16T pulleys at both ends",
-"where": "middle, middle, 382 mm up",
+"where": "middle, middle, 379 mm up",
 "centre": [
 485.0,
 0.0,
-382.0
+379.0
 ],
 "size": [
 5.0,
@@ -1464,20 +1996,115 @@
 },
 {
 "pn": "P10",
-"pos": 14,
-"tag": "P10-14",
+"pos": 42,
+"tag": "P10-42",
 "item": "Mini V-wheel gantry plate kits",
 "base": "carriage_plate",
-"label": "Cutter carriage: mini V-wheel gantry plate on the bridge (Y axis)",
-"where": "middle, middle, 348 mm up",
+"label": "Cutter carriage: mini V-wheel gantry plate on the side of the bridge (Y axis)",
+"where": "middle, middle, 359 mm up",
 "centre": [
-450.0,
+432.5,
 0.0,
-347.5
+359.0
 ],
 "size": [
+3.0,
 60.0,
-60.0,
+48.0
+]
+},
+{
+"pn": "P10",
+"pos": 43,
+"tag": "P10-43",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot",
+"where": "middle, middle, 343 mm up",
+"centre": [
+438.4,
+-18.0,
+343.4
+],
+"size": [
+8.8,
+15.2,
+15.2
+]
+},
+{
+"pn": "P10",
+"pos": 44,
+"tag": "P10-44",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot",
+"where": "middle, middle, 375 mm up",
+"centre": [
+438.4,
+-18.0,
+374.6
+],
+"size": [
+8.8,
+15.2,
+15.2
+]
+},
+{
+"pn": "P10",
+"pos": 45,
+"tag": "P10-45",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot",
+"where": "middle, middle, 343 mm up",
+"centre": [
+438.4,
+18.0,
+343.4
+],
+"size": [
+8.8,
+15.2,
+15.2
+]
+},
+{
+"pn": "P10",
+"pos": 46,
+"tag": "P10-46",
+"item": "Mini V-wheel gantry plate kits",
+"base": "v_wheel",
+"label": "Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot",
+"where": "middle, middle, 375 mm up",
+"centre": [
+438.4,
+18.0,
+374.6
+],
+"size": [
+8.8,
+15.2,
+15.2
+]
+},
+{
+"pn": "P13",
+"pos": 2,
+"tag": "P13-2",
+"item": "Z motor bracket (3D printed)",
+"base": "z_motor_mount",
+"label": "Cutter motor shelf (3D printed): holds the Z and Y motors on top of the carriage plate",
+"where": "middle, middle, 384 mm up",
+"centre": [
+410.5,
+0.0,
+384.5
+],
+"size": [
+47.0,
+116.0,
 3.0
 ]
 },
@@ -1488,11 +2115,30 @@
 "item": "NEMA 17 stepper motor",
 "base": "y_motor",
 "label": "Cutter Y motor: NEMA 17 + GT2 belt along the bridge",
-"where": "middle, middle, 326 mm up",
+"where": "middle, middle, 406 mm up",
 "centre": [
-483.0,
-0.0,
-326.0
+410.0,
+-35.0,
+406.0
+],
+"size": [
+42.0,
+42.0,
+40.0
+]
+},
+{
+"pn": "P12",
+"pos": 3,
+"tag": "P12-3",
+"item": "NEMA 17 with integrated T8 lead screw",
+"base": "z_motor",
+"label": "Cutter Z motor: NEMA 17 with integrated T8 x 2 mm lead screw (150 mm)",
+"where": "middle, middle, 406 mm up",
+"centre": [
+410.0,
+35.0,
+406.0
 ],
 "size": [
 42.0,
@@ -1506,10 +2152,10 @@
 "tag": "P01-20",
 "item": "V-slot 20x20 aluminium extrusion",
 "base": "z_axis",
-"label": "Cutter Z axis: 20x20 V-slot aluminium extrusion 200 mm on a T8 lead screw (slides through the carriage)",
+"label": "Cutter Z axis: 20x20 V-slot aluminium extrusion 200 mm on a T8 lead screw (slides on the carriage plate)",
 "where": "middle, middle, 375 mm up",
 "centre": [
-450.0,
+421.0,
 0.0,
 375.3
 ],
@@ -1521,59 +2167,21 @@
 },
 {
 "pn": "P12",
-"pos": 3,
-"tag": "P12-3",
-"item": "NEMA 17 with integrated T8 lead screw",
-"base": "z_motor",
-"label": "Cutter Z motor: NEMA 17 with integrated T8 x 2 mm lead screw (150 mm)",
-"where": "middle, middle, 369 mm up",
-"centre": [
-403.0,
-0.0,
-369.0
-],
-"size": [
-42.0,
-42.0,
-40.0
-]
-},
-{
-"pn": "P13",
-"pos": 2,
-"tag": "P13-2",
-"item": "Z motor bracket (3D printed)",
-"base": "z_motor_mount",
-"label": "Cutter Z motor bracket (3D printed)",
-"where": "middle, middle, 348 mm up",
-"centre": [
-409.0,
-0.0,
-347.5
-],
-"size": [
-58.0,
-48.0,
-3.0
-]
-},
-{
-"pn": "P12",
 "pos": 4,
 "tag": "P12-4",
 "item": "NEMA 17 with integrated T8 lead screw",
 "base": "lead_screw",
 "label": "T8 x 2 mm lead screw, 150 mm",
-"where": "middle, middle, 322 mm up",
+"where": "middle, middle, 339 mm up",
 "centre": [
-403.0,
-0.0,
-322.2
+410.0,
+35.0,
+339.2
 ],
 "size": [
 8.0,
 8.0,
-53.7
+87.7
 ]
 },
 {
@@ -1585,13 +2193,13 @@
 "label": "Cutter lead-screw nut block on the Z axis (3D printed + brass T8 nut)",
 "where": "middle, middle, 301 mm up",
 "centre": [
-417.5,
-0.0,
+410.0,
+28.5,
 301.3
 ],
 "size": [
-45.0,
-20.0,
+24.0,
+37.0,
 12.0
 ]
 },
@@ -1604,7 +2212,7 @@
 "label": "Cutter arm mount plate (3D printed)",
 "where": "middle, middle, 273 mm up",
 "centre": [
-450.0,
+421.0,
 0.0,
 273.3
 ],
@@ -1623,7 +2231,7 @@
 "label": "Cutter arm: MeArm-type 4-servo arm kit (MG90S servos) - base",
 "where": "middle, middle, 258 mm up",
 "centre": [
-450.0,
+421.0,
 0.0,
 258.3
 ],
@@ -1642,7 +2250,7 @@
 "label": "Cutter arm: upper arm (~80 mm)",
 "where": "middle, middle, 213 mm up",
 "centre": [
-450.0,
+421.0,
 0.0,
 212.8
 ],
@@ -1661,7 +2269,7 @@
 "label": "Cutter arm: forearm (~80 mm)",
 "where": "middle, middle, 174 mm up",
 "centre": [
-482.0,
+453.0,
 0.0,
 173.8
 ],
@@ -1680,7 +2288,7 @@
 "label": "Cutter arm: wrist / tool holder",
 "where": "middle, middle, 161 mm up",
 "centre": [
-520.0,
+491.0,
 0.0,
 161.3
 ],
@@ -1699,7 +2307,7 @@
 "label": "Cutter 'torch' for the prototype: fine-liner pen in a sprung 3D-printed holder (marks the cut lines)",
 "where": "middle, middle, 140 mm up",
 "centre": [
-520.0,
+491.0,
 0.0,
 140.3
 ],

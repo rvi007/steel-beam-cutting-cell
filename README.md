@@ -82,6 +82,12 @@ Needs Python 3 and numpy (already on the Jetson). OpenCV is only needed for the 
 6. **Machine** tab, **Manual cut** (top left) - pick a section and length, click on the web to put a
    hole there (it snaps to the centre line), **+ Cut** to cut it, check, **Plan these cuts**, Run.
 7. **Section library** - *CAD files*: download the whole cell, the prototype or any example part as STEP.
+8. When a job finishes the **Job finished** window asks what next: next bar, run again, **Delete this
+   job** or keep it. **Job history & saved jobs** (Machine tab) lists every job that ran - when, what,
+   how long - and every saved job, each with its own **Delete** button.
+
+A 30-second video of the cell (whole job, then following the Cutter, then the Handler) is in
+`docs/video/beam_cell_30s.mp4`; `tools/make_video.mjs` makes it again after a change.
 
 ## What's in each folder
 
@@ -92,6 +98,7 @@ steel-beam-cutting-cell/
 ├── beamcell/             the engine (Python)
 │   ├── server.py         web server + API the browser talks to
 │   ├── safety.py         the safety controller: E-stop, interlocks, modes, reset/start, watchdogs
+│   ├── history.py        job history: every job that ran (jobs/history.json)
 │   ├── gpio_inputs.py    optional real E-stop / gate / light curtain / reset buttons on the Jetson's pins
 │   ├── assistant.py      "what's happening" in plain English + optional AI advisor
 │   ├── doctor.py         system check: python3 -m beamcell.doctor
@@ -117,7 +124,7 @@ steel-beam-cutting-cell/
 │   └── vendor/           three.js 3D library (MIT licence), kept here so no internet is needed
 ├── cad/                  STEP files: beam_cell.step, prototype_1to10.step, parts/*.step, prototype cut list + positions
 ├── examples/nc1/         example NC1 files of typical UK parts (tools/make_examples.py writes them)
-├── tools/                make_examples.py
+├── tools/                make_examples.py, make_bom_pdf.py, make_assembly_pdf.py, assembly_views.mjs, make_video.mjs
 ├── models/               put YOLO .onnx models here (see docs/JETSON_SETUP.md)
 ├── jobs/                 jobs you save from the app (not in git)
 ├── logs/                 safety event log (not in git)

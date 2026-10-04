@@ -135,6 +135,14 @@ await shot("2d_job_done");
 await page.click("#jd-clear");
 await until("job not cleared", () => app.job.parts.length === 0 && !app.plan);
 if ((await state()).job) fail("the safety controller still has the cleared job");
+// the finished job is in the job history, and can be deleted from it
+await page.click("#btn-jobs");
+await until("job history didn't open", () => document.getElementById("jobs-dlg").open && document.querySelector("#hist-body [data-hist]"));
+const hist = await page.evaluate(() => fetch("/api/history").then((r) => r.json()).then((h) => h.history));
+if (!hist.length || hist[0].result !== "finished" || !hist[0].parts) fail("job history: " + JSON.stringify(hist[0]));
+await page.click(`[data-hist="${hist[0].id}"]`);
+await until("history entry not deleted", (id) => !document.querySelector(`[data-hist="${id}"]`), hist[0].id);
+await page.click("#jobs-close");
 
 // import an NC1 file through the file picker
 await page.click(".tabs button[data-tab=parts]");

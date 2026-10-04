@@ -37,6 +37,8 @@ except ImportError:                                   # fine on the Jetson: the 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CAD_DIR = os.path.join(ROOT, "cad")
 WEB_MODELS = os.path.join(ROOT, "web", "models")
+RUNWAY_Z = M.RAIL_Z * 1000 - 550            # underside of the runway beams (UB 457x191x67, 453.4 deep)
+CRANE_RAIL_TOP = RUNWAY_Z + 453.4 + 50      # top of the 50 mm crane rail on the runway: the wheels stand on it
 
 # colours (0..1 RGB) - the same as the 3D view
 STRUCTURE = (0.42, 0.45, 0.49)
@@ -334,8 +336,7 @@ def build_cell():
     W = M.WIDTH * mm
     L = (xb - xa + 0.6) * mm
     x0 = (xa - 0.3) * mm
-    rail_z = M.RAIL_Z * mm
-    run_z = rail_z - 550                                    # underside of the runway beams
+    run_z = RUNWAY_Z                                        # underside of the runway beams
     by, bz = M.BEAM_Y * mm, M.BED_Z * mm
 
     # building steelwork: runway beams on columns, crane rails
@@ -343,11 +344,13 @@ def build_cell():
         m.section(f"runway_{side}", "Runway beam UB 457x191x67 - carries a bridge rail", STRUCTURE,
                   "UB 457x191x67", L, at=(x0, y, run_z))
         m.box(f"crane_rail_{side}", "Crane rail 60x50 flat bar - both bridges' wheels run on it", STEEL,
-              x0, x0 + L, y - 30, y + 30, run_z + 453.4, run_z + 503.4)
+              x0, x0 + L, y - 30, y + 30, CRANE_RAIL_TOP - 50, CRANE_RAIL_TOP)
         for i in range(5):
             x = (xa + i * (xb - xa) / 4) * mm
+            # standing up, the section's depth runs along -X from 'at': centre it on its base plate
+            uc = S.get("UC 254x254x73")
             m.section(f"column_{side}", "Column UC 254x254x73 holding up the runway", STRUCTURE,
-                      "UC 254x254x73", run_z, at=(x - 127, y, 0), axis="z")
+                      "UC 254x254x73", run_z - 25, at=(x + uc["h"] / 2, y, 25), axis="z")
             m.box(f"base_plate_{side}", "Column base plate 500x500x25, anchored to the floor", DARK,
                   x - 250, x + 250, y - 250, y + 250, 0, 25)
 
@@ -457,8 +460,10 @@ def _hand_bodies(m, hand):
     m.box("bridge_cover", f"{hand.name} bridge - cable tray on top", DARK, -170, 170, -W / 2 - 260, W / 2 + 260, 510, 540, group=g)
     for y in (-W / 2, W / 2):
         m.box("end_truck", f"{hand.name} end truck", YELLOW, -450, 450, y - 120, y + 120, -40, 200, group=g)
+        # the wheels stand on the crane rail, whose top is a little below the bridges' rail height
+        wz = CRANE_RAIL_TOP - M.RAIL_Z * 1000 + 90
         for dx in (-320, 320):
-            m.cyl("wheel", "Crane wheel 180 dia", RUBBER, (dx, y - 40, -20), (dx, y + 40, -20), 90, group=g)
+            m.cyl("wheel", "Crane wheel 180 dia", RUBBER, (dx, y - 40, wz), (dx, y + 40, wz), 90, group=g)
         ys = -180 if y > 0 else 180
         m.cyl("drive_motor", f"{hand.name} long-travel motor + gearbox (X axis)", DARK, (300, y + ys, 120), (520, y + ys, 120), 80, group=g)
     # carriage on the bridge (Y axis), with its motor
@@ -608,40 +613,61 @@ def build_prototype():
     for hand, hx in ((M.make_hands()[1], 50.0), (M.make_hands()[0], 450.0)):
         name = hand.name
         paint = tuple(int(hand.color[i:i + 2], 16) / 255 for i in (1, 3, 5))
-        top = rail_z + 12
+        # bridge ends: a mini V-wheel gantry plate lies flat 6 mm above each top rail and its four
+        # V-wheels clamp the rail from both sides, running in the rail's side slots (wheel axes upright)
+        top = rail_z + 9                                     # top of the gantry plates = underside of the bridge
         m.extrusion("bridge", f"{name} bridge: {E} {W + 40:.0f} mm", ALU, (20, 20), (hx, -W / 2 - 20, top + 10), (hx, W / 2 + 20, top + 10), use="bridge")
         for y in (-W / 2, W / 2):
-            m.box("gantry_plate", f"{name} bridge end: mini V-wheel gantry plate (20 series)", DARK, hx - 30, hx + 30, y - 18, y + 18, top - 3, top)
+            m.box("gantry_plate", f"{name} bridge end: mini V-wheel gantry plate (20 series), clamps the gantry rail",
+                  DARK, hx - 30, hx + 30, y - 26, y + 26, top - 3, top)
             for dx in (-18, 18):
-                m.cyl("v_wheel", "Mini V-wheel (625 bearing)", RUBBER, (hx + dx, y - 6, top - 9), (hx + dx, y + 6, top - 9), 8)
+                for dy in (-15.6, 15.6):                     # 10 mm half-rail + 7.6 wheel radius - 2 mm into the slot
+                    m.cyl("v_wheel", "Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot",
+                          RUBBER, (hx + dx, y + dy, rail_z - 14.4), (hx + dx, y + dy, rail_z - 5.6), 7.6)
+                    m.cyl("wheel_spacer", "Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate",
+                          STEEL, (hx + dx, y + dy, rail_z - 5.6), (hx + dx, y + dy, top - 3), 3.5)
         m.box("x_motor", f"{name} X motor: NEMA 17 driving both rails through a 5 mm cross shaft and GT2 belts",
               RUBBER, hx + 14, hx + 56, -W / 2 + 25, -W / 2 + 65, top + 20, top + 62)
         m.cyl("cross_shaft", "5 mm cross shaft with GT2 16T pulleys at both ends", STEEL, (hx + 35, -W / 2, top + 30), (hx + 35, W / 2, top + 30), 2.5)
+        # carriage: a mini V-wheel plate standing on the bridge's side face, wheels running in the
+        # bridge's top and bottom slots; the Z axis, both motors and the arm hang off its outer face
         cy = 0.0
-        m.box("carriage_plate", f"{name} carriage: mini V-wheel gantry plate on the bridge (Y axis)", DARK, hx - 30, hx + 30, cy - 30, cy + 30, top - 6, top - 3)
-        m.box("y_motor", f"{name} Y motor: NEMA 17 + GT2 belt along the bridge", RUBBER, hx + 12, hx + 54, cy - 21, cy + 21, top - 46, top - 6)
+        bz0, bz1 = top, top + 20                             # the bridge extrusion
+        m.box("carriage_plate", f"{name} carriage: mini V-wheel gantry plate on the side of the bridge (Y axis)",
+              DARK, hx - 19, hx - 16, cy - 30, cy + 30, bz0 - 14, bz1 + 14)
+        for dy in (-18, 18):
+            for wz in (bz0 - 5.6, bz1 + 5.6):
+                m.cyl("v_wheel", "Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot",
+                      RUBBER, (hx - 16, cy + dy, wz), (hx - 7.2, cy + dy, wz), 7.6)
+        zx = hx - 29                                         # Z axis centre, bolted to the carriage plate
+        shelf = bz1 + 14
+        m.box("z_motor_mount", f"{name} motor shelf (3D printed): holds the Z and Y motors on top of the carriage plate",
+              PRINTED, hx - 63, hx - 16, cy - 58, cy + 58, shelf, shelf + 3)
+        m.box("y_motor", f"{name} Y motor: NEMA 17 + GT2 belt along the bridge", RUBBER,
+              hx - 61, hx - 19, cy - 56, cy - 14, shelf + 3, shelf + 43)
+        m.box("z_motor", f"{name} Z motor: NEMA 17 with integrated T8 x 2 mm lead screw (150 mm)", RUBBER,
+              hx - 61, hx - 19, cy + 14, cy + 56, shelf + 3, shelf + 43)
         z_len = 200.0
         beam_top = bz + tiny["h"]
         tool = 150 if hand.tool == "torch" else 130          # arm base to tool tip in this pose
         zb = beam_top + (5 if hand.tool == "torch" else 0) + tool
-        m.extrusion("z_axis", f"{name} Z axis: {E} {z_len:.0f} mm on a T8 lead screw (slides through the carriage)", ALU,
-                    (20, 20), (hx, cy, zb), (hx, cy, zb + z_len), use="Z axis")
-        m.box("z_motor", f"{name} Z motor: NEMA 17 with integrated T8 x 2 mm lead screw (150 mm)", RUBBER, hx - 68, hx - 26, cy - 21, cy + 21, top - 3, top + 37)
-        m.box("z_motor_mount", f"{name} Z motor bracket (3D printed)", PRINTED, hx - 70, hx - 12, cy - 24, cy + 24, top - 6, top - 3)
-        m.cyl("lead_screw", "T8 x 2 mm lead screw, 150 mm", STEEL, (hx - 47, cy, top - 3), (hx - 47, cy, zb + 20), 4)
-        m.box("lead_nut", f"{name} lead-screw nut block on the Z axis (3D printed + brass T8 nut)", PRINTED, hx - 55, hx - 10, cy - 10, cy + 10, zb + 20, zb + 32)
-        m.box("arm_mount", f"{name} arm mount plate (3D printed)", PRINTED, hx - 22, hx + 22, cy - 22, cy + 22, zb - 4, zb)
+        m.extrusion("z_axis", f"{name} Z axis: {E} {z_len:.0f} mm on a T8 lead screw (slides on the carriage plate)", ALU,
+                    (20, 20), (zx, cy, zb), (zx, cy, zb + z_len), use="Z axis")
+        m.cyl("lead_screw", "T8 x 2 mm lead screw, 150 mm", STEEL, (hx - 40, cy + 35, shelf), (hx - 40, cy + 35, zb + 20), 4)
+        m.box("lead_nut", f"{name} lead-screw nut block on the Z axis (3D printed + brass T8 nut)", PRINTED,
+              hx - 52, hx - 28, cy + 10, cy + 47, zb + 20, zb + 32)
+        m.box("arm_mount", f"{name} arm mount plate (3D printed)", PRINTED, zx - 22, zx + 22, cy - 22, cy + 22, zb - 4, zb)
         # MeArm-size 4-servo arm (MG90S micro servos) hanging under the Z axis
-        m.cyl("arm_base", f"{name} arm: MeArm-type 4-servo arm kit (MG90S servos) - base", paint, (hx, cy, zb - 4), (hx, cy, zb - 30), 22)
-        m.box("arm_upper", f"{name} arm: upper arm (~80 mm)", paint, hx - 8, hx + 8, cy - 8, cy + 8, zb - 95, zb - 30)
-        m.box("arm_fore", f"{name} arm: forearm (~80 mm)", paint, hx - 6, hx + 70, cy - 6, cy + 6, zb - 108, zb - 95)
-        m.box("arm_wrist", f"{name} arm: wrist / tool holder", paint, hx + 60, hx + 80, cy - 9, cy + 9, zb - 120, zb - 108)
+        m.cyl("arm_base", f"{name} arm: MeArm-type 4-servo arm kit (MG90S servos) - base", paint, (zx, cy, zb - 4), (zx, cy, zb - 30), 22)
+        m.box("arm_upper", f"{name} arm: upper arm (~80 mm)", paint, zx - 8, zx + 8, cy - 8, cy + 8, zb - 95, zb - 30)
+        m.box("arm_fore", f"{name} arm: forearm (~80 mm)", paint, zx - 6, zx + 70, cy - 6, cy + 6, zb - 108, zb - 95)
+        m.box("arm_wrist", f"{name} arm: wrist / tool holder", paint, zx + 60, zx + 80, cy - 9, cy + 9, zb - 120, zb - 108)
         if hand.tool == "torch":
             m.cyl("pen_tool", "Cutter 'torch' for the prototype: fine-liner pen in a sprung 3D-printed holder (marks the cut lines)",
-                  RUBBER, (hx + 70, cy, zb - 120), (hx + 70, cy, zb - 150), 4)
+                  RUBBER, (zx + 70, cy, zb - 120), (zx + 70, cy, zb - 150), 4)
         else:
             m.cyl("magnet_tool", "Handler magnet: 5 V 20 mm lifting electromagnet (holds about 2.5 kg)", RED,
-                  (hx + 70, cy, zb - 120), (hx + 70, cy, zb - 130), 10)
+                  (zx + 70, cy, zb - 120), (zx + 70, cy, zb - 130), 10)
     # electronics and safety beside the frame
     m.box("control_box", "Control box: Jetson Orin Nano, FluidNC 6-axis board, PCA9685 servo board, 24 V and 5 V supplies, fuses, safety relay",
           DARK, x0 + Lx + 20, x0 + Lx + 180, -100, 100, 0, 110)
@@ -668,7 +694,7 @@ PROTO_PARTS = {
     "outfeed_table": "Outfeed table board", "outfeed_riser": "Outfeed table risers (3D printed)",
     "scrap_tray": "Scrap tray (3D printed)", "model_beam": "Model beams (3D printed)",
     "gantry_plate": "Mini V-wheel gantry plate kits", "carriage_plate": "Mini V-wheel gantry plate kits",
-    "v_wheel": "Mini V-wheel gantry plate kits",
+    "v_wheel": "Mini V-wheel gantry plate kits", "wheel_spacer": "Mini V-wheel gantry plate kits",
     "x_motor": "NEMA 17 stepper motor", "y_motor": "NEMA 17 stepper motor",
     "z_motor": "NEMA 17 with integrated T8 lead screw", "lead_screw": "NEMA 17 with integrated T8 lead screw",
     "z_motor_mount": "Z motor bracket (3D printed)", "lead_nut": "Lead-screw nut block (3D printed)",

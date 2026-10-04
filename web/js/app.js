@@ -10,6 +10,7 @@ import { initPrototype } from "./prototype.js";
 import { initCamera } from "./camera.js";
 import { initHelp } from "./help.js";
 import { initSafety, safety, connected, startMachine, stopMachine, jobFinished, loadJob, clearSafetyJob } from "./safety.js";
+import { initJobs, openJobs } from "./jobs.js";
 import { initManual, manual, manualPreview, planManual, render as renderManual } from "./manual.js";
 
 export const app = {
@@ -283,11 +284,18 @@ function showJobNow() {
 }
 setInterval(showJobNow, 1000);
 
+// what the job history keeps about the loaded job
+function jobDetails(plan = app.plan) {
+  if (!plan) return {};
+  return { section: plan.bar.section, parts: plan.summary.parts, duration_s: plan.summary.duration_s,
+    what: plan.manual ? `manual cuts on a ${plan.bar.length} mm bar` : `bar ${plan.bar_index + 1} of ${plan.bar_count}, ${plan.bar.length} mm` };
+}
+
 let finishing = false;
 async function finishJob() {
   if (finishing) return;
   finishing = true;
-  await jobFinished();
+  await jobFinished(jobDetails());
   const plan = app.plan, dlg = $("job-done");
   $("job-done-what").innerHTML = `<p><b>${plan.jobName}</b><br>${plan.summary.parts} ${plan.manual ? "piece(s)" : "part(s)"} cut in ${fmtTime(plan.summary.duration_s)}.</p>`;
   const more = !plan.manual && plan.bar_index + 1 < plan.bar_count;
@@ -296,6 +304,7 @@ async function finishJob() {
   $("jd-next").onclick = async () => { dlg.close(); app.barIndex = plan.bar_index + 1; clearPlan(); renderBars(); await planBar(); toast("Next bar planned - confirm the checklist (Safety tab), then Run"); };
   $("jd-again").onclick = () => { dlg.close(); app.t = 0; loadJob(plan.jobName); updateTransport(); toast("Ready to run again - confirm the checklist first (Safety tab)"); };
   $("jd-clear").onclick = async () => { dlg.close(); await clearJob(true); };
+  $("jd-history").onclick = () => { dlg.close(); openJobs(); };
   $("jd-keep").onclick = () => dlg.close();
   dlg.onclose = () => { finishing = false; };
   if (!dlg.open) dlg.showModal();
@@ -306,7 +315,7 @@ export async function clearJob(confirmed = false) {
   if (safety.status && safety.status.state === "RUNNING") return toast("Stop the machine before clearing the job", true);
   const what = manual.on ? "all the manual cuts" : "every part in this job";
   if (!confirmed && !confirm(`Clear the job? This removes ${what} and its plan.`)) return;
-  await clearSafetyJob();
+  await clearSafetyJob(jobDetails());
   if (manual.on) { manual.job.cuts = []; try { localStorage.setItem("manual", JSON.stringify(manual.job)); } catch (e) { /* blocked */ } renderManual(); }
   else await clearAllParts();
   clearPlan();
@@ -365,7 +374,9 @@ function frame(now) {
   if (plan && app.motion > 0) {
     app.t = Math.min(app.t + dt * app.speed * app.motion, plan.summary.duration_s);
   }
-  if (plan && app.t >= plan.summary.duration_s && st && st.state === "RUNNING") finishJob();
+  // the loaded job has reached its end (running, or paused right at the end): finish it once
+  if (plan && app.t >= plan.summary.duration_s && st && st.job && st.job.state !== "finished" && st.job.started
+      && st.job.name === plan.jobName) finishJob();
   if (plan) {
     for (const key of ["cutter", "handler"]) scene.pose(key, ...trackAt(plan.tracks[key], app.t));
     updateSteel(app.t);
@@ -439,6 +450,7 @@ async function start() {
   }
   sel.value = app.job.stock_length;
   initParts();
+  initJobs();
   initLibrary();
   initPrototype();
   initCamera();
