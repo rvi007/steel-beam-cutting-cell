@@ -166,11 +166,11 @@ function buildSteel() {
   }
   const sec = plan.stock_section;
   for (const d of plan.drops) {
-    const mesh = stockMesh(sec, d.x0, d.x1, MAT.scrap, origin);
+    const mesh = stockMesh(sec, d.x0, d.x1, d.remnant ? MAT.steel : MAT.scrap, origin);
     app.scene.steel.add(mesh);
-    steel.scraps.push({ d, mesh, home: mesh.position.clone() });
+    steel.scraps.push({ d, mesh, home: mesh.position.clone(), h: (sec.h || 200) / 1000 });
   }
-  if (plan.bar.remnant) {
+  if (plan.bar.remnant && !plan.drops.some((d) => d.remnant)) {
     steel.remnant = stockMesh(sec, plan.bar.remnant[0], plan.bar.remnant[1], MAT.steel, origin);
     app.scene.steel.add(steel.remnant);
   }
@@ -218,11 +218,17 @@ function updateSteel(t) {
     p.group.position.set(...off);
     p.kerfGroup.position.set(...off);
   }
-  for (const s of steel.scraps) {                     // offcuts fall into the skip
-    const f = Math.min(Math.max((t - s.d.t) / 0.6, 0), 1);
-    const skip = app.scene.skip;
-    s.mesh.position.set(s.home.x + (skip.x - 0.2 - s.home.x) * f, s.home.y, s.home.z + (skip.z - s.home.z) * f * f);
-    s.mesh.rotation.z = f * 0.6;
+  // loose pieces fall straight down between the rollers (gravity) into the scrap tray;
+  // a piece that is short and tall can't stand on its end, so it tips over flat
+  const g = app.info.machine.g, drop = origin.z - app.scene.trayZ;
+  for (const s of steel.scraps) {
+    const dt = t - s.d.t, w = (s.d.x1 - s.d.x0) / 1000;
+    let z = 0, tip = 0;
+    if (dt > 0) z = Math.min(0.5 * g * dt * dt, drop);
+    const landed = t - s.d.t_land;
+    if (landed > 0 && w < 0.6 * s.h) tip = Math.min(landed / 0.35, 1) ** 2 * (Math.PI / 2);
+    s.mesh.rotation.set(0, tip, 0);                     // turns about its bottom edge at the start end
+    s.mesh.position.set(s.home.x, s.home.y, s.home.z - z + w * Math.sin(tip));
   }
   for (const k of steel.kerfs) {                      // kerf glows hot, then cools
     const times = k.c.times;

@@ -160,32 +160,36 @@ export class CellScene {
         this._box(0.5, 0.5, 0.025, 0x777777, x, y, 0.012);          // base plate
       }
     }
-    // roller bed for the stock bar
-    const by = m.beam_y, bz = m.bed_z;
-    for (const dy of [-0.38, 0.38]) this._box(13, 0.1, 0.16, C.bed, 6, by + dy, bz - 0.17);
-    for (let x = 0; x <= 12.01; x += 1.0) {
-      const roller = this._cyl(0.05, 0.7, C.roller, { metal: 0.8, rough: 0.25 });
-      roller.rotation.z = Math.PI / 2;
-      roller.rotation.x = 0;
-      roller.position.set(x, by, bz - 0.05);
-      roller.rotation.set(0, 0, 0);
-      roller.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 1, 0));
-      if (x % 2 === 0) for (const dy of [-0.38, 0.38]) this._box(0.12, 0.12, bz - 0.25, C.bed, x, by + dy, (bz - 0.25) / 2);
+    // roller bed: side rails on legs, a roller every metre turning in bearing blocks.
+    // The top of every roller is exactly at bed height - the bar rests on them.
+    const by = m.beam_y, bz = m.bed_z, rr = m.roller_r, x0 = -0.3, x1 = m.work_length + 0.3;
+    const frame = new THREE.MeshStandardMaterial({ color: C.bed, metalness: 0.35, roughness: 0.6 });
+    for (const dy of [-0.4, 0.4]) {
+      this._box(x1 - x0, 0.08, 0.12, 0, (x0 + x1) / 2, by + dy, bz - rr - 0.1, { material: frame });            // side rail
+      for (let x = x0 + 0.1; x <= x1; x += 2) this._box(0.08, 0.08, bz - rr - 0.16, 0, x, by + dy, (bz - rr - 0.16) / 2, { material: frame });   // legs
     }
-    // outfeed rack (cantilever arms)
-    for (let x = 0.5; x <= 12; x += 1.5) {
-      this._box(0.12, 0.12, bz, C.rack, x, m.outfeed_y + 0.42, bz / 2);
-      this._box(0.1, 0.95, 0.08, C.rack, x, m.outfeed_y, bz - 0.04);
+    for (const x of m.roller_x) {
+      const roller = this._cyl(rr, 0.72, C.roller, { metal: 0.8, rough: 0.25 });   // axis along Y
+      roller.position.set(x, by, bz - rr);
+      for (const dy of [-0.4, 0.4]) this._box(0.1, 0.08, 0.1, 0x30363c, x, by + dy, bz - rr - 0.02);   // bearing blocks
     }
-    // scrap skip under the bed
-    this.skip = { x: 0.4, y: by, z: 0.32 };
-    const skip = new THREE.Group();
-    const skipMat = new THREE.MeshStandardMaterial({ color: 0x2e5e8c, metalness: 0.3, roughness: 0.6 });
-    this._box(1.2, 0.9, 0.04, 0, 0, 0, 0.02, { parent: skip, material: skipMat });
-    for (const [w, d, x, y] of [[1.2, 0.04, 0, -0.45], [1.2, 0.04, 0, 0.45], [0.04, 0.9, -0.6, 0], [0.04, 0.9, 0.6, 0]])
-      this._box(w, d, 0.4, 0, x, y, 0.2, { parent: skip, material: skipMat });
-    skip.position.set(this.skip.x, by, 0);
-    this.scene.add(skip);
+    // scrap tray under the bed, between the legs: offcuts fall into it
+    const trayMat = new THREE.MeshStandardMaterial({ color: 0x2e5e8c, metalness: 0.3, roughness: 0.6 });
+    const tz = m.scrap_tray_z;
+    this._box(x1 - x0, 0.6, 0.04, 0, (x0 + x1) / 2, by, tz - 0.02, { material: trayMat });
+    for (const dy of [-0.3, 0.3]) this._box(x1 - x0, 0.03, 0.22, 0, (x0 + x1) / 2, by + dy, tz + 0.09, { material: trayMat });
+    for (const x of [x0, x1]) this._box(0.03, 0.6, 0.22, 0, x, by, tz + 0.09, { material: trayMat });
+    for (let x = x0 + 0.6; x < x1; x += 3) for (const dy of [-0.25, 0.25]) this._box(0.06, 0.06, tz - 0.04, 0x222222, x, by + dy, (tz - 0.04) / 2);
+    this.trayZ = tz;
+    // outfeed table: a steel grating deck on a frame, top at bed height - finished parts are put down on it
+    const [ox0, ox1, oy0, oy1] = m.outfeed_deck;
+    const deckMat = new THREE.MeshStandardMaterial({ color: C.rack, metalness: 0.4, roughness: 0.55 });
+    this._box(ox1 - ox0, oy1 - oy0, 0.03, 0, (ox0 + ox1) / 2, (oy0 + oy1) / 2, bz - 0.015, { material: deckMat });
+    for (let x = ox0 + 0.25; x < ox1; x += 0.25) this._box(0.012, oy1 - oy0, 0.004, 0x2a3a2a, x, (oy0 + oy1) / 2, bz + 0.0005, { noShadow: true });
+    for (const y of [oy0 + 0.04, oy1 - 0.04]) {
+      this._box(ox1 - ox0, 0.08, 0.1, 0, (ox0 + ox1) / 2, y, bz - 0.08, { material: frame });
+      for (let x = ox0 + 0.1; x <= ox1; x += 2) this._box(0.08, 0.08, bz - 0.13, 0, x, y, (bz - 0.13) / 2, { material: frame });
+    }
     // safety fence with a gate at the front, light-curtain posts at the gate
     const fenceMat = new THREE.MeshStandardMaterial({ color: C.fence, metalness: 0.2, roughness: 0.6 });
     const meshMat = new THREE.MeshStandardMaterial({ color: 0x222222, transparent: true, opacity: 0.18, side: THREE.DoubleSide });
