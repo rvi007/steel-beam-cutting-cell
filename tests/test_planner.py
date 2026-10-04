@@ -7,7 +7,7 @@ from beamcell import nc1
 from beamcell import sections as S
 from beamcell.collisions import check_plan
 from beamcell.machine import MIN_GAP
-from beamcell.parts import Bar, nest_all
+from beamcell.parts import Bar, inside, nest_all
 from beamcell.planner import Plan
 from tests.sweep_sections import typical_part
 
@@ -55,3 +55,40 @@ class Planner(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CutOrder(unittest.TestCase):
+    def test_examples_web_holes_centred(self):
+        """Web bolt groups in the examples sit on the middle of the web that's left (not random)."""
+        for name in ("B1", "B2", "G1", "T1_tekla_style"):
+            with open(os.path.join(EXAMPLES, name + ".nc1")) as fh:
+                part = nc1.read(fh.read(), name)[0]
+            s = part.sec
+            groups = {}
+            for h in part.holes:
+                self.assertEqual(h["face"], "v", f"{name}: only web holes")
+                groups.setdefault(h["x"], []).append(h["y"])
+            web = part.face_outline("v")
+            for x, ys in groups.items():
+                lo = s["tf"] + s["r"]
+                top = max(y / 2 for y in range(0, int(s["h"] * 2)) if inside(web, x, y / 2))   # under any notch
+                hi = min(top, s["h"] - s["tf"]) - (s["r"] if top >= s["h"] - s["tf"] - 1 else 0)
+                self.assertAlmostEqual(sum(ys) / len(ys), (lo + hi) / 2, delta=1.0, msg=f"{name} group at x={x}")
+
+    def test_cut_in_order_along_the_bar(self):
+        """Start cut first, then holes going along the bar (never jumping back), then the cut-off."""
+        from beamcell.planner import bar_operations
+        parts = []
+        for f in ("B1", "G1", "C1"):
+            with open(os.path.join(EXAMPLES, f + ".nc1")) as fh:
+                parts.append(nc1.read(fh.read(), f)[0])
+        for bar in nest_all(parts, 12000):
+            for ops in bar_operations(bar)[0]:
+                kinds = [o["kind"] for o in ops]
+                if "start" in kinds:
+                    self.assertEqual(kinds[0], "start")
+                if "end" in kinds:
+                    self.assertEqual(kinds[-1], "end")
+                xs = [float(o["passes"][0][0][:, 0].mean()) for o in ops if o["kind"] not in ("start", "end")]
+                for a, b in zip(xs, xs[1:]):
+                    self.assertGreater(b, a - 0.16, "went back along the bar")

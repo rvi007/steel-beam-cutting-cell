@@ -103,7 +103,7 @@ export function renderEditor() {
   <div class="box"><h3>Holes and slots <span class="muted small">(BS EN 1090-2 hole sizes; x along the part, y across the face)</span></h3>
     <table><tr><th>#</th><th>Face</th><th>x</th><th>y</th><th>Bolt</th><th>Type</th><th>&Oslash; d</th><th>Slot</th><th></th></tr>
     ${p.holes.map((h, i) => `<tr data-h="${i}"><td>${i + 1}</td><td><select data-hk="face">${faceOpts(h.face === "h" ? "v" : h.face)}</select></td>
-      <td><input type="number" data-hk="x" value="${+h.x.toFixed(1)}"></td><td><input type="number" data-hk="y" value="${+h.y.toFixed(1)}"></td>
+      <td><input type="number" data-hk="x" value="${+h.x.toFixed(1)}"></td><td class="nowrap"><input type="number" data-hk="y" value="${+h.y.toFixed(1)}"><button class="mini" data-centre="${i}" title="Put this hole on the centre line of its face">centre</button></td>
       <td><select data-hk="bolt">${boltOpts(h.bolt || guessBolt(h))}</select></td>
       <td><select data-hk="type">${app.info.codes.hole_types.map((t) => `<option ${t === (h.type || guessType(h)) ? "selected" : ""}>${t}</option>`).join("")}</select></td>
       <td><input type="number" data-hk="d" value="${h.d}" step="0.5"></td><td><input type="number" data-hk="slot" value="${h.slot || 0}"></td>
@@ -179,6 +179,11 @@ function wireEditor(p, sec) {
       changed();
     }));
   });
+  ed.querySelectorAll("[data-centre]").forEach((b) => (b.onclick = () => {
+    const h = p.holes[+b.dataset.centre];
+    h.y = Math.round(faceCentre(p, sec, h.face, h.x) * 10) / 10;
+    changed(true);
+  }));
   ed.querySelectorAll("[data-del-hole]").forEach((b) => (b.onclick = () => { p.holes.splice(+b.dataset.delHole, 1); changed(true); }));
   ed.querySelectorAll("[data-del-cope]").forEach((b) => (b.onclick = () => { p.copes.splice(+b.dataset.delCope, 1); changed(true); }));
   ed.querySelectorAll("tr[data-c]").forEach((tr) => {
@@ -194,7 +199,7 @@ function wireEditor(p, sec) {
   }));
   $("ed-add-hole").onclick = () => {
     const face = sec.kind === "L" ? "v" : "v";
-    p.holes.push(Object.assign({ face, x: Math.round(p.length / 2), y: Math.round((sec.h || 200) / 2), bolt: app.info.codes.standard_bolt, type: "normal" },
+    p.holes.push(Object.assign({ face, x: Math.round(p.length / 2), y: Math.round(faceCentre(p, sec, face, p.length / 2) * 10) / 10, bolt: app.info.codes.standard_bolt, type: "normal" },
       holeFor(app.info.codes.standard_bolt, "normal")));
     changed(true);
   };
@@ -207,9 +212,8 @@ function wireEditor(p, sec) {
     for (const end of ends) {
       const X = (dx) => (end === "start" ? x0 + dx : p.length - x0 - dx);
       if (type === "fin") {            // a vertical line of holes in the web, below any top notch
-        const top = topNotch(p, end);
-        const yTop = (sec.h || 300) - Math.max(top, sec.tf + sec.r || 30) - Math.max(40, 1.5 * d);
-        for (let i = 0; i < n; i++) p.holes.push({ face: "v", x: X(0), y: Math.round(yTop - i * pitch), d, bolt, type: "normal" });
+        const mid = webCentre(p, sec, X(0));             // centred on the web left below any notch
+        for (let i = 0; i < n; i++) p.holes.push({ face: "v", x: X(0), y: Math.round((mid + ((n - 1) / 2 - i) * pitch) * 10) / 10, d, bolt, type: "normal" });
       } else if (type === "flange") {  // pairs across the top flange at UK cross-centres
         const cc = sec.kind === "I" ? ((sec.b || 150) > 180 ? 140 : 90) : Math.round((sec.b || 90) / 2);
         for (let i = 0; i < n; i++) {
@@ -217,7 +221,7 @@ function wireEditor(p, sec) {
           else p.holes.push({ face: sec.kind === "L" ? "u" : "o", x: X(i * pitch), y: cc, d, bolt, type: "normal" });
         }
       } else {
-        for (let i = 0; i < n; i++) p.holes.push({ face: "v", x: X(i * pitch), y: Math.round((sec.h || 200) / 2), d, bolt, type: "normal" });
+        for (let i = 0; i < n; i++) p.holes.push({ face: "v", x: X(i * pitch), y: Math.round(webCentre(p, sec, X(i * pitch)) * 10) / 10, d, bolt, type: "normal" });
       }
     }
     changed(true);
@@ -248,9 +252,25 @@ function wireEditor(p, sec) {
   };
 }
 
-function topNotch(p, end) {
-  const c = (p.copes || []).find((x) => x.end === end && x.side === "top");
+function notchDepth(p, end, side) {
+  const c = (p.copes || []).find((x) => x.end === end && x.side === side);
   return c ? c.depth : 0;
+}
+
+// Middle of the web that is left at x: between the flanges (plus root radius) or a notch.
+// Holes go here unless the drawing says otherwise.
+function webCentre(p, sec, x) {
+  const root = (sec.tf || 10) + (sec.r || 0);
+  const end = x < p.length / 2 ? "start" : "end";
+  const cope = (side) => (p.copes || []).find((c) => c.end === end && c.side === side && (end === "start" ? x <= c.length + 200 : x >= p.length - c.length - 200));
+  const lo = Math.max(root, cope("bottom") ? cope("bottom").depth : 0);
+  const hi = (sec.h || 200) - Math.max(root, cope("top") ? cope("top").depth : 0);
+  return (lo + hi) / 2;
+}
+
+function faceCentre(p, sec, face, x) {
+  if (face === "v" || face === "h") return sec.kind === "L" ? 50 : webCentre(p, sec, x);
+  return (sec.b || 100) / 2;
 }
 
 const clean = (p) => Object.fromEntries(Object.entries(p).filter(([k]) => !k.startsWith("_")));
