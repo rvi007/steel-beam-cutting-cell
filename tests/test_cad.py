@@ -76,3 +76,23 @@ class Solids(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ShoppingList(unittest.TestCase):
+    def test_extrusion_metres_match_the_cad(self):
+        """docs/prototype_bom.csv buys enough of each extrusion for cad/prototype_cut_list.csv."""
+        import csv
+        with open(os.path.join(ROOT, "cad", "prototype_cut_list.csv")) as fh:
+            need, pieces = {}, {}
+            for r in csv.DictReader(fh):
+                need[r["profile"]] = need.get(r["profile"], 0) + int(r["length_mm"]) * int(r["quantity"])
+                pieces[r["profile"]] = pieces.get(r["profile"], 0) + int(r["quantity"])
+        with open(os.path.join(ROOT, "docs", "prototype_bom.csv")) as fh:
+            rows = list(csv.DictReader(fh))
+        self.assertTrue(all(len(r) == 8 and r["approx_gbp_each"] for r in rows))
+        for profile, mm in need.items():
+            qty = next(r for r in rows if f"V-slot {profile}" in r["item"])["qty"]
+            if qty.endswith(" m"):                   # bought by the metre
+                self.assertGreaterEqual(float(qty.split()[0]) * 1000 + 50, mm, profile)
+            else:                                    # bought as cut pieces
+                self.assertEqual(int(qty), pieces[profile], profile)

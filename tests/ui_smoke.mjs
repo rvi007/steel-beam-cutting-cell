@@ -26,10 +26,13 @@ const until = async (what, fn, arg, timeout = 20000) => {
 };
 const untilState = async (want) => {
   for (let i = 0; i < 100; i++) { if ((await state()).state === want) return; await page.waitForTimeout(200); }
-  fail("safety state never became " + want + " (is " + (await state()).state + ")");
+  const st = await state();
+  fail("safety state never became " + want + " (is " + st.state + ", stops: " + st.latched.map((f) => f.code).join(", ") + ")");
 };
-const shot = async (name) => {
-  if (!shots) return;
+// On CI (software 3D, no GPU) a screenshot can freeze the page for seconds; while the machine runs
+// that rightly trips the screen watchdog (HEARTBEAT stop), so CI skips screenshots of a running machine.
+const shot = async (name, running = false) => {
+  if (!shots || (running && process.env.CI)) return;
   try { await page.screenshot({ path: `${shots}/${name}.png`, timeout: 60000 }); }
   catch (e) { console.warn(`screenshot ${name} skipped: ${e.message.split("\n")[0]}`); }
 };
@@ -75,14 +78,14 @@ await page.click("#btn-safety-reset");
 await untilState("READY");
 await page.click("#btn-play");
 await until("didn't restart after reset + start", (t) => app.t > t, t1);
-await shot("2_running");
+await shot("2_running", true);
 
 // opening the gate in Auto = protective stop
 await page.click(".tabs button[data-tab=safety]");
 await page.click("[data-input=gate_closed]");
 await untilState("FAULT");
 const st = await state();
-if (st.state !== "FAULT" || !st.latched.some((f) => f.code === "GATE")) fail("gate open didn't stop: " + st.state);
+if (!st.latched.some((f) => f.code === "GATE")) fail("gate open didn't stop: " + st.state + " " + st.latched.map((f) => f.code).join(", "));
 await shot("2b_safety_tab");
 await page.click("[data-input=gate_closed]");
 await page.waitForTimeout(500);
@@ -114,7 +117,7 @@ for (const t of [0.3, 0.6, 1.0]) {
   await page.evaluate((f) => { app.t = app.plan.summary.duration_s * f; }, t);
   await page.waitForTimeout(400);
 }
-await shot("2c_finished");
+await shot("2c_finished", true);
 
 // import an NC1 file through the file picker
 await page.click(".tabs button[data-tab=parts]");
@@ -191,7 +194,7 @@ if (mplan.c || mplan.w.length || mplan.n !== 2 || mplan.holes !== 2) fail("manua
 await page.click("[data-view=overview]");
 await page.evaluate(() => { app.t = app.plan.summary.duration_s * 0.5; });
 await page.waitForTimeout(500);
-await shot("5_manual");
+await shot("5_manual", true);
 await page.click("#mode-job");
 await page.waitForTimeout(300);
 

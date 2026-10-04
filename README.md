@@ -4,12 +4,19 @@ A working prototype of a **structural steel beam cutting cell**, to UK codes. Tw
 "hands" hang from an overhead gantry over a 12 m work area:
 
 - **Cutter** (orange) - plasma torch: bolt holes, slots, openings, notches (copes), mitres and cut-to-length.
-- **Handler** (blue) - magnet: holds each part while it's cut free and puts it on the outfeed rack.
+- **Handler** (blue) - magnet: holds each part while it's cut free and puts it on the outfeed table.
 
 You give it parts - **NC1 files from Tekla** (or Advance Steel, SDS2), or parts you make on
 screen - and it nests them on stock bars, plans every move of both hands, checks they never
-collide, and plays the whole job in 3D. A camera with YOLO person detection stops the
-machine when someone walks into the cell.
+collide, and plays the whole job in 3D. Or cut by hand: **Manual cut** - click on the steel
+to put a hole or a cut there. A camera with YOLO person detection stops the machine when
+someone walks into the cell.
+
+The 3D view **is the CAD model**: the same solids are in `cad/beam_cell.step` (open it in
+Fusion 360, SolidWorks, FreeCAD or Onshape), every part is a STEP solid with its holes and
+notches, and there's a **1:5 working prototype** in CAD with its shopping list
+([docs/PROTOTYPE.md](docs/PROTOTYPE.md)). Things obey gravity: parts rest on the rollers or
+the outfeed table, offcuts fall into the scrap tray.
 
 It runs on the **Jetson Orin Nano** with nothing to install, and you open it in a web browser.
 
@@ -21,7 +28,9 @@ following PUWER, BS EN ISO 13849, BS EN 60204-1, BS EN ISO 13850 and BS EN ISO 1
 prototype: real machines need these functions in certified safety hardware (see
 [docs/SAFETY.md](docs/SAFETY.md)).
 
-![The cell: the Handler carries a finished beam to the rack while the Cutter works](docs/images/machine.png)
+![The cell: the Handler carries a finished beam to the outfeed table while the Cutter works](docs/images/machine.png)
+
+![The 1:5 prototype in CAD](docs/images/prototype_1to5.png)
 
 ## Start it
 
@@ -40,7 +49,8 @@ Needs Python 3 and numpy (already on the Jetson). OpenCV is only needed for the 
    won't move until you do, like a real one.)
 1. **Machine** tab - three example parts are already loaded and nested on two UB 305 bars.
    Press **Plan this bar**, then **Run**. Use *Follow Cutter* to watch the torch cut the holes
-   and notches; *Follow Handler* to see it carry a finished beam to the rack.
+   and notches; *Follow Handler* to see it carry a finished beam to the outfeed table.
+   Point at anything in 3D to see what it is.
 2. **Parts & NC1** - drag in NC1 files from Tekla (or *Add an example*). Each part shows a
    drawing of every face and its UK code checks. Click a part to edit it: add a fin-plate bolt
    group (M20 in 22 mm holes), notch it to clear a UB 457 (Blue Book N x n), see the checks update.
@@ -50,6 +60,9 @@ Needs Python 3 and numpy (already on the Jetson). OpenCV is only needed for the 
    red zone (machine stops until the zone is clear and you press Reset).
 5. Press **E-STOP** (or Esc) while it runs: everything freezes. Release, Reset, Start to carry on.
    Open the gate on the Safety tab: protective stop. Try Manual mode: it only moves while you hold the button.
+6. **Machine** tab, **Manual cut** (top left) - pick a section and length, click on the web to put a
+   hole there (it snaps to the centre line), **+ Cut** to cut it, check, **Plan these cuts**, Run.
+7. **Section library** - *CAD files*: download the whole cell, the prototype or any example part as STEP.
 
 ## What's in each folder
 
@@ -71,15 +84,21 @@ robot_arm/
 │   ├── nc1.py            reads / writes DSTV NC1 files (Tekla)
 │   ├── arm.py            6-axis robot arm maths
 │   ├── machine.py        the cell's sizes and the two hands
-│   ├── planner.py        plans every move of both hands for a bar
+│   ├── planner.py        plans every move of both hands for a bar (and where loose pieces fall)
+│   ├── manual.py         manual cutting: holes, cuts and notches by hand
 │   ├── collisions.py     checks the arms never touch the steel
+│   ├── cad.py            makes the CAD: STEP files and the 3D view's model (needs CadQuery, on a PC)
 │   └── vision.py         camera + YOLO person detection + safety zone
 ├── web/                  what you see in the browser
 │   ├── index.html        the page
 │   ├── css/style.css     its look
-│   ├── js/               app.js (machine), parts.js, library.js, camera.js, scene.js (3D), geometry.js (steel)
+│   ├── js/               app.js (machine), manual.js, parts.js, library.js, camera.js, safety.js,
+│   │                     scene.js (3D), geometry.js (steel)
+│   ├── models/           the machine for the 3D view (GLB, made by beamcell/cad.py)
 │   └── vendor/           three.js 3D library (MIT licence), kept here so no internet is needed
-├── examples/nc1/         example NC1 files of typical UK parts
+├── cad/                  STEP files: beam_cell.step, prototype_1to5.step, parts/*.step, prototype cut list
+├── examples/nc1/         example NC1 files of typical UK parts (tools/make_examples.py writes them)
+├── tools/                make_examples.py
 ├── models/               put YOLO .onnx models here (see docs/JETSON_SETUP.md)
 ├── jobs/                 jobs you save from the app (not in git)
 ├── logs/                 safety event log (not in git)
@@ -98,7 +117,9 @@ robot_arm/
 | [docs/UK_CODES.md](docs/UK_CODES.md) | every UK rule it checks and where it comes from |
 | [docs/NC1_FILES.md](docs/NC1_FILES.md) | NC1 files from Tekla: what's read, faces and coordinates |
 | [docs/JETSON_SETUP.md](docs/JETSON_SETUP.md) | running on the Orin, start at boot, kiosk mode, camera, YOLO, memory |
-| [docs/SCALE_MODEL.md](docs/SCALE_MODEL.md) | building a 1:10 / 1:20 / 1:100 model: sizes, STL files, parts |
+| [docs/PROTOTYPE.md](docs/PROTOTYPE.md) | **the 1:5 working prototype: CAD, shopping list (~£1,900), safety wiring, build stages** |
+| [docs/prototype_bom.csv](docs/prototype_bom.csv) | the shopping list as a spreadsheet |
+| [docs/SCALE_MODEL.md](docs/SCALE_MODEL.md) | a static display model at 1:20 / 1:100: sizes, STL files |
 | [docs/JETSON_SPECS.md](docs/JETSON_SPECS.md) | your Orin's hardware and software |
 
 ## Check your computer
@@ -115,11 +136,22 @@ python3 -m unittest discover -s tests -t .     # about 45 s
 python3 tests/sweep_sections.py                # every UK section, about 4 min
 ```
 GitHub runs the tests on every push with the Orin's versions (Python 3.12, numpy 1.26.4,
-OpenCV 4.6) and the latest ones, plus a browser test of the whole app.
+OpenCV 4.6) and the latest ones, a browser test of the whole app, and a CAD job that builds
+every solid with CadQuery.
+
+## Make the CAD again (after changing the machine)
+
+On a PC (CadQuery is big; the Jetson doesn't need it - the files are in the repo):
+```
+pip install cadquery
+python3 -m beamcell.cad                 # everything: parts, the cell (+ the 3D view's model), the prototype
+python3 -m beamcell.cad parts my.nc1    # STEP solids of your own NC1 parts
+```
 
 ## Honest limits
 
-- It's a simulation and a planner, not a machine controller - there are no motor outputs yet.
+- It's a simulation and a planner, not a machine controller - there are no motor outputs yet
+  (the prototype guide says what's needed: a FluidNC G-code streamer and SO-101 arm maths).
 - The NC1 face conventions follow the DSTV standard as commonly exported; check one of your
   own Tekla parts against its drawing (see `docs/NC1_FILES.md`).
 - The software stops behave like a real safety system but are not safety-rated - a real machine

@@ -123,8 +123,8 @@ function wire() {
   $("mc-fam").onchange = (e) => { j.section = app.sections[e.target.value].find((s) => s.cuttable).title; changed(true); };
   $("mc-sec").onchange = (e) => { j.section = e.target.value; changed(true); };
   $("mc-len").onchange = (e) => { j.length = Math.max(300, Math.min(12000, +e.target.value)); changed(true); };
-  $("mc-add-hole").onclick = () => { j.cuts.push(newHole("v", Math.round(j.length / 2))); changed(true); };
-  $("mc-add-cut").onclick = () => { j.cuts.push({ type: "cut", x: Math.round(j.length / 2), angle: 0 }); changed(true); };
+  $("mc-add-hole").onclick = () => { j.cuts.push(newHole("v", freeX(0.25))); changed(true); };
+  $("mc-add-cut").onclick = () => { j.cuts.push({ type: "cut", x: freeX(0.5), angle: 0 }); changed(true); };
   $("mc-add-notch").onclick = () => {
     const sup = manual.sec, depth = Math.ceil((sup.tf || 10) + (sup.r || 10) + 2);
     j.cuts.push({ type: "notch", x: 0, on: "after", side: "top", length: 100, depth, radius: 10 });
@@ -144,6 +144,17 @@ function wire() {
     }));
   });
   document.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => { j.cuts.splice(+b.dataset.del, 1); changed(true); }));
+}
+
+// A place along the bar for a new hole or cut: near `frac` of the length, at least 150 mm from
+// any cut, hole or end already there (so a new item doesn't start with a rule broken).
+function freeX(frac) {
+  const j = manual.job, taken = [0, j.length, ...j.cuts.map((c) => c.x)];
+  for (let k = 0; k < 40; k++) {
+    const x = Math.round((j.length * frac + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 100) / 10) * 10;
+    if (x > 150 && x < j.length - 150 && taken.every((t) => Math.abs(t - x) >= 150)) return x;
+  }
+  return Math.round(j.length * frac);
 }
 
 function newHole(face, x, y) {

@@ -165,8 +165,9 @@ td.nowrap { white-space: nowrap; }
 .seg-toggle button { flex: 1; border: 0; border-radius: 0; padding: 9px 6px; font-weight: 600; background: transparent; }
 .seg-toggle button.on { background: #e8641b; color: #fff; }
 .mc-list { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
-.mc-row { border: 1px solid var(--line, #ccd); border-radius: 6px; padding: 6px; font-size: 12px; line-height: 2; }
-.mc-row input[type=number] { width: 64px; }
+.mc-row { border: 1px solid var(--line, #ccd); border-radius: 6px; padding: 6px; font-size: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.mc-row button[data-del] { margin-left: auto; }
+.mc-row input[type=number] { width: 74px; }
 .mc-row select { max-width: 110px; }
 .mc-type { display: inline-block; min-width: 42px; text-align: center; border-radius: 4px; padding: 0 4px; color: #fff; font-weight: 600; }
 .mc-type.hole { background: #1f6fb2; } .mc-type.cut { background: #c0392b; } .mc-type.notch { background: #7d3c98; }
