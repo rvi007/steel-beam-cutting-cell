@@ -137,6 +137,8 @@ steel-beam-cutting-cell/
 | [docs/NC1_FILES.md](docs/NC1_FILES.md) | NC1 files from Tekla: what's read, faces and coordinates |
 | [docs/JETSON_SETUP.md](docs/JETSON_SETUP.md) | running on the Orin, start at boot, kiosk mode, camera, YOLO, memory |
 | [docs/PROTOTYPE.md](docs/PROTOTYPE.md) | **the 1:5 working prototype: CAD, shopping list (~£1,900), safety wiring, build stages** |
+| [docs/Prototype_Shopping_List.pdf](docs/Prototype_Shopping_List.pdf) | the shopping list to print: part numbers, total cost, buy links |
+| [docs/Prototype_Assembly.pdf](docs/Prototype_Assembly.pdf) | the prototype's assembly drawing: part-number balloons, exploded view, every position |
 | [docs/prototype_bom.csv](docs/prototype_bom.csv) | the shopping list as a spreadsheet |
 | [docs/SCALE_MODEL.md](docs/SCALE_MODEL.md) | a static display model at 1:20 / 1:100: sizes, STL files |
 | [docs/JETSON_SPECS.md](docs/JETSON_SPECS.md) | the Orin's hardware and software |

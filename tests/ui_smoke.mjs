@@ -211,10 +211,17 @@ await shot("5_manual", true);
 await page.click("#mode-job");
 await page.waitForTimeout(300);
 
+// prototype tab: the assembly loads with a part number on every solid; clicking a row selects that part
+await page.click(".tabs button[data-tab=proto]");
+await until("prototype assembly didn't load", () => window.prototypeView && prototypeView.solids && Object.keys(prototypeView.solids).length > 80, null, 60000);
+await page.click("#pr-list tr[data-pn=P11]");
+const info = await page.textContent("#pr-info");
+if (!info.includes("P11") || !info.includes("NEMA 17")) fail("prototype info: " + info);
+
 for (const tab of ["camera", "help", "safety", "cell"]) {
   await page.click(`.tabs button[data-tab=${tab}]`);
   await page.waitForTimeout(500);
 }
 if (errors.length) fail("JavaScript errors:\n" + errors.join("\n"));
-console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; job finished -> checklist again, clear job; NC1 import; editor checks; manual cut (click, check, plan); CAD model + files; STL ${fs.statSync(file).size} bytes`);
+console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; job finished -> checklist again, clear job; NC1 import; editor checks; manual cut (click, check, plan); CAD model + files; prototype assembly; STL ${fs.statSync(file).size} bytes`);
 await browser.close();

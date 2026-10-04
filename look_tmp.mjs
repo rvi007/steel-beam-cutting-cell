@@ -1,0 +1,18 @@
+import { chromium } from "playwright";
+const S = process.argv[2];
+const b = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
+const p = await b.newPage({ viewport: { width: 1600, height: 900 } });
+p.on("pageerror", (e) => console.log("ERR", e.message));
+p.on("console", (m) => { if (m.type() === "error") console.log("CONSOLE", m.text()); });
+await p.goto("http://localhost:8099", { waitUntil: "load" });
+await p.waitForFunction(() => window.app && app.scene && app.scene.loaded, null, { timeout: 60000 });
+await p.click(".tabs button[data-tab=proto]");
+await p.waitForTimeout(8000); console.log(await p.evaluate(() => JSON.stringify({v: !!window.prototypeView, keys: window.prototypeView ? Object.keys(window.prototypeView) : null, n: window.prototypeView && window.prototypeView.solids ? Object.keys(window.prototypeView.solids).length : -1})));
+console.log("solids", await p.evaluate(() => Object.keys(prototypeView.solids).length));
+await p.waitForTimeout(1500);
+await p.screenshot({ path: `${S}/look/proto_tab.png` });
+await p.click("#pr-list tr[data-pn=P11]");
+await p.evaluate(() => { document.getElementById("pr-explode").value = 0.6; document.getElementById("pr-explode").dispatchEvent(new Event("input")); });
+await p.waitForTimeout(1200);
+await p.screenshot({ path: `${S}/look/proto_explode.png` });
+await b.close();

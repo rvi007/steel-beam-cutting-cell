@@ -17,6 +17,7 @@ API (all JSON):
     POST /api/plan                  {parts, stock_length, bar} -> motion plan for one bar
     POST /api/manual/check          {section, length, cuts} -> pieces + UK checks for a manual cut
     POST /api/manual/plan           {section, length, cuts} -> motion plan for the manual cuts
+    GET  /api/prototype             the 1:5 prototype: shopping list with part numbers + every position
     GET  /api/cad                   the CAD files in cad/;  GET /cad/<file> downloads one
     POST /api/cad/part              {part} -> STEP solid of the part (needs CadQuery: a PC, not the Jetson)
     GET  /api/jobs, GET/POST /api/jobs/<name>   saved jobs (jobs/ folder); POST /api/jobs-delete/<name> deletes one
@@ -104,6 +105,16 @@ def cad_files():
                 out.append({"path": os.path.relpath(full, CAD).replace(os.sep, "/"), "kb": round(os.path.getsize(full) / 1024)})
     from beamcell import cad
     return {"files": sorted(out, key=lambda f: f["path"]), "can_make_parts": cad.cq is not None}
+
+
+def prototype_info():
+    """The 1:5 prototype: the shopping list (with part numbers) and where every position is."""
+    import csv
+    with open(os.path.join(ROOT, "docs", "prototype_bom.csv")) as fh:
+        bom = list(csv.DictReader(fh))
+    with open(os.path.join(WEB, "models", "prototype_positions.json")) as fh:
+        positions = json.load(fh)
+    return {"bom": bom, "positions": positions}
 
 
 def part_step(body):
@@ -268,6 +279,8 @@ class Handler(BaseHTTPRequestHandler):
                 safe = {k: v for k, v in CONFIG.items()}
                 return self._send(200, {"config": safe, "problems": config_problems(CONFIG),
                                         "api_key_set": bool(os.environ.get("ANTHROPIC_API_KEY"))})
+            if path == "/api/prototype":
+                return self._send(200, prototype_info())
             if path == "/api/cad":
                 return self._send(200, cad_files())
             if path.startswith("/cad/"):

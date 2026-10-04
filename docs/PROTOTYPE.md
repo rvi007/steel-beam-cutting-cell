@@ -6,6 +6,10 @@ the motion planning, the vision and the safety circuit before anything full size
 
 - **CAD:** `cad/prototype_1to5.step` (open in Fusion 360 / SolidWorks / FreeCAD / Onshape).
   Every solid is named and says what it is (also in `cad/prototype_parts.csv`).
+- **Assembly drawing:** `docs/Prototype_Assembly.pdf` - views with part-number balloons, an exploded
+  view, every position, the parts list and the position list. In the app: the **Prototype** tab
+  (3D, click any part, explode slider). Part numbers P01 ... are the shopping-list lines; positions
+  P11-1, P11-2 ... are the copies (also in `cad/prototype_positions.csv` and the CAD tree).
 - **Cut list:** `cad/prototype_cut_list.csv` - every aluminium extrusion length (from the CAD).
 - **Shopping list:** `docs/Prototype_Shopping_List.pdf` (print it, tick as you buy) or
   `docs/prototype_bom.csv` (open in Excel / Google Sheets) - the tables

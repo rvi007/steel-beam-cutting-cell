@@ -16,6 +16,7 @@
     <button data-tab="cell" class="on">Machine</button>
     <button data-tab="parts">Parts &amp; NC1</button>
     <button data-tab="library">Section library</button>
+    <button data-tab="proto">Prototype</button>
     <button data-tab="safety">Safety</button>
     <button data-tab="camera">Camera</button>
     <button data-tab="help">Help</button>
@@ -111,6 +112,31 @@
   </section>
 
   <!-- ============================================================ LIBRARY -->
+  <section id="tab-proto" class="tab">
+    <aside class="side proto-side">
+      <h2>1:5 prototype - parts</h2>
+      <p class="muted small">Every part has a <b>part number</b> (P01, P02 ... the same as the shopping list) and every copy a
+        <b>position</b> (P11-1, P11-2 ...). Click a part in 3D or a row below. Blue links = buy it.</p>
+      <div class="toolbar small">
+        Balloons <select id="pr-balloons"><option value="part">one per part</option><option value="all">every position</option><option value="off">off</option></select>
+        <label>Explode <input id="pr-explode" type="range" min="0" max="1" step="0.01" value="0"></label>
+      </div>
+      <div id="pr-info" class="pr-info muted small">Click a part to see what it is, where it goes and where to buy it.</div>
+      <div class="toolbar small"><a href="/cad/prototype_1to5.step" download>Download the CAD (STEP)</a> &middot;
+        <a href="/cad/prototype_positions.csv" download>positions (CSV)</a></div>
+      <table id="pr-list" class="list pr-list"></table>
+    </aside>
+    <div class="viewport proto-view">
+      <canvas id="pr-canvas"></canvas>
+      <svg id="pr-leaders" class="pr-leaders"></svg>
+      <div id="pr-balloons-layer" class="pr-balloons"></div>
+      <div class="views pr-views">
+        <button data-pview="iso">3D</button><button data-pview="front">Front</button><button data-pview="side">Side</button>
+        <button data-pview="top">Top</button><button data-pview="fit">Fit</button>
+      </div>
+    </div>
+  </section>
+
   <section id="tab-library" class="tab">
     <aside class="side">
       <h2>UK sections</h2>

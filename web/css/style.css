@@ -184,3 +184,18 @@ dialog.job-done h2 { margin: 0 0 8px; color: #1e7d3a; }
 dialog.job-done .safety-note { background: #fff7e0; border-left: 4px solid #f2b632; padding: 8px 12px; margin: 10px 0; }
 dialog.job-done .safety-note ol { margin: 6px 0 0; padding-left: 20px; }
 .job-now { margin: 8px 0; line-height: 1.8; }
+/* prototype assembly */
+#tab-proto { grid-template-columns: 430px 1fr; }
+#pr-canvas { width: 100%; height: 100%; display: block; background: #e9edf0; }
+.pr-leaders { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.pr-balloons { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.pr-balloon { position: absolute; transform: translate(-50%, -50%); min-width: 26px; height: 26px; padding: 0 5px; border-radius: 13px;
+  background: #fff; border: 2px solid #1f2933; font: 700 11px/22px sans-serif; text-align: center; color: #1f2933;
+  pointer-events: auto; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.25); white-space: nowrap; }
+.pr-balloon.sel { background: #e8641b; border-color: #e8641b; color: #fff; }
+.pr-list td { font-size: 12px; padding: 3px 5px; vertical-align: top; }
+.pr-list tr { cursor: pointer; }
+.pr-list tr.sel td { background: #fde7d9; }
+.pr-list .pn { font-weight: 700; white-space: nowrap; }
+.pr-info { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 8px 0; color: var(--ink, #222); }
+.pr-info h3 { margin: 0 0 4px; font-size: 14px; }
