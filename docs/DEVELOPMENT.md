@@ -57,6 +57,7 @@ a three.js web app (`web/`). It runs on a Jetson Orin Nano (4 GB, see
 - Manual cutting (`manual.py`): ManualBar placements with `keep` (rest of bar) / `scrap` flags.
 
 ## Status
-Working in simulation, tested headless. The 1:5 prototype
-(docs/PROTOTYPE.md, cad/prototype_1to5.step) needs: a FluidNC G-code streamer for the gantry
-axes and SO-101 (5-DOF) arm maths - not written yet.
+Working in simulation, tested headless. The 1:10 prototype
+(docs/PROTOTYPE.md, cad/prototype_1to10.step) needs: a FluidNC G-code streamer for the gantry
+axes and maths for the 4-servo arms on the PCA9685 - not written yet. Part numbers come from
+docs/prototype_bom.csv; cad.PROTO_PARTS maps each CAD solid to its line.

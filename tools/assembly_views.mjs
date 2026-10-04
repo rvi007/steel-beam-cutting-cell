@@ -1,4 +1,4 @@
-// Captures the 1:5 prototype assembly views (with part-number balloons) from the Prototype tab, for
+// Captures the 1:10 prototype assembly views (with part-number balloons) from the Prototype tab, for
 // docs/Prototype_Assembly.pdf. Start the app first:
 //   ./start.sh --port 8099 &
 //   node tools/assembly_views.mjs http://localhost:8099      (needs playwright)

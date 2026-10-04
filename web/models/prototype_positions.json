@@ -3,302 +3,283 @@
 "pn": "P01",
 "pos": 1,
 "tag": "P01-1",
-"item": "V-slot 20x40 aluminium extrusion",
+"item": "V-slot 20x20 aluminium extrusion",
 "base": "base_rail",
-"label": "20x40 V-slot aluminium extrusion - base rail 1500 mm",
-"where": "front (operator side), middle, 20 mm up",
+"label": "20x20 V-slot aluminium extrusion - base rail 900 mm",
+"where": "front (operator side), middle, 10 mm up",
 "centre": [
-600.0,
--300.0,
-20.0
+300.0,
+-150.0,
+10.0
 ],
 "size": [
-1500.0,
+900.0,
 20.0,
-40.0
+20.0
 ]
 },
 {
 "pn": "P01",
 "pos": 2,
 "tag": "P01-2",
-"item": "V-slot 20x40 aluminium extrusion",
+"item": "V-slot 20x20 aluminium extrusion",
 "base": "top_rail",
-"label": "20x40 V-slot aluminium extrusion - gantry rail 1500 mm (the bridges' wheels run on it)",
-"where": "front (operator side), middle, 660 mm up",
+"label": "20x20 V-slot aluminium extrusion - gantry rail 900 mm (the bridges' wheels run on it)",
+"where": "front (operator side), middle, 330 mm up",
 "centre": [
-600.0,
--300.0,
-660.0
+300.0,
+-150.0,
+330.0
 ],
 "size": [
-1500.0,
+900.0,
 20.0,
-40.0
+20.0
 ]
 },
 {
 "pn": "P01",
 "pos": 3,
 "tag": "P01-3",
-"item": "V-slot 20x40 aluminium extrusion",
+"item": "V-slot 20x20 aluminium extrusion",
 "base": "upright",
-"label": "20x40 V-slot aluminium extrusion - upright 600 mm",
-"where": "front (operator side), infeed end, 340 mm up",
+"label": "20x20 V-slot aluminium extrusion - upright 300 mm",
+"where": "front (operator side), infeed end, 170 mm up",
 "centre": [
 -140.0,
--300.0,
-340.0
+-150.0,
+170.0
 ],
 "size": [
 20.0,
-40.0,
-600.0
+20.0,
+300.0
 ]
 },
 {
 "pn": "P01",
 "pos": 4,
 "tag": "P01-4",
-"item": "V-slot 20x40 aluminium extrusion",
+"item": "V-slot 20x20 aluminium extrusion",
 "base": "upright",
-"label": "20x40 V-slot aluminium extrusion - upright 600 mm",
-"where": "front (operator side), middle, 340 mm up",
+"label": "20x20 V-slot aluminium extrusion - upright 300 mm",
+"where": "front (operator side), middle, 170 mm up",
 "centre": [
-600.0,
--300.0,
-340.0
+300.0,
+-150.0,
+170.0
 ],
 "size": [
 20.0,
-40.0,
-600.0
+20.0,
+300.0
 ]
 },
 {
 "pn": "P01",
 "pos": 5,
 "tag": "P01-5",
-"item": "V-slot 20x40 aluminium extrusion",
+"item": "V-slot 20x20 aluminium extrusion",
 "base": "upright",
-"label": "20x40 V-slot aluminium extrusion - upright 600 mm",
-"where": "front (operator side), outfeed end, 340 mm up",
+"label": "20x20 V-slot aluminium extrusion - upright 300 mm",
+"where": "front (operator side), middle, 170 mm up",
 "centre": [
-1340.0,
--300.0,
-340.0
+740.0,
+-150.0,
+170.0
 ],
 "size": [
 20.0,
-40.0,
-600.0
+20.0,
+300.0
 ]
 },
 {
 "pn": "P01",
 "pos": 6,
 "tag": "P01-6",
-"item": "V-slot 20x40 aluminium extrusion",
+"item": "V-slot 20x20 aluminium extrusion",
 "base": "base_rail",
-"label": "20x40 V-slot aluminium extrusion - base rail 1500 mm",
-"where": "back, middle, 20 mm up",
+"label": "20x20 V-slot aluminium extrusion - base rail 900 mm",
+"where": "back, middle, 10 mm up",
 "centre": [
-600.0,
 300.0,
-20.0
+150.0,
+10.0
 ],
 "size": [
-1500.0,
+900.0,
 20.0,
-40.0
+20.0
 ]
 },
 {
 "pn": "P01",
 "pos": 7,
 "tag": "P01-7",
-"item": "V-slot 20x40 aluminium extrusion",
+"item": "V-slot 20x20 aluminium extrusion",
 "base": "top_rail",
-"label": "20x40 V-slot aluminium extrusion - gantry rail 1500 mm (the bridges' wheels run on it)",
-"where": "back, middle, 660 mm up",
+"label": "20x20 V-slot aluminium extrusion - gantry rail 900 mm (the bridges' wheels run on it)",
+"where": "back, middle, 330 mm up",
 "centre": [
-600.0,
 300.0,
-660.0
+150.0,
+330.0
 ],
 "size": [
-1500.0,
+900.0,
 20.0,
-40.0
+20.0
 ]
 },
 {
 "pn": "P01",
 "pos": 8,
 "tag": "P01-8",
-"item": "V-slot 20x40 aluminium extrusion",
+"item": "V-slot 20x20 aluminium extrusion",
 "base": "upright",
-"label": "20x40 V-slot aluminium extrusion - upright 600 mm",
-"where": "back, infeed end, 340 mm up",
+"label": "20x20 V-slot aluminium extrusion - upright 300 mm",
+"where": "back, infeed end, 170 mm up",
 "centre": [
 -140.0,
-300.0,
-340.0
+150.0,
+170.0
 ],
 "size": [
 20.0,
-40.0,
-600.0
+20.0,
+300.0
 ]
 },
 {
 "pn": "P01",
 "pos": 9,
 "tag": "P01-9",
-"item": "V-slot 20x40 aluminium extrusion",
+"item": "V-slot 20x20 aluminium extrusion",
 "base": "upright",
-"label": "20x40 V-slot aluminium extrusion - upright 600 mm",
-"where": "back, middle, 340 mm up",
+"label": "20x20 V-slot aluminium extrusion - upright 300 mm",
+"where": "back, middle, 170 mm up",
 "centre": [
-600.0,
 300.0,
-340.0
+150.0,
+170.0
 ],
 "size": [
 20.0,
-40.0,
-600.0
+20.0,
+300.0
 ]
 },
 {
 "pn": "P01",
 "pos": 10,
 "tag": "P01-10",
-"item": "V-slot 20x40 aluminium extrusion",
+"item": "V-slot 20x20 aluminium extrusion",
 "base": "upright",
-"label": "20x40 V-slot aluminium extrusion - upright 600 mm",
-"where": "back, outfeed end, 340 mm up",
+"label": "20x20 V-slot aluminium extrusion - upright 300 mm",
+"where": "back, middle, 170 mm up",
 "centre": [
-1340.0,
-300.0,
-340.0
+740.0,
+150.0,
+170.0
 ],
 "size": [
 20.0,
-40.0,
-600.0
+20.0,
+300.0
 ]
 },
 {
 "pn": "P01",
 "pos": 11,
 "tag": "P01-11",
-"item": "V-slot 20x40 aluminium extrusion",
+"item": "V-slot 20x20 aluminium extrusion",
 "base": "cross_member",
-"label": "20x40 V-slot aluminium extrusion - cross member 580 mm",
-"where": "middle, infeed end, 20 mm up",
+"label": "20x20 V-slot aluminium extrusion - cross member 280 mm",
+"where": "middle, infeed end, 10 mm up",
 "centre": [
 -140.0,
 0.0,
-20.0
+10.0
 ],
 "size": [
 20.0,
-580.0,
-40.0
+280.0,
+20.0
 ]
 },
 {
 "pn": "P01",
 "pos": 12,
 "tag": "P01-12",
-"item": "V-slot 20x40 aluminium extrusion",
+"item": "V-slot 20x20 aluminium extrusion",
 "base": "cross_member",
-"label": "20x40 V-slot aluminium extrusion - cross member 580 mm",
-"where": "middle, infeed end, 660 mm up",
+"label": "20x20 V-slot aluminium extrusion - cross member 280 mm",
+"where": "middle, infeed end, 330 mm up",
 "centre": [
 -140.0,
 0.0,
-660.0
+330.0
 ],
 "size": [
 20.0,
-580.0,
-40.0
+280.0,
+20.0
 ]
 },
 {
 "pn": "P01",
 "pos": 13,
 "tag": "P01-13",
-"item": "V-slot 20x40 aluminium extrusion",
+"item": "V-slot 20x20 aluminium extrusion",
 "base": "cross_member",
-"label": "20x40 V-slot aluminium extrusion - cross member 580 mm",
-"where": "middle, outfeed end, 20 mm up",
+"label": "20x20 V-slot aluminium extrusion - cross member 280 mm",
+"where": "middle, middle, 10 mm up",
 "centre": [
-1340.0,
+740.0,
 0.0,
-20.0
+10.0
 ],
 "size": [
 20.0,
-580.0,
-40.0
+280.0,
+20.0
 ]
 },
 {
 "pn": "P01",
 "pos": 14,
 "tag": "P01-14",
-"item": "V-slot 20x40 aluminium extrusion",
-"base": "cross_member",
-"label": "20x40 V-slot aluminium extrusion - cross member 580 mm",
-"where": "middle, outfeed end, 660 mm up",
-"centre": [
-1340.0,
-0.0,
-660.0
-],
-"size": [
-20.0,
-580.0,
-40.0
-]
-},
-{
-"pn": "P02",
-"pos": 1,
-"tag": "P02-1",
 "item": "V-slot 20x20 aluminium extrusion",
-"base": "bed_rail",
-"label": "20x20 V-slot - bed rail 1300 mm",
-"where": "front (operator side), middle, 150 mm up",
+"base": "cross_member",
+"label": "20x20 V-slot aluminium extrusion - cross member 280 mm",
+"where": "middle, middle, 330 mm up",
 "centre": [
-600.0,
--160.0,
-150.0
+740.0,
+0.0,
+330.0
 ],
 "size": [
-1300.0,
 20.0,
+280.0,
 20.0
 ]
 },
 {
-"pn": "P02",
-"pos": 2,
-"tag": "P02-2",
+"pn": "P01",
+"pos": 15,
+"tag": "P01-15",
 "item": "V-slot 20x20 aluminium extrusion",
 "base": "bed_rail",
-"label": "20x20 V-slot - bed rail 1300 mm",
-"where": "middle, middle, 150 mm up",
+"label": "20x20 V-slot aluminium extrusion - bed rail 700 mm",
+"where": "front (operator side), middle, 70 mm up",
 "centre": [
-600.0,
--40.0,
-150.0
+300.0,
+-80.0,
+70.0
 ],
 "size": [
-1300.0,
+700.0,
 20.0,
 20.0
 ]
@@ -307,531 +288,607 @@
 "pn": "P06",
 "pos": 1,
 "tag": "P06-1",
-"item": "Bed rollers",
-"base": "bed_roller",
-"label": "Bed roller: 20 mm aluminium tube on an 8 mm shaft, 2 x 608 bearings",
-"where": "front (operator side), infeed end, 170 mm up",
+"item": "Bed riser blocks (3D printed)",
+"base": "bed_riser",
+"label": "Bed riser block (3D printed) - holds the bed rails on the base",
+"where": "front (operator side), infeed end, 30 mm up",
 "centre": [
-100.0,
--100.0,
-170.0
-],
-"size": [
-20.0,
-100.0,
-20.0
-]
-},
-{
-"pn": "P07",
-"pos": 1,
-"tag": "P07-1",
-"item": "Roller brackets",
-"base": "bed_bracket",
-"label": "3D-printed roller bracket (cad/prototype: print in PETG)",
-"where": "front (operator side), infeed end, 158 mm up",
-"centre": [
-100.0,
--160.0,
-157.5
-],
-"size": [
-24.0,
-20.0,
-35.0
-]
-},
-{
-"pn": "P07",
-"pos": 2,
-"tag": "P07-2",
-"item": "Roller brackets",
-"base": "bed_bracket",
-"label": "3D-printed roller bracket (cad/prototype: print in PETG)",
-"where": "middle, infeed end, 158 mm up",
-"centre": [
-100.0,
 -40.0,
-157.5
+-80.0,
+30.0
 ],
 "size": [
-24.0,
 20.0,
-35.0
+20.0,
+60.0
 ]
 },
 {
 "pn": "P06",
 "pos": 2,
 "tag": "P06-2",
-"item": "Bed rollers",
-"base": "bed_roller",
-"label": "Bed roller: 20 mm aluminium tube on an 8 mm shaft, 2 x 608 bearings",
-"where": "front (operator side), middle, 170 mm up",
+"item": "Bed riser blocks (3D printed)",
+"base": "bed_riser",
+"label": "Bed riser block (3D printed) - holds the bed rails on the base",
+"where": "front (operator side), middle, 30 mm up",
 "centre": [
 300.0,
--100.0,
-170.0
+-80.0,
+30.0
 ],
 "size": [
 20.0,
-100.0,
-20.0
-]
-},
-{
-"pn": "P07",
-"pos": 3,
-"tag": "P07-3",
-"item": "Roller brackets",
-"base": "bed_bracket",
-"label": "3D-printed roller bracket (cad/prototype: print in PETG)",
-"where": "front (operator side), middle, 158 mm up",
-"centre": [
-300.0,
--160.0,
-157.5
-],
-"size": [
-24.0,
 20.0,
-35.0
-]
-},
-{
-"pn": "P07",
-"pos": 4,
-"tag": "P07-4",
-"item": "Roller brackets",
-"base": "bed_bracket",
-"label": "3D-printed roller bracket (cad/prototype: print in PETG)",
-"where": "middle, middle, 158 mm up",
-"centre": [
-300.0,
--40.0,
-157.5
-],
-"size": [
-24.0,
-20.0,
-35.0
+60.0
 ]
 },
 {
 "pn": "P06",
 "pos": 3,
 "tag": "P06-3",
-"item": "Bed rollers",
-"base": "bed_roller",
-"label": "Bed roller: 20 mm aluminium tube on an 8 mm shaft, 2 x 608 bearings",
-"where": "front (operator side), middle, 170 mm up",
+"item": "Bed riser blocks (3D printed)",
+"base": "bed_riser",
+"label": "Bed riser block (3D printed) - holds the bed rails on the base",
+"where": "front (operator side), middle, 30 mm up",
 "centre": [
-500.0,
--100.0,
-170.0
+640.0,
+-80.0,
+30.0
 ],
 "size": [
 20.0,
-100.0,
+20.0,
+60.0
+]
+},
+{
+"pn": "P01",
+"pos": 16,
+"tag": "P01-16",
+"item": "V-slot 20x20 aluminium extrusion",
+"base": "bed_rail",
+"label": "20x20 V-slot aluminium extrusion - bed rail 700 mm",
+"where": "middle, middle, 70 mm up",
+"centre": [
+300.0,
+-20.0,
+70.0
+],
+"size": [
+700.0,
+20.0,
 20.0
-]
-},
-{
-"pn": "P07",
-"pos": 5,
-"tag": "P07-5",
-"item": "Roller brackets",
-"base": "bed_bracket",
-"label": "3D-printed roller bracket (cad/prototype: print in PETG)",
-"where": "front (operator side), middle, 158 mm up",
-"centre": [
-500.0,
--160.0,
-157.5
-],
-"size": [
-24.0,
-20.0,
-35.0
-]
-},
-{
-"pn": "P07",
-"pos": 6,
-"tag": "P07-6",
-"item": "Roller brackets",
-"base": "bed_bracket",
-"label": "3D-printed roller bracket (cad/prototype: print in PETG)",
-"where": "middle, middle, 158 mm up",
-"centre": [
-500.0,
--40.0,
-157.5
-],
-"size": [
-24.0,
-20.0,
-35.0
 ]
 },
 {
 "pn": "P06",
 "pos": 4,
 "tag": "P06-4",
-"item": "Bed rollers",
-"base": "bed_roller",
-"label": "Bed roller: 20 mm aluminium tube on an 8 mm shaft, 2 x 608 bearings",
-"where": "front (operator side), middle, 170 mm up",
+"item": "Bed riser blocks (3D printed)",
+"base": "bed_riser",
+"label": "Bed riser block (3D printed) - holds the bed rails on the base",
+"where": "middle, infeed end, 30 mm up",
 "centre": [
-700.0,
--100.0,
-170.0
-],
-"size": [
-20.0,
-100.0,
-20.0
-]
-},
-{
-"pn": "P07",
-"pos": 7,
-"tag": "P07-7",
-"item": "Roller brackets",
-"base": "bed_bracket",
-"label": "3D-printed roller bracket (cad/prototype: print in PETG)",
-"where": "front (operator side), middle, 158 mm up",
-"centre": [
-700.0,
--160.0,
-157.5
-],
-"size": [
-24.0,
-20.0,
-35.0
-]
-},
-{
-"pn": "P07",
-"pos": 8,
-"tag": "P07-8",
-"item": "Roller brackets",
-"base": "bed_bracket",
-"label": "3D-printed roller bracket (cad/prototype: print in PETG)",
-"where": "middle, middle, 158 mm up",
-"centre": [
-700.0,
 -40.0,
-157.5
+-20.0,
+30.0
 ],
 "size": [
-24.0,
 20.0,
-35.0
+20.0,
+60.0
 ]
 },
 {
 "pn": "P06",
 "pos": 5,
 "tag": "P06-5",
-"item": "Bed rollers",
-"base": "bed_roller",
-"label": "Bed roller: 20 mm aluminium tube on an 8 mm shaft, 2 x 608 bearings",
-"where": "front (operator side), middle, 170 mm up",
+"item": "Bed riser blocks (3D printed)",
+"base": "bed_riser",
+"label": "Bed riser block (3D printed) - holds the bed rails on the base",
+"where": "middle, middle, 30 mm up",
 "centre": [
-900.0,
--100.0,
-170.0
+300.0,
+-20.0,
+30.0
 ],
 "size": [
 20.0,
-100.0,
-20.0
-]
-},
-{
-"pn": "P07",
-"pos": 9,
-"tag": "P07-9",
-"item": "Roller brackets",
-"base": "bed_bracket",
-"label": "3D-printed roller bracket (cad/prototype: print in PETG)",
-"where": "front (operator side), middle, 158 mm up",
-"centre": [
-900.0,
--160.0,
-157.5
-],
-"size": [
-24.0,
 20.0,
-35.0
-]
-},
-{
-"pn": "P07",
-"pos": 10,
-"tag": "P07-10",
-"item": "Roller brackets",
-"base": "bed_bracket",
-"label": "3D-printed roller bracket (cad/prototype: print in PETG)",
-"where": "middle, middle, 158 mm up",
-"centre": [
-900.0,
--40.0,
-157.5
-],
-"size": [
-24.0,
-20.0,
-35.0
+60.0
 ]
 },
 {
 "pn": "P06",
 "pos": 6,
 "tag": "P06-6",
+"item": "Bed riser blocks (3D printed)",
+"base": "bed_riser",
+"label": "Bed riser block (3D printed) - holds the bed rails on the base",
+"where": "middle, middle, 30 mm up",
+"centre": [
+640.0,
+-20.0,
+30.0
+],
+"size": [
+20.0,
+20.0,
+60.0
+]
+},
+{
+"pn": "P04",
+"pos": 1,
+"tag": "P04-1",
 "item": "Bed rollers",
 "base": "bed_roller",
-"label": "Bed roller: 20 mm aluminium tube on an 8 mm shaft, 2 x 608 bearings",
-"where": "front (operator side), outfeed end, 170 mm up",
+"label": "Bed roller: 10 mm printed sleeve on a 3 mm steel rod, 2 x 623 bearings",
+"where": "middle, infeed end, 85 mm up",
 "centre": [
-1100.0,
--100.0,
-170.0
+50.0,
+-50.0,
+85.0
 ],
 "size": [
-20.0,
-100.0,
-20.0
+10.0,
+50.0,
+10.0
 ]
 },
 {
-"pn": "P07",
-"pos": 11,
-"tag": "P07-11",
-"item": "Roller brackets",
+"pn": "P05",
+"pos": 1,
+"tag": "P05-1",
+"item": "Roller brackets (3D printed)",
 "base": "bed_bracket",
-"label": "3D-printed roller bracket (cad/prototype: print in PETG)",
-"where": "front (operator side), outfeed end, 158 mm up",
+"label": "Roller bracket (3D printed, PETG) - clips on the bed rail",
+"where": "front (operator side), infeed end, 84 mm up",
 "centre": [
-1100.0,
--160.0,
-157.5
+50.0,
+-80.0,
+84.0
 ],
 "size": [
-24.0,
+12.0,
 20.0,
-35.0
+8.0
 ]
 },
 {
-"pn": "P07",
-"pos": 12,
-"tag": "P07-12",
-"item": "Roller brackets",
+"pn": "P05",
+"pos": 2,
+"tag": "P05-2",
+"item": "Roller brackets (3D printed)",
 "base": "bed_bracket",
-"label": "3D-printed roller bracket (cad/prototype: print in PETG)",
-"where": "middle, outfeed end, 158 mm up",
+"label": "Roller bracket (3D printed, PETG) - clips on the bed rail",
+"where": "middle, infeed end, 84 mm up",
 "centre": [
-1100.0,
--40.0,
-157.5
+50.0,
+-20.0,
+84.0
 ],
 "size": [
-24.0,
+12.0,
 20.0,
-35.0
+8.0
 ]
 },
 {
-"pn": "P02",
+"pn": "P04",
+"pos": 2,
+"tag": "P04-2",
+"item": "Bed rollers",
+"base": "bed_roller",
+"label": "Bed roller: 10 mm printed sleeve on a 3 mm steel rod, 2 x 623 bearings",
+"where": "middle, infeed end, 85 mm up",
+"centre": [
+150.0,
+-50.0,
+85.0
+],
+"size": [
+10.0,
+50.0,
+10.0
+]
+},
+{
+"pn": "P05",
 "pos": 3,
-"tag": "P02-3",
-"item": "V-slot 20x20 aluminium extrusion",
-"base": "bed_leg",
-"label": "20x20 V-slot - bed leg",
-"where": "front (operator side), infeed end, 90 mm up",
+"tag": "P05-3",
+"item": "Roller brackets (3D printed)",
+"base": "bed_bracket",
+"label": "Roller bracket (3D printed, PETG) - clips on the bed rail",
+"where": "front (operator side), infeed end, 84 mm up",
 "centre": [
--40.0,
--160.0,
-90.0
+150.0,
+-80.0,
+84.0
 ],
 "size": [
+12.0,
 20.0,
-20.0,
-100.0
+8.0
 ]
 },
 {
-"pn": "P02",
+"pn": "P05",
 "pos": 4,
-"tag": "P02-4",
-"item": "V-slot 20x20 aluminium extrusion",
-"base": "bed_leg",
-"label": "20x20 V-slot - bed leg",
-"where": "middle, infeed end, 90 mm up",
+"tag": "P05-4",
+"item": "Roller brackets (3D printed)",
+"base": "bed_bracket",
+"label": "Roller bracket (3D printed, PETG) - clips on the bed rail",
+"where": "middle, infeed end, 84 mm up",
 "centre": [
--40.0,
--40.0,
-90.0
+150.0,
+-20.0,
+84.0
 ],
 "size": [
+12.0,
 20.0,
-20.0,
-100.0
+8.0
 ]
 },
 {
-"pn": "P02",
+"pn": "P04",
+"pos": 3,
+"tag": "P04-3",
+"item": "Bed rollers",
+"base": "bed_roller",
+"label": "Bed roller: 10 mm printed sleeve on a 3 mm steel rod, 2 x 623 bearings",
+"where": "middle, middle, 85 mm up",
+"centre": [
+250.0,
+-50.0,
+85.0
+],
+"size": [
+10.0,
+50.0,
+10.0
+]
+},
+{
+"pn": "P05",
 "pos": 5,
-"tag": "P02-5",
-"item": "V-slot 20x20 aluminium extrusion",
-"base": "bed_leg",
-"label": "20x20 V-slot - bed leg",
-"where": "front (operator side), middle, 90 mm up",
+"tag": "P05-5",
+"item": "Roller brackets (3D printed)",
+"base": "bed_bracket",
+"label": "Roller bracket (3D printed, PETG) - clips on the bed rail",
+"where": "front (operator side), middle, 84 mm up",
 "centre": [
-600.0,
--160.0,
-90.0
+250.0,
+-80.0,
+84.0
 ],
 "size": [
+12.0,
 20.0,
-20.0,
-100.0
+8.0
 ]
 },
 {
-"pn": "P02",
+"pn": "P05",
 "pos": 6,
-"tag": "P02-6",
-"item": "V-slot 20x20 aluminium extrusion",
-"base": "bed_leg",
-"label": "20x20 V-slot - bed leg",
-"where": "middle, middle, 90 mm up",
+"tag": "P05-6",
+"item": "Roller brackets (3D printed)",
+"base": "bed_bracket",
+"label": "Roller bracket (3D printed, PETG) - clips on the bed rail",
+"where": "middle, middle, 84 mm up",
 "centre": [
-600.0,
--40.0,
-90.0
+250.0,
+-20.0,
+84.0
 ],
 "size": [
+12.0,
 20.0,
-20.0,
-100.0
+8.0
 ]
 },
 {
-"pn": "P02",
+"pn": "P04",
+"pos": 4,
+"tag": "P04-4",
+"item": "Bed rollers",
+"base": "bed_roller",
+"label": "Bed roller: 10 mm printed sleeve on a 3 mm steel rod, 2 x 623 bearings",
+"where": "middle, middle, 85 mm up",
+"centre": [
+350.0,
+-50.0,
+85.0
+],
+"size": [
+10.0,
+50.0,
+10.0
+]
+},
+{
+"pn": "P05",
 "pos": 7,
-"tag": "P02-7",
-"item": "V-slot 20x20 aluminium extrusion",
-"base": "bed_leg",
-"label": "20x20 V-slot - bed leg",
-"where": "front (operator side), outfeed end, 90 mm up",
+"tag": "P05-7",
+"item": "Roller brackets (3D printed)",
+"base": "bed_bracket",
+"label": "Roller bracket (3D printed, PETG) - clips on the bed rail",
+"where": "front (operator side), middle, 84 mm up",
 "centre": [
-1240.0,
--160.0,
-90.0
+350.0,
+-80.0,
+84.0
 ],
 "size": [
+12.0,
 20.0,
-20.0,
-100.0
+8.0
 ]
 },
 {
-"pn": "P02",
+"pn": "P05",
 "pos": 8,
-"tag": "P02-8",
-"item": "V-slot 20x20 aluminium extrusion",
-"base": "bed_leg",
-"label": "20x20 V-slot - bed leg",
-"where": "middle, outfeed end, 90 mm up",
+"tag": "P05-8",
+"item": "Roller brackets (3D printed)",
+"base": "bed_bracket",
+"label": "Roller bracket (3D printed, PETG) - clips on the bed rail",
+"where": "middle, middle, 84 mm up",
 "centre": [
-1240.0,
--40.0,
-90.0
+350.0,
+-20.0,
+84.0
 ],
 "size": [
+12.0,
 20.0,
+8.0
+]
+},
+{
+"pn": "P04",
+"pos": 5,
+"tag": "P04-5",
+"item": "Bed rollers",
+"base": "bed_roller",
+"label": "Bed roller: 10 mm printed sleeve on a 3 mm steel rod, 2 x 623 bearings",
+"where": "middle, middle, 85 mm up",
+"centre": [
+450.0,
+-50.0,
+85.0
+],
+"size": [
+10.0,
+50.0,
+10.0
+]
+},
+{
+"pn": "P05",
+"pos": 9,
+"tag": "P05-9",
+"item": "Roller brackets (3D printed)",
+"base": "bed_bracket",
+"label": "Roller bracket (3D printed, PETG) - clips on the bed rail",
+"where": "front (operator side), middle, 84 mm up",
+"centre": [
+450.0,
+-80.0,
+84.0
+],
+"size": [
+12.0,
 20.0,
-100.0
+8.0
+]
+},
+{
+"pn": "P05",
+"pos": 10,
+"tag": "P05-10",
+"item": "Roller brackets (3D printed)",
+"base": "bed_bracket",
+"label": "Roller bracket (3D printed, PETG) - clips on the bed rail",
+"where": "middle, middle, 84 mm up",
+"centre": [
+450.0,
+-20.0,
+84.0
+],
+"size": [
+12.0,
+20.0,
+8.0
+]
+},
+{
+"pn": "P04",
+"pos": 6,
+"tag": "P04-6",
+"item": "Bed rollers",
+"base": "bed_roller",
+"label": "Bed roller: 10 mm printed sleeve on a 3 mm steel rod, 2 x 623 bearings",
+"where": "middle, middle, 85 mm up",
+"centre": [
+550.0,
+-50.0,
+85.0
+],
+"size": [
+10.0,
+50.0,
+10.0
+]
+},
+{
+"pn": "P05",
+"pos": 11,
+"tag": "P05-11",
+"item": "Roller brackets (3D printed)",
+"base": "bed_bracket",
+"label": "Roller bracket (3D printed, PETG) - clips on the bed rail",
+"where": "front (operator side), middle, 84 mm up",
+"centre": [
+550.0,
+-80.0,
+84.0
+],
+"size": [
+12.0,
+20.0,
+8.0
+]
+},
+{
+"pn": "P05",
+"pos": 12,
+"tag": "P05-12",
+"item": "Roller brackets (3D printed)",
+"base": "bed_bracket",
+"label": "Roller bracket (3D printed, PETG) - clips on the bed rail",
+"where": "middle, middle, 84 mm up",
+"centre": [
+550.0,
+-20.0,
+84.0
+],
+"size": [
+12.0,
+20.0,
+8.0
 ]
 },
 {
 "pn": "P09",
 "pos": 1,
 "tag": "P09-1",
-"item": "Scrap tray",
+"item": "Scrap tray (3D printed)",
 "base": "scrap_tray",
-"label": "Scrap tray: 3D-printed or folded aluminium sheet",
-"where": "front (operator side), middle, 45 mm up",
+"label": "Scrap tray (3D printed) - offcuts fall into it",
+"where": "middle, middle, 22 mm up",
 "centre": [
-600.0,
--100.0,
-45.0
+300.0,
+-50.0,
+22.0
 ],
 "size": [
-1300.0,
+700.0,
+44.0,
+4.0
+]
+},
+{
+"pn": "P07",
+"pos": 1,
+"tag": "P07-1",
+"item": "Outfeed table board",
+"base": "outfeed_table",
+"label": "Outfeed table: 3 mm plywood strip on printed risers",
+"where": "back, middle, 88 mm up",
+"centre": [
+300.0,
+85.0,
+88.5
+],
+"size": [
+700.0,
 90.0,
-10.0
+3.0
 ]
 },
 {
 "pn": "P08",
 "pos": 1,
 "tag": "P08-1",
-"item": "Outfeed table board",
-"base": "outfeed_table",
-"label": "Outfeed table: 6 mm plywood / MDF strip on 20x20 legs",
-"where": "back, middle, 177 mm up",
+"item": "Outfeed table risers (3D printed)",
+"base": "outfeed_riser",
+"label": "Outfeed table riser (3D printed)",
+"where": "back, infeed end, 44 mm up",
 "centre": [
-600.0,
-170.0,
-177.0
+-40.0,
+85.0,
+43.5
 ],
 "size": [
-1300.0,
-180.0,
-6.0
+20.0,
+20.0,
+87.0
+]
+},
+{
+"pn": "P08",
+"pos": 2,
+"tag": "P08-2",
+"item": "Outfeed table risers (3D printed)",
+"base": "outfeed_riser",
+"label": "Outfeed table riser (3D printed)",
+"where": "back, middle, 44 mm up",
+"centre": [
+300.0,
+85.0,
+43.5
+],
+"size": [
+20.0,
+20.0,
+87.0
+]
+},
+{
+"pn": "P08",
+"pos": 3,
+"tag": "P08-3",
+"item": "Outfeed table risers (3D printed)",
+"base": "outfeed_riser",
+"label": "Outfeed table riser (3D printed)",
+"where": "back, middle, 44 mm up",
+"centre": [
+640.0,
+85.0,
+43.5
+],
+"size": [
+20.0,
+20.0,
+87.0
 ]
 },
 {
 "pn": "P28",
 "pos": 1,
 "tag": "P28-1",
-"item": "Model beams",
+"item": "Model beams (3D printed)",
 "base": "model_beam",
-"label": "Model beam: UB 305x165x40 at 1:5, 3D printed (see docs/SCALE_MODEL.md)",
-"where": "front (operator side), middle, 210 mm up",
+"label": "Model beam: UB 305x165x40 at 1:10 (30 x 16 mm), 3D printed, steel tape on top",
+"where": "middle, middle, 105 mm up",
 "centre": [
-520.0,
--100.0,
-210.3
+260.0,
+-50.0,
+105.2
 ],
 "size": [
-1000.0,
-33.0,
-60.7
+500.0,
+16.5,
+30.3
 ]
 },
 {
-"pn": "P03",
-"pos": 1,
-"tag": "P03-1",
-"item": "V-slot 20x60 aluminium extrusion",
+"pn": "P01",
+"pos": 17,
+"tag": "P01-17",
+"item": "V-slot 20x20 aluminium extrusion",
 "base": "bridge",
-"label": "Handler bridge: 20x60 V-slot 660 mm",
-"where": "middle, infeed end, 710 mm up",
+"label": "Handler bridge: 20x20 V-slot aluminium extrusion 340 mm",
+"where": "middle, infeed end, 362 mm up",
 "centre": [
-150.0,
+50.0,
 0.0,
-710.0
+362.0
 ],
 "size": [
-60.0,
-660.0,
+20.0,
+340.0,
 20.0
 ]
 },
@@ -839,114 +896,114 @@
 "pn": "P10",
 "pos": 1,
 "tag": "P10-1",
-"item": "V-wheel gantry plate kits",
+"item": "Mini V-wheel gantry plate kits",
 "base": "gantry_plate",
-"label": "Handler bridge end: V-slot gantry plate with 4 V-wheels",
-"where": "front (operator side), infeed end, 698 mm up",
+"label": "Handler bridge end: mini V-wheel gantry plate (20 series)",
+"where": "front (operator side), infeed end, 350 mm up",
 "centre": [
-150.0,
--300.0,
-697.5
+50.0,
+-150.0,
+350.5
 ],
 "size": [
-90.0,
-50.0,
-5.0
+60.0,
+36.0,
+3.0
 ]
 },
 {
 "pn": "P10",
 "pos": 2,
 "tag": "P10-2",
-"item": "V-wheel gantry plate kits",
+"item": "Mini V-wheel gantry plate kits",
 "base": "v_wheel",
-"label": "V-wheel (Delrin, 625 bearings)",
-"where": "front (operator side), infeed end, 685 mm up",
+"label": "Mini V-wheel (625 bearing)",
+"where": "front (operator side), infeed end, 343 mm up",
 "centre": [
-120.0,
--300.0,
-685.0
+32.0,
+-150.0,
+343.0
 ],
 "size": [
-24.0,
-24.0,
-24.0
+16.0,
+12.0,
+16.0
 ]
 },
 {
 "pn": "P10",
 "pos": 3,
 "tag": "P10-3",
-"item": "V-wheel gantry plate kits",
+"item": "Mini V-wheel gantry plate kits",
 "base": "v_wheel",
-"label": "V-wheel (Delrin, 625 bearings)",
-"where": "front (operator side), infeed end, 685 mm up",
+"label": "Mini V-wheel (625 bearing)",
+"where": "front (operator side), infeed end, 343 mm up",
 "centre": [
-180.0,
--300.0,
-685.0
+68.0,
+-150.0,
+343.0
 ],
 "size": [
-24.0,
-24.0,
-24.0
+16.0,
+12.0,
+16.0
 ]
 },
 {
 "pn": "P10",
 "pos": 4,
 "tag": "P10-4",
-"item": "V-wheel gantry plate kits",
+"item": "Mini V-wheel gantry plate kits",
 "base": "gantry_plate",
-"label": "Handler bridge end: V-slot gantry plate with 4 V-wheels",
-"where": "back, infeed end, 698 mm up",
+"label": "Handler bridge end: mini V-wheel gantry plate (20 series)",
+"where": "back, infeed end, 350 mm up",
 "centre": [
+50.0,
 150.0,
-300.0,
-697.5
+350.5
 ],
 "size": [
-90.0,
-50.0,
-5.0
+60.0,
+36.0,
+3.0
 ]
 },
 {
 "pn": "P10",
 "pos": 5,
 "tag": "P10-5",
-"item": "V-wheel gantry plate kits",
+"item": "Mini V-wheel gantry plate kits",
 "base": "v_wheel",
-"label": "V-wheel (Delrin, 625 bearings)",
-"where": "back, infeed end, 685 mm up",
+"label": "Mini V-wheel (625 bearing)",
+"where": "back, infeed end, 343 mm up",
 "centre": [
-120.0,
-300.0,
-685.0
+32.0,
+150.0,
+343.0
 ],
 "size": [
-24.0,
-24.0,
-24.0
+16.0,
+12.0,
+16.0
 ]
 },
 {
 "pn": "P10",
 "pos": 6,
 "tag": "P10-6",
-"item": "V-wheel gantry plate kits",
+"item": "Mini V-wheel gantry plate kits",
 "base": "v_wheel",
-"label": "V-wheel (Delrin, 625 bearings)",
-"where": "back, infeed end, 685 mm up",
+"label": "Mini V-wheel (625 bearing)",
+"where": "back, infeed end, 343 mm up",
 "centre": [
-180.0,
-300.0,
-685.0
+68.0,
+150.0,
+343.0
 ],
 "size": [
-24.0,
-24.0,
-24.0
+16.0,
+12.0,
+16.0
 ]
 },
 {
@@ -955,16 +1012,16 @@
 "tag": "P11-1",
 "item": "NEMA 17 stepper motor",
 "base": "x_motor",
-"label": "Handler X motor: NEMA 17 (42x42x48) driving both sides through an 8 mm cross shaft and GT2 belts",
-"where": "front (operator side), infeed end, 741 mm up",
+"label": "Handler X motor: NEMA 17 driving both rails through a 5 mm cross shaft and GT2 belts",
+"where": "front (operator side), infeed end, 393 mm up",
 "centre": [
-191.0,
--236.0,
-741.0
+85.0,
+-105.0,
+393.0
 ],
 "size": [
 42.0,
-48.0,
+40.0,
 42.0
 ]
 },
@@ -972,38 +1029,38 @@
 "pn": "P17",
 "pos": 1,
 "tag": "P17-1",
-"item": "8 mm cross shafts + pillow blocks",
+"item": "5 mm cross shafts + bearings",
 "base": "cross_shaft",
-"label": "8 mm cross shaft with GT2 20T pulleys at both ends",
-"where": "middle, infeed end, 741 mm up",
+"label": "5 mm cross shaft with GT2 16T pulleys at both ends",
+"where": "middle, infeed end, 382 mm up",
 "centre": [
-191.0,
+85.0,
 0.0,
-741.0
+382.0
 ],
 "size": [
-8.0,
-600.0,
-8.0
+5.0,
+300.0,
+5.0
 ]
 },
 {
 "pn": "P10",
 "pos": 7,
 "tag": "P10-7",
-"item": "V-wheel gantry plate kits",
+"item": "Mini V-wheel gantry plate kits",
 "base": "carriage_plate",
-"label": "Handler carriage: V-slot gantry plate on the bridge (Y axis)",
-"where": "middle, infeed end, 688 mm up",
+"label": "Handler carriage: mini V-wheel gantry plate on the bridge (Y axis)",
+"where": "middle, infeed end, 348 mm up",
 "centre": [
-150.0,
+50.0,
 0.0,
-687.5
+347.5
 ],
 "size": [
-90.0,
-90.0,
-5.0
+60.0,
+60.0,
+3.0
 ]
 },
 {
@@ -1013,35 +1070,35 @@
 "item": "NEMA 17 stepper motor",
 "base": "y_motor",
 "label": "Handler Y motor: NEMA 17 + GT2 belt along the bridge",
-"where": "middle, infeed end, 661 mm up",
+"where": "middle, infeed end, 326 mm up",
 "centre": [
-186.0,
+83.0,
 0.0,
-661.0
+326.0
 ],
 "size": [
 42.0,
 42.0,
-48.0
+40.0
 ]
 },
 {
-"pn": "P02",
-"pos": 9,
-"tag": "P02-9",
+"pn": "P01",
+"pos": 18,
+"tag": "P01-18",
 "item": "V-slot 20x20 aluminium extrusion",
 "base": "z_axis",
-"label": "Handler Z axis: 20x20 V-slot 300 mm on a T8 lead screw (slides through the carriage)",
-"where": "middle, infeed end, 646 mm up",
+"label": "Handler Z axis: 20x20 V-slot aluminium extrusion 200 mm on a T8 lead screw (slides through the carriage)",
+"where": "middle, infeed end, 350 mm up",
 "centre": [
-150.0,
+50.0,
 0.0,
-645.7
+350.3
 ],
 "size": [
 20.0,
 20.0,
-300.0
+200.0
 ]
 },
 {
@@ -1050,17 +1107,17 @@
 "tag": "P12-1",
 "item": "NEMA 17 with integrated T8 lead screw",
 "base": "z_motor",
-"label": "Handler Z motor: NEMA 17 with integrated T8 x 2 mm lead screw",
-"where": "middle, infeed end, 714 mm up",
+"label": "Handler Z motor: NEMA 17 with integrated T8 x 2 mm lead screw (150 mm)",
+"where": "middle, infeed end, 369 mm up",
 "centre": [
-91.0,
+3.0,
 0.0,
-714.0
+369.0
 ],
 "size": [
 42.0,
 42.0,
-48.0
+40.0
 ]
 },
 {
@@ -1070,16 +1127,16 @@
 "item": "Z motor bracket (3D printed)",
 "base": "z_motor_mount",
 "label": "Handler Z motor bracket (3D printed)",
-"where": "middle, infeed end, 688 mm up",
+"where": "middle, infeed end, 348 mm up",
 "centre": [
-101.5,
+9.0,
 0.0,
-687.5
+347.5
 ],
 "size": [
-67.0,
-50.0,
-5.0
+58.0,
+48.0,
+3.0
 ]
 },
 {
@@ -1088,17 +1145,17 @@
 "tag": "P12-2",
 "item": "NEMA 17 with integrated T8 lead screw",
 "base": "lead_screw",
-"label": "T8 x 2 mm lead screw, 300 mm",
-"where": "middle, infeed end, 593 mm up",
+"label": "T8 x 2 mm lead screw, 150 mm",
+"where": "middle, infeed end, 310 mm up",
 "centre": [
-91.0,
+3.0,
 0.0,
-592.8
+309.7
 ],
 "size": [
 8.0,
 8.0,
-194.3
+78.7
 ]
 },
 {
@@ -1108,16 +1165,16 @@
 "item": "Lead-screw nut block (3D printed)",
 "base": "lead_nut",
 "label": "Handler lead-screw nut block on the Z axis (3D printed + brass T8 nut)",
-"where": "middle, infeed end, 503 mm up",
+"where": "middle, infeed end, 276 mm up",
 "centre": [
-110.0,
+17.5,
 0.0,
-503.2
+276.3
 ],
 "size": [
-60.0,
-24.0,
-15.0
+45.0,
+20.0,
+12.0
 ]
 },
 {
@@ -1127,92 +1184,92 @@
 "item": "Arm mount plate (3D printed)",
 "base": "arm_mount",
 "label": "Handler arm mount plate (3D printed)",
-"where": "middle, infeed end, 493 mm up",
+"where": "middle, infeed end, 248 mm up",
 "centre": [
-150.0,
+50.0,
 0.0,
-492.7
+248.3
 ],
 "size": [
-60.0,
-60.0,
-6.0
+44.0,
+44.0,
+4.0
 ]
 },
 {
 "pn": "P22",
 "pos": 1,
 "tag": "P22-1",
-"item": "SO-101 6-servo arm kit (follower)",
+"item": "MeArm-type 4-servo arm kit",
 "base": "arm_base",
-"label": "Handler arm: SO-101 type 6-servo arm kit (STS3215 servos) - base",
-"where": "middle, infeed end, 465 mm up",
+"label": "Handler arm: MeArm-type 4-servo arm kit (MG90S servos) - base",
+"where": "middle, infeed end, 233 mm up",
 "centre": [
-150.0,
+50.0,
 0.0,
-464.7
+233.3
 ],
 "size": [
-64.0,
-64.0,
-50.0
+44.0,
+44.0,
+26.0
 ]
 },
 {
 "pn": "P22",
 "pos": 2,
 "tag": "P22-2",
-"item": "SO-101 6-servo arm kit (follower)",
+"item": "MeArm-type 4-servo arm kit",
 "base": "arm_upper",
-"label": "Handler arm: upper arm (~110 mm)",
-"where": "middle, infeed end, 385 mm up",
+"label": "Handler arm: upper arm (~80 mm)",
+"where": "middle, infeed end, 188 mm up",
 "centre": [
-150.0,
+50.0,
 0.0,
-384.7
+187.8
 ],
 "size": [
-30.0,
-30.0,
-110.0
+16.0,
+16.0,
+65.0
 ]
 },
 {
 "pn": "P22",
 "pos": 3,
 "tag": "P22-3",
-"item": "SO-101 6-servo arm kit (follower)",
+"item": "MeArm-type 4-servo arm kit",
 "base": "arm_fore",
-"label": "Handler arm: forearm (~135 mm)",
-"where": "middle, infeed end, 318 mm up",
+"label": "Handler arm: forearm (~80 mm)",
+"where": "middle, infeed end, 149 mm up",
 "centre": [
-205.5,
+82.0,
 0.0,
-317.7
+148.8
 ],
 "size": [
-135.0,
-24.0,
-24.0
+76.0,
+12.0,
+13.0
 ]
 },
 {
 "pn": "P22",
 "pos": 4,
 "tag": "P22-4",
-"item": "SO-101 6-servo arm kit (follower)",
+"item": "MeArm-type 4-servo arm kit",
 "base": "arm_wrist",
-"label": "Handler arm: wrist",
-"where": "middle, middle, 286 mm up",
+"label": "Handler arm: wrist / tool holder",
+"where": "middle, infeed end, 136 mm up",
 "centre": [
-275.0,
+120.0,
 0.0,
-285.7
+136.3
 ],
 "size": [
-30.0,
-28.0,
-40.0
+20.0,
+18.0,
+12.0
 ]
 },
 {
@@ -1221,35 +1278,35 @@
 "tag": "P27-1",
 "item": "Handler magnet",
 "base": "magnet_tool",
-"label": "Handler magnet: 12 V 25 mm lifting electromagnet (holds 2.5 kg)",
-"where": "middle, middle, 253 mm up",
+"label": "Handler magnet: 5 V 20 mm lifting electromagnet (holds about 2.5 kg)",
+"where": "middle, infeed end, 125 mm up",
 "centre": [
-275.0,
+120.0,
 0.0,
-253.2
+125.3
 ],
 "size": [
-25.0,
-25.0,
-25.0
+20.0,
+20.0,
+10.0
 ]
 },
 {
-"pn": "P03",
-"pos": 2,
-"tag": "P03-2",
-"item": "V-slot 20x60 aluminium extrusion",
+"pn": "P01",
+"pos": 19,
+"tag": "P01-19",
+"item": "V-slot 20x20 aluminium extrusion",
 "base": "bridge",
-"label": "Cutter bridge: 20x60 V-slot 660 mm",
-"where": "middle, middle, 710 mm up",
+"label": "Cutter bridge: 20x20 V-slot aluminium extrusion 340 mm",
+"where": "middle, middle, 362 mm up",
 "centre": [
-900.0,
+450.0,
 0.0,
-710.0
+362.0
 ],
 "size": [
-60.0,
-660.0,
+20.0,
+340.0,
 20.0
 ]
 },
@@ -1257,114 +1314,114 @@
 "pn": "P10",
 "pos": 8,
 "tag": "P10-8",
-"item": "V-wheel gantry plate kits",
+"item": "Mini V-wheel gantry plate kits",
 "base": "gantry_plate",
-"label": "Cutter bridge end: V-slot gantry plate with 4 V-wheels",
-"where": "front (operator side), middle, 698 mm up",
+"label": "Cutter bridge end: mini V-wheel gantry plate (20 series)",
+"where": "front (operator side), middle, 350 mm up",
 "centre": [
-900.0,
--300.0,
-697.5
+450.0,
+-150.0,
+350.5
 ],
 "size": [
-90.0,
-50.0,
-5.0
+60.0,
+36.0,
+3.0
 ]
 },
 {
 "pn": "P10",
 "pos": 9,
 "tag": "P10-9",
-"item": "V-wheel gantry plate kits",
+"item": "Mini V-wheel gantry plate kits",
 "base": "v_wheel",
-"label": "V-wheel (Delrin, 625 bearings)",
-"where": "front (operator side), middle, 685 mm up",
+"label": "Mini V-wheel (625 bearing)",
+"where": "front (operator side), middle, 343 mm up",
 "centre": [
-870.0,
--300.0,
-685.0
+432.0,
+-150.0,
+343.0
 ],
 "size": [
-24.0,
-24.0,
-24.0
+16.0,
+12.0,
+16.0
 ]
 },
 {
 "pn": "P10",
 "pos": 10,
 "tag": "P10-10",
-"item": "V-wheel gantry plate kits",
+"item": "Mini V-wheel gantry plate kits",
 "base": "v_wheel",
-"label": "V-wheel (Delrin, 625 bearings)",
-"where": "front (operator side), middle, 685 mm up",
+"label": "Mini V-wheel (625 bearing)",
+"where": "front (operator side), middle, 343 mm up",
 "centre": [
-930.0,
--300.0,
-685.0
+468.0,
+-150.0,
+343.0
 ],
 "size": [
-24.0,
-24.0,
-24.0
+16.0,
+12.0,
+16.0
 ]
 },
 {
 "pn": "P10",
 "pos": 11,
 "tag": "P10-11",
-"item": "V-wheel gantry plate kits",
+"item": "Mini V-wheel gantry plate kits",
 "base": "gantry_plate",
-"label": "Cutter bridge end: V-slot gantry plate with 4 V-wheels",
-"where": "back, middle, 698 mm up",
+"label": "Cutter bridge end: mini V-wheel gantry plate (20 series)",
+"where": "back, middle, 350 mm up",
 "centre": [
-900.0,
-300.0,
-697.5
+450.0,
+150.0,
+350.5
 ],
 "size": [
-90.0,
-50.0,
-5.0
+60.0,
+36.0,
+3.0
 ]
 },
 {
 "pn": "P10",
 "pos": 12,
 "tag": "P10-12",
-"item": "V-wheel gantry plate kits",
+"item": "Mini V-wheel gantry plate kits",
 "base": "v_wheel",
-"label": "V-wheel (Delrin, 625 bearings)",
-"where": "back, middle, 685 mm up",
+"label": "Mini V-wheel (625 bearing)",
+"where": "back, middle, 343 mm up",
 "centre": [
-870.0,
-300.0,
-685.0
+432.0,
+150.0,
+343.0
 ],
 "size": [
-24.0,
-24.0,
-24.0
+16.0,
+12.0,
+16.0
 ]
 },
 {
 "pn": "P10",
 "pos": 13,
 "tag": "P10-13",
-"item": "V-wheel gantry plate kits",
+"item": "Mini V-wheel gantry plate kits",
 "base": "v_wheel",
-"label": "V-wheel (Delrin, 625 bearings)",
-"where": "back, middle, 685 mm up",
+"label": "Mini V-wheel (625 bearing)",
+"where": "back, middle, 343 mm up",
 "centre": [
-930.0,
-300.0,
-685.0
+468.0,
+150.0,
+343.0
 ],
 "size": [
-24.0,
-24.0,
-24.0
+16.0,
+12.0,
+16.0
 ]
 },
 {
@@ -1373,16 +1430,16 @@
 "tag": "P11-3",
 "item": "NEMA 17 stepper motor",
 "base": "x_motor",
-"label": "Cutter X motor: NEMA 17 (42x42x48) driving both sides through an 8 mm cross shaft and GT2 belts",
-"where": "front (operator side), middle, 741 mm up",
+"label": "Cutter X motor: NEMA 17 driving both rails through a 5 mm cross shaft and GT2 belts",
+"where": "front (operator side), middle, 393 mm up",
 "centre": [
-941.0,
--236.0,
-741.0
+485.0,
+-105.0,
+393.0
 ],
 "size": [
 42.0,
-48.0,
+40.0,
 42.0
 ]
 },
@@ -1390,38 +1447,38 @@
 "pn": "P17",
 "pos": 2,
 "tag": "P17-2",
-"item": "8 mm cross shafts + pillow blocks",
+"item": "5 mm cross shafts + bearings",
 "base": "cross_shaft",
-"label": "8 mm cross shaft with GT2 20T pulleys at both ends",
-"where": "middle, middle, 741 mm up",
+"label": "5 mm cross shaft with GT2 16T pulleys at both ends",
+"where": "middle, middle, 382 mm up",
 "centre": [
-941.0,
+485.0,
 0.0,
-741.0
+382.0
 ],
 "size": [
-8.0,
-600.0,
-8.0
+5.0,
+300.0,
+5.0
 ]
 },
 {
 "pn": "P10",
 "pos": 14,
 "tag": "P10-14",
-"item": "V-wheel gantry plate kits",
+"item": "Mini V-wheel gantry plate kits",
 "base": "carriage_plate",
-"label": "Cutter carriage: V-slot gantry plate on the bridge (Y axis)",
-"where": "middle, middle, 688 mm up",
+"label": "Cutter carriage: mini V-wheel gantry plate on the bridge (Y axis)",
+"where": "middle, middle, 348 mm up",
 "centre": [
-900.0,
+450.0,
 0.0,
-687.5
+347.5
 ],
 "size": [
-90.0,
-90.0,
-5.0
+60.0,
+60.0,
+3.0
 ]
 },
 {
@@ -1431,35 +1488,35 @@
 "item": "NEMA 17 stepper motor",
 "base": "y_motor",
 "label": "Cutter Y motor: NEMA 17 + GT2 belt along the bridge",
-"where": "middle, middle, 661 mm up",
+"where": "middle, middle, 326 mm up",
 "centre": [
-936.0,
+483.0,
 0.0,
-661.0
+326.0
 ],
 "size": [
 42.0,
 42.0,
-48.0
+40.0
 ]
 },
 {
-"pn": "P02",
-"pos": 10,
-"tag": "P02-10",
+"pn": "P01",
+"pos": 20,
+"tag": "P01-20",
 "item": "V-slot 20x20 aluminium extrusion",
 "base": "z_axis",
-"label": "Cutter Z axis: 20x20 V-slot 300 mm on a T8 lead screw (slides through the carriage)",
-"where": "middle, middle, 701 mm up",
+"label": "Cutter Z axis: 20x20 V-slot aluminium extrusion 200 mm on a T8 lead screw (slides through the carriage)",
+"where": "middle, middle, 375 mm up",
 "centre": [
-900.0,
+450.0,
 0.0,
-700.7
+375.3
 ],
 "size": [
 20.0,
 20.0,
-300.0
+200.0
 ]
 },
 {
@@ -1468,17 +1525,17 @@
 "tag": "P12-3",
 "item": "NEMA 17 with integrated T8 lead screw",
 "base": "z_motor",
-"label": "Cutter Z motor: NEMA 17 with integrated T8 x 2 mm lead screw",
-"where": "middle, middle, 714 mm up",
+"label": "Cutter Z motor: NEMA 17 with integrated T8 x 2 mm lead screw (150 mm)",
+"where": "middle, middle, 369 mm up",
 "centre": [
-841.0,
+403.0,
 0.0,
-714.0
+369.0
 ],
 "size": [
 42.0,
 42.0,
-48.0
+40.0
 ]
 },
 {
@@ -1488,16 +1545,16 @@
 "item": "Z motor bracket (3D printed)",
 "base": "z_motor_mount",
 "label": "Cutter Z motor bracket (3D printed)",
-"where": "middle, middle, 688 mm up",
+"where": "middle, middle, 348 mm up",
 "centre": [
-851.5,
+409.0,
 0.0,
-687.5
+347.5
 ],
 "size": [
-67.0,
-50.0,
-5.0
+58.0,
+48.0,
+3.0
 ]
 },
 {
@@ -1506,17 +1563,17 @@
 "tag": "P12-4",
 "item": "NEMA 17 with integrated T8 lead screw",
 "base": "lead_screw",
-"label": "T8 x 2 mm lead screw, 300 mm",
-"where": "middle, middle, 620 mm up",
+"label": "T8 x 2 mm lead screw, 150 mm",
+"where": "middle, middle, 322 mm up",
 "centre": [
-841.0,
+403.0,
 0.0,
-620.3
+322.2
 ],
 "size": [
 8.0,
 8.0,
-139.3
+53.7
 ]
 },
 {
@@ -1526,16 +1583,16 @@
 "item": "Lead-screw nut block (3D printed)",
 "base": "lead_nut",
 "label": "Cutter lead-screw nut block on the Z axis (3D printed + brass T8 nut)",
-"where": "middle, middle, 558 mm up",
+"where": "middle, middle, 301 mm up",
 "centre": [
-860.0,
+417.5,
 0.0,
-558.2
+301.3
 ],
 "size": [
-60.0,
-24.0,
-15.0
+45.0,
+20.0,
+12.0
 ]
 },
 {
@@ -1545,111 +1602,111 @@
 "item": "Arm mount plate (3D printed)",
 "base": "arm_mount",
 "label": "Cutter arm mount plate (3D printed)",
-"where": "middle, middle, 548 mm up",
+"where": "middle, middle, 273 mm up",
 "centre": [
-900.0,
+450.0,
 0.0,
-547.7
+273.3
 ],
 "size": [
-60.0,
-60.0,
-6.0
+44.0,
+44.0,
+4.0
 ]
 },
 {
 "pn": "P22",
 "pos": 5,
 "tag": "P22-5",
-"item": "SO-101 6-servo arm kit (follower)",
+"item": "MeArm-type 4-servo arm kit",
 "base": "arm_base",
-"label": "Cutter arm: SO-101 type 6-servo arm kit (STS3215 servos) - base",
-"where": "middle, middle, 520 mm up",
+"label": "Cutter arm: MeArm-type 4-servo arm kit (MG90S servos) - base",
+"where": "middle, middle, 258 mm up",
 "centre": [
-900.0,
+450.0,
 0.0,
-519.7
+258.3
 ],
 "size": [
-64.0,
-64.0,
-50.0
+44.0,
+44.0,
+26.0
 ]
 },
 {
 "pn": "P22",
 "pos": 6,
 "tag": "P22-6",
-"item": "SO-101 6-servo arm kit (follower)",
+"item": "MeArm-type 4-servo arm kit",
 "base": "arm_upper",
-"label": "Cutter arm: upper arm (~110 mm)",
-"where": "middle, middle, 440 mm up",
+"label": "Cutter arm: upper arm (~80 mm)",
+"where": "middle, middle, 213 mm up",
 "centre": [
-900.0,
+450.0,
 0.0,
-439.7
+212.8
 ],
 "size": [
-30.0,
-30.0,
-110.0
+16.0,
+16.0,
+65.0
 ]
 },
 {
 "pn": "P22",
 "pos": 7,
 "tag": "P22-7",
-"item": "SO-101 6-servo arm kit (follower)",
+"item": "MeArm-type 4-servo arm kit",
 "base": "arm_fore",
-"label": "Cutter arm: forearm (~135 mm)",
-"where": "middle, outfeed end, 373 mm up",
+"label": "Cutter arm: forearm (~80 mm)",
+"where": "middle, middle, 174 mm up",
 "centre": [
-955.5,
+482.0,
 0.0,
-372.7
+173.8
 ],
 "size": [
-135.0,
-24.0,
-24.0
+76.0,
+12.0,
+13.0
 ]
 },
 {
 "pn": "P22",
 "pos": 8,
 "tag": "P22-8",
-"item": "SO-101 6-servo arm kit (follower)",
+"item": "MeArm-type 4-servo arm kit",
 "base": "arm_wrist",
-"label": "Cutter arm: wrist",
-"where": "middle, outfeed end, 341 mm up",
+"label": "Cutter arm: wrist / tool holder",
+"where": "middle, middle, 161 mm up",
 "centre": [
-1025.0,
+520.0,
 0.0,
-340.7
+161.3
 ],
 "size": [
-30.0,
-28.0,
-40.0
+20.0,
+18.0,
+12.0
 ]
 },
 {
 "pn": "P26",
 "pos": 1,
 "tag": "P26-1",
-"item": "Cutter 'torch' for the prototype",
+"item": "Cutter 'torch' for the prototype (pen holder)",
 "base": "pen_tool",
-"label": "Cutter 'torch' for the prototype: pen or 5 mW laser pointer in a 3D-printed holder (marks the cut lines)",
-"where": "middle, outfeed end, 286 mm up",
+"label": "Cutter 'torch' for the prototype: fine-liner pen in a sprung 3D-printed holder (marks the cut lines)",
+"where": "middle, middle, 140 mm up",
 "centre": [
-1025.0,
+520.0,
 0.0,
-285.7
+140.3
 ],
 "size": [
-14.0,
-14.0,
-70.0
+8.0,
+8.0,
+30.0
 ]
 },
 {
@@ -1658,17 +1715,17 @@
 "tag": "P44-1",
 "item": "Control box",
 "base": "control_box",
-"label": "Control box: Jetson Orin Nano, FluidNC 6-axis board, 24 V and 12 V supplies, fuses, safety relay",
-"where": "middle, outfeed end, 80 mm up",
+"label": "Control box: Jetson Orin Nano, FluidNC 6-axis board, PCA9685 servo board, 24 V and 5 V supplies, fuses, safety relay",
+"where": "middle, middle, 55 mm up",
 "centre": [
-1480.0,
+850.0,
 0.0,
-80.0
+55.0
 ],
 "size": [
+160.0,
 200.0,
-300.0,
-160.0
+110.0
 ]
 },
 {
@@ -1677,11 +1734,11 @@
 "tag": "P32-1",
 "item": "Emergency stop station",
 "base": "estop",
-"label": "Emergency stop: 22 mm red mushroom, 2 NC contacts, yellow box (BS EN ISO 13850)",
-"where": "front (operator side), outfeed end, 35 mm up",
+"label": "Emergency stop: 40 mm red mushroom, 2 NC contacts, yellow box (BS EN ISO 13850)",
+"where": "front (operator side), middle, 35 mm up",
 "centre": [
-1445.0,
--345.0,
+825.0,
+-195.0,
 35.0
 ],
 "size": [
@@ -1697,10 +1754,10 @@
 "item": "Emergency stop station",
 "base": "estop_head",
 "label": "Emergency stop head",
-"where": "front (operator side), outfeed end, 82 mm up",
+"where": "front (operator side), middle, 82 mm up",
 "centre": [
-1445.0,
--345.0,
+825.0,
+-195.0,
 82.5
 ],
 "size": [
@@ -1713,19 +1770,19 @@
 "pn": "P39",
 "pos": 1,
 "tag": "P39-1",
-"item": "Polycarbonate sheet 3 mm",
+"item": "Polycarbonate sheet 2 mm",
 "base": "enclosure_front",
-"label": "Enclosure door: 3 mm polycarbonate on 20x20 frame, with a safety interlock switch",
-"where": "front (operator side), middle, 340 mm up",
+"label": "Enclosure door: 2 mm polycarbonate on a 20x20 frame, with a safety interlock switch",
+"where": "front (operator side), middle, 170 mm up",
 "centre": [
-400.0,
--350.5,
-340.0
+300.0,
+-171.0,
+170.0
 ],
 "size": [
 700.0,
-3.0,
-600.0
+2.0,
+300.0
 ]
 },
 {
@@ -1735,16 +1792,16 @@
 "item": "Door interlock switch",
 "base": "door_switch",
 "label": "Door interlock switch (magnetic coded, NC) - opens = protective stop",
-"where": "front (operator side), middle, 320 mm up",
+"where": "front (operator side), middle, 165 mm up",
 "centre": [
-740.0,
--361.0,
-320.0
+642.5,
+-179.0,
+165.0
 ],
 "size": [
-20.0,
-18.0,
-40.0
+15.0,
+14.0,
+30.0
 ]
 },
 {
@@ -1754,11 +1811,11 @@
 "item": "USB wide-angle camera (safety zone)",
 "base": "camera",
 "label": "Camera: USB wide-angle (or IMX219 CSI) on a 20x20 post - YOLO watches the cell",
-"where": "front (operator side), infeed end, 760 mm up",
+"where": "front (operator side), infeed end, 420 mm up",
 "centre": [
 -190.0,
--300.0,
-760.0
+-150.0,
+420.0
 ],
 "size": [
 40.0,
@@ -1767,22 +1824,22 @@
 ]
 },
 {
-"pn": "P02",
-"pos": 11,
-"tag": "P02-11",
+"pn": "P01",
+"pos": 21,
+"tag": "P01-21",
 "item": "V-slot 20x20 aluminium extrusion",
 "base": "camera_post",
-"label": "20x20 V-slot camera post",
-"where": "front (operator side), infeed end, 380 mm up",
+"label": "20x20 V-slot aluminium extrusion - camera post",
+"where": "front (operator side), infeed end, 205 mm up",
 "centre": [
 -190.0,
--300.0,
-380.0
+-150.0,
+205.0
 ],
 "size": [
 20.0,
 20.0,
-720.0
+390.0
 ]
 }
 ]

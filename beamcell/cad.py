@@ -1,12 +1,12 @@
 """
-Real CAD for the cell, the parts and the 1:5 prototype - solid models you can open in Fusion 360,
+Real CAD for the cell, the parts and the 1:10 prototype - solid models you can open in Fusion 360,
 SolidWorks, FreeCAD, Onshape or Inventor (STEP), and the same model for the 3D view (GLB).
 
     python3 -m beamcell.cad                    everything below
     python3 -m beamcell.cad cell               cad/beam_cell.step  + web/models/*.glb (the 3D view)
     python3 -m beamcell.cad parts [files.nc1]  cad/parts/<mark>.step - one solid per NC1 part, with its
                                                holes, slots, notches and end cuts (default: examples/nc1)
-    python3 -m beamcell.cad prototype          cad/prototype_1to5.step + cad/prototype_cut_list.csv
+    python3 -m beamcell.cad prototype          cad/prototype_1to10.step + cut list + positions + the Prototype tab's model
 
 Needs CadQuery (pip install cadquery) - run it on a PC. The Jetson doesn't need it: the files
 it makes are in the repo.
@@ -553,131 +553,132 @@ def _loc(R, t):
     return cq.Location(cq.Vector(*map(float, t)), cq.Vector(*map(float, axis)), math.degrees(angle))
 
 
-# ======================================================================= the 1:5 working prototype
-PROTO_SCALE = 0.2               # 1:5
-PROTO_LENGTH = 1200.0           # mm of work area (= 6 m at full size)
+# ======================================================================= the 1:10 working prototype
+PROTO_SCALE = 0.1               # 1:10
+PROTO_LENGTH = 600.0            # mm of bed (= a 6 m bar at full size); make it 1200 for the full 12 m
 
 
 def build_prototype():
-    """A 1:5 desktop prototype made from parts you can buy (see docs/PROTOTYPE.md): 20x40 / 20x60
-    aluminium T-slot frame, NEMA 17 motors on GT2 belts and T8 lead screws, two SO-101-size
-    servo arms, a pen / laser-pointer 'torch' and a small electromagnet. Labels say what to buy."""
+    """A 1:10 desk-top prototype made from parts you can buy (see docs/PROTOTYPE.md): 20x20 aluminium
+    T-slot frame, NEMA 17 motors on GT2 belts and T8 lead screws, two MeArm-size 4-servo arms on a
+    PCA9685 board, a pen 'torch' and a small 5 V electromagnet. Labels say what to buy or print."""
     need_cadquery()
     s = PROTO_SCALE
-    m = Model("beam_cell_prototype_1to5")
-    Lx = PROTO_LENGTH + 300                                  # rails run past the work area for parking
+    m = Model("beam_cell_prototype_1to10")
+    Lx = PROTO_LENGTH + 300                                  # rails run past the bed so the bridges can park
     x0 = -150.0
-    W = M.WIDTH * 1000 * s                                   # 600 between rail centres
-    rail_z = M.RAIL_Z * 1000 * s                             # 680
-    bz = M.BED_Z * 1000 * s                                  # 180
-    by = M.BEAM_Y * 1000 * s                                 # -100
-    E = "20x40 V-slot aluminium extrusion"
-    # base frame on the table, uprights, top rails
+    W = M.WIDTH * 1000 * s                                   # 300 between rail centres
+    rail_z = M.RAIL_Z * 1000 * s                             # 340
+    bz = M.BED_Z * 1000 * s                                  # 90
+    by = M.BEAM_Y * 1000 * s                                 # -50
+    E = "20x20 V-slot aluminium extrusion"
+    # base frame on the table, uprights, top rails (all 20x20)
     for y in (-W / 2, W / 2):
-        m.extrusion("base_rail", f"{E} - base rail {Lx:.0f} mm", ALU, (20, 40), (x0, y, 20), (x0 + Lx, y, 20))
-        m.extrusion("top_rail", f"{E} - gantry rail {Lx:.0f} mm (the bridges' wheels run on it)", ALU, (20, 40),
-                    (x0, y, rail_z - 20), (x0 + Lx, y, rail_z - 20))
+        m.extrusion("base_rail", f"{E} - base rail {Lx:.0f} mm", ALU, (20, 20), (x0, y, 10), (x0 + Lx, y, 10))
+        m.extrusion("top_rail", f"{E} - gantry rail {Lx:.0f} mm (the bridges' wheels run on it)", ALU, (20, 20),
+                    (x0, y, rail_z - 10), (x0 + Lx, y, rail_z - 10))
         for x in (x0 + 10, x0 + Lx / 2, x0 + Lx - 10):
-            m.extrusion("upright", f"{E} - upright {rail_z - 80:.0f} mm", ALU, (20, 40), (x, y, 40), (x, y, rail_z - 40))
+            m.extrusion("upright", f"{E} - upright {rail_z - 40:.0f} mm", ALU, (20, 20), (x, y, 20), (x, y, rail_z - 20))
     for x in (x0 + 10, x0 + Lx - 10):
-        for z in (20, rail_z - 20):
-            m.extrusion("cross_member", f"{E} - cross member {W - 20:.0f} mm", ALU, (20, 40), (x, -W / 2 + 10, z), (x, W / 2 - 10, z))
-    # roller bed: two 20x20 rails, 20 mm rollers on 8 mm shafts every 200 mm (= 1 m full size)
-    for dy in (-60, 60):
-        m.extrusion("bed_rail", "20x20 V-slot - bed rail 1300 mm", ALU, (20, 20), (-50, by + dy, bz - 30), (PROTO_LENGTH + 50, by + dy, bz - 30))
-    for x in (100 + 200 * i for i in range(6)):
-        m.cyl("bed_roller", "Bed roller: 20 mm aluminium tube on an 8 mm shaft, 2 x 608 bearings", ALU,
-              (x, by - 50, bz - 10), (x, by + 50, bz - 10), 10)
-        for dy in (-60, 60):
-            m.box("bed_bracket", "3D-printed roller bracket (cad/prototype: print in PETG)", PRINTED,
-                  x - 12, x + 12, by + dy - 10, by + dy + 10, bz - 40, bz - 5)
+        for z in (10, rail_z - 10):
+            m.extrusion("cross_member", f"{E} - cross member {W - 20:.0f} mm", ALU, (20, 20), (x, -W / 2 + 10, z), (x, W / 2 - 10, z))
+    # roller bed: two 20x20 rails on printed risers, 10 mm rollers every 100 mm (= 1 m full size)
+    for dy in (-30, 30):
+        m.extrusion("bed_rail", f"{E} - bed rail {PROTO_LENGTH + 100:.0f} mm", ALU, (20, 20),
+                    (-50, by + dy, bz - 20), (PROTO_LENGTH + 50, by + dy, bz - 20))
+        for x in (-40, PROTO_LENGTH / 2, PROTO_LENGTH + 40):
+            m.box("bed_riser", "Bed riser block (3D printed) - holds the bed rails on the base", PRINTED,
+                  x - 10, x + 10, by + dy - 10, by + dy + 10, 0, bz - 30)
+    for x in (50 + 100 * i for i in range(int(PROTO_LENGTH / 100))):
+        m.cyl("bed_roller", "Bed roller: 10 mm printed sleeve on a 3 mm steel rod, 2 x 623 bearings", ALU,
+              (x, by - 25, bz - 5), (x, by + 25, bz - 5), 5)
+        for dy in (-30, 30):
+            m.box("bed_bracket", "Roller bracket (3D printed, PETG) - clips on the bed rail", PRINTED,
+                  x - 6, x + 6, by + dy - 10, by + dy + 10, bz - 10, bz - 2)
+    m.box("scrap_tray", "Scrap tray (3D printed) - offcuts fall into it", BLUE_TRAY, -50, PROTO_LENGTH + 50, by - 22, by + 22, 20, 24)
+    oy0, oy1 = M.OUTFEED_DECK[2] * 1000 * s, M.OUTFEED_DECK[3] * 1000 * s
+    m.box("outfeed_table", "Outfeed table: 3 mm plywood strip on printed risers", GREEN, -50, PROTO_LENGTH + 50, oy0, oy1, bz - 3, bz)
     for x in (-40, PROTO_LENGTH / 2, PROTO_LENGTH + 40):
-        for dy in (-60, 60):
-            m.extrusion("bed_leg", "20x20 V-slot - bed leg", ALU, (20, 20), (x, by + dy, 40), (x, by + dy, bz - 40))
-    m.box("scrap_tray", "Scrap tray: 3D-printed or folded aluminium sheet", BLUE_TRAY, -50, PROTO_LENGTH + 50, by - 45, by + 45, 40, 50)
-    m.box("outfeed_table", "Outfeed table: 6 mm plywood / MDF strip on 20x20 legs", GREEN,
-          -50, PROTO_LENGTH + 50, M.OUTFEED_DECK[2] * 1000 * s, M.OUTFEED_DECK[3] * 1000 * s, bz - 6, bz)
-    # model beam on the bed: a 3D-printed UB 305x165 at 1:5 (61 x 33 mm)
+        m.box("outfeed_riser", "Outfeed table riser (3D printed)", PRINTED, x - 10, x + 10, (oy0 + oy1) / 2 - 10, (oy0 + oy1) / 2 + 10, 0, bz - 3)
+    # model beam on the bed: a 3D-printed UB 305x165 at 1:10 (30 x 16 mm), walls thickened to print
     ub = S.get("UB 305x165x40")
-    tiny = dict(ub, h=ub["h"] * s, b=ub["b"] * s, tw=max(ub["tw"] * s, 1.6), tf=max(ub["tf"] * s, 2.0), r=ub["r"] * s)
-    m.add("model_beam", "Model beam: UB 305x165x40 at 1:5, 3D printed (see docs/SCALE_MODEL.md)", section_solid(tiny, 1000).translate((20, by, bz)), STEEL)
-    # each hand: bridge (20x60 on V-wheel plates), carriage plate, Z axis (20x20 + T8 screw), arm, tool
-    for hand, hx in ((M.make_hands()[1], 150.0), (M.make_hands()[0], 900.0)):
+    tiny = dict(ub, h=ub["h"] * s, b=ub["b"] * s, tw=max(ub["tw"] * s, 1.2), tf=max(ub["tf"] * s, 1.2), r=ub["r"] * s)
+    m.add("model_beam", "Model beam: UB 305x165x40 at 1:10 (30 x 16 mm), 3D printed, steel tape on top", section_solid(tiny, PROTO_LENGTH - 100).translate((10, by, bz)), STEEL)
+    # each hand: bridge (20x20 on mini V-wheel plates), carriage plate, Z axis (20x20 + T8 screw), arm, tool
+    for hand, hx in ((M.make_hands()[1], 50.0), (M.make_hands()[0], 450.0)):
         name = hand.name
         paint = tuple(int(hand.color[i:i + 2], 16) / 255 for i in (1, 3, 5))
-        top = rail_z + 20
-        m.extrusion("bridge", f"{name} bridge: 20x60 V-slot {W + 60:.0f} mm", ALU, (60, 20), (hx, -W / 2 - 30, top + 10), (hx, W / 2 + 30, top + 10), use="bridge")
+        top = rail_z + 12
+        m.extrusion("bridge", f"{name} bridge: {E} {W + 40:.0f} mm", ALU, (20, 20), (hx, -W / 2 - 20, top + 10), (hx, W / 2 + 20, top + 10), use="bridge")
         for y in (-W / 2, W / 2):
-            m.box("gantry_plate", f"{name} bridge end: V-slot gantry plate with 4 V-wheels", DARK, hx - 45, hx + 45, y - 25, y + 25, top - 5, top)
-            for dx in (-30, 30):
-                m.cyl("v_wheel", "V-wheel (Delrin, 625 bearings)", RUBBER, (hx + dx, y - 12, top - 15), (hx + dx, y + 12, top - 15), 12)
-        m.box("x_motor", f"{name} X motor: NEMA 17 (42x42x48) driving both sides through an 8 mm cross shaft and GT2 belts",
-              RUBBER, hx + 20, hx + 62, -W / 2 + 40, -W / 2 + 88, top + 20, top + 62)
-        m.cyl("cross_shaft", "8 mm cross shaft with GT2 20T pulleys at both ends", STEEL, (hx + 41, -W / 2, top + 41), (hx + 41, W / 2, top + 41), 4)
+            m.box("gantry_plate", f"{name} bridge end: mini V-wheel gantry plate (20 series)", DARK, hx - 30, hx + 30, y - 18, y + 18, top - 3, top)
+            for dx in (-18, 18):
+                m.cyl("v_wheel", "Mini V-wheel (625 bearing)", RUBBER, (hx + dx, y - 6, top - 9), (hx + dx, y + 6, top - 9), 8)
+        m.box("x_motor", f"{name} X motor: NEMA 17 driving both rails through a 5 mm cross shaft and GT2 belts",
+              RUBBER, hx + 14, hx + 56, -W / 2 + 25, -W / 2 + 65, top + 20, top + 62)
+        m.cyl("cross_shaft", "5 mm cross shaft with GT2 16T pulleys at both ends", STEEL, (hx + 35, -W / 2, top + 30), (hx + 35, W / 2, top + 30), 2.5)
         cy = 0.0
-        m.box("carriage_plate", f"{name} carriage: V-slot gantry plate on the bridge (Y axis)", DARK, hx - 45, hx + 45, cy - 45, cy + 45, top - 15, top - 10)
-        # Y motor hangs under the carriage plate beside the Z axis; its GT2 belt runs along the bridge
-        m.box("y_motor", f"{name} Y motor: NEMA 17 + GT2 belt along the bridge", RUBBER, hx + 15, hx + 57, cy - 21, cy + 21, top - 63, top - 15)
-        z_len = 300.0
+        m.box("carriage_plate", f"{name} carriage: mini V-wheel gantry plate on the bridge (Y axis)", DARK, hx - 30, hx + 30, cy - 30, cy + 30, top - 6, top - 3)
+        m.box("y_motor", f"{name} Y motor: NEMA 17 + GT2 belt along the bridge", RUBBER, hx + 12, hx + 54, cy - 21, cy + 21, top - 46, top - 6)
+        z_len = 200.0
         beam_top = bz + tiny["h"]
-        tool = 300 if hand.tool == "torch" else 255          # arm base to tool tip in this pose
-        zb = beam_top + (10 if hand.tool == "torch" else 0) + tool   # pen 10 mm above the steel, magnet on it
-        m.extrusion("z_axis", f"{name} Z axis: 20x20 V-slot {z_len:.0f} mm on a T8 lead screw (slides through the carriage)", ALU,
+        tool = 150 if hand.tool == "torch" else 130          # arm base to tool tip in this pose
+        zb = beam_top + (5 if hand.tool == "torch" else 0) + tool
+        m.extrusion("z_axis", f"{name} Z axis: {E} {z_len:.0f} mm on a T8 lead screw (slides through the carriage)", ALU,
                     (20, 20), (hx, cy, zb), (hx, cy, zb + z_len), use="Z axis")
-        # Z motor stands on the carriage plate; its T8 lead screw drives a nut fixed to the Z axis
-        m.box("z_motor", f"{name} Z motor: NEMA 17 with integrated T8 x 2 mm lead screw", RUBBER, hx - 80, hx - 38, cy - 21, cy + 21, top - 10, top + 38)
-        m.box("z_motor_mount", f"{name} Z motor bracket (3D printed)", PRINTED, hx - 82, hx - 15, cy - 25, cy + 25, top - 15, top - 10)
-        m.cyl("lead_screw", "T8 x 2 mm lead screw, 300 mm", STEEL, (hx - 59, cy, top - 10), (hx - 59, cy, zb), 4)
-        m.box("lead_nut", f"{name} lead-screw nut block on the Z axis (3D printed + brass T8 nut)", PRINTED, hx - 70, hx - 10, cy - 12, cy + 12, zb, zb + 15)
-        m.box("arm_mount", f"{name} arm mount plate (3D printed)", PRINTED, hx - 30, hx + 30, cy - 30, cy + 30, zb - 6, zb)
-        # SO-101-size servo arm hanging under the Z axis (envelope: base, upper arm, forearm, wrist)
-        m.cyl("arm_base", f"{name} arm: SO-101 type 6-servo arm kit (STS3215 servos) - base", paint, (hx, cy, zb - 6), (hx, cy, zb - 56), 32)
-        m.box("arm_upper", f"{name} arm: upper arm (~110 mm)", paint, hx - 15, hx + 15, cy - 15, cy + 15, zb - 166, zb - 56)
-        m.box("arm_fore", f"{name} arm: forearm (~135 mm)", paint, hx - 12, hx + 123, cy - 12, cy + 12, zb - 190, zb - 166)
-        m.box("arm_wrist", f"{name} arm: wrist", paint, hx + 110, hx + 140, cy - 14, cy + 14, zb - 230, zb - 190)
+        m.box("z_motor", f"{name} Z motor: NEMA 17 with integrated T8 x 2 mm lead screw (150 mm)", RUBBER, hx - 68, hx - 26, cy - 21, cy + 21, top - 3, top + 37)
+        m.box("z_motor_mount", f"{name} Z motor bracket (3D printed)", PRINTED, hx - 70, hx - 12, cy - 24, cy + 24, top - 6, top - 3)
+        m.cyl("lead_screw", "T8 x 2 mm lead screw, 150 mm", STEEL, (hx - 47, cy, top - 3), (hx - 47, cy, zb + 20), 4)
+        m.box("lead_nut", f"{name} lead-screw nut block on the Z axis (3D printed + brass T8 nut)", PRINTED, hx - 55, hx - 10, cy - 10, cy + 10, zb + 20, zb + 32)
+        m.box("arm_mount", f"{name} arm mount plate (3D printed)", PRINTED, hx - 22, hx + 22, cy - 22, cy + 22, zb - 4, zb)
+        # MeArm-size 4-servo arm (MG90S micro servos) hanging under the Z axis
+        m.cyl("arm_base", f"{name} arm: MeArm-type 4-servo arm kit (MG90S servos) - base", paint, (hx, cy, zb - 4), (hx, cy, zb - 30), 22)
+        m.box("arm_upper", f"{name} arm: upper arm (~80 mm)", paint, hx - 8, hx + 8, cy - 8, cy + 8, zb - 95, zb - 30)
+        m.box("arm_fore", f"{name} arm: forearm (~80 mm)", paint, hx - 6, hx + 70, cy - 6, cy + 6, zb - 108, zb - 95)
+        m.box("arm_wrist", f"{name} arm: wrist / tool holder", paint, hx + 60, hx + 80, cy - 9, cy + 9, zb - 120, zb - 108)
         if hand.tool == "torch":
-            m.cyl("pen_tool", "Cutter 'torch' for the prototype: pen or 5 mW laser pointer in a 3D-printed holder (marks the cut lines)",
-                  RUBBER, (hx + 125, cy, zb - 230), (hx + 125, cy, zb - 300), 7)
+            m.cyl("pen_tool", "Cutter 'torch' for the prototype: fine-liner pen in a sprung 3D-printed holder (marks the cut lines)",
+                  RUBBER, (hx + 70, cy, zb - 120), (hx + 70, cy, zb - 150), 4)
         else:
-            m.cyl("magnet_tool", "Handler magnet: 12 V 25 mm lifting electromagnet (holds 2.5 kg)", RED,
-                  (hx + 125, cy, zb - 230), (hx + 125, cy, zb - 255), 12.5)
-    # electronics and safety on the frame
-    m.box("control_box", "Control box: Jetson Orin Nano, FluidNC 6-axis board, 24 V and 12 V supplies, fuses, safety relay",
-          DARK, x0 + Lx + 30, x0 + Lx + 230, -150, 150, 0, 160)
-    m.box("estop", "Emergency stop: 22 mm red mushroom, 2 NC contacts, yellow box (BS EN ISO 13850)", YELLOW,
-          x0 + Lx + 60, x0 + Lx + 130, -W / 2 - 80, -W / 2 - 10, 0, 70)
-    m.cyl("estop_head", "Emergency stop head", RED, (x0 + Lx + 95, -W / 2 - 45, 70), (x0 + Lx + 95, -W / 2 - 45, 95), 20)
-    m.box("enclosure_front", "Enclosure door: 3 mm polycarbonate on 20x20 frame, with a safety interlock switch", (0.8, 0.85, 0.9),
-          x0 + 200, x0 + 900, -W / 2 - 52, -W / 2 - 49, 40, rail_z - 40)
+            m.cyl("magnet_tool", "Handler magnet: 5 V 20 mm lifting electromagnet (holds about 2.5 kg)", RED,
+                  (hx + 70, cy, zb - 120), (hx + 70, cy, zb - 130), 10)
+    # electronics and safety beside the frame
+    m.box("control_box", "Control box: Jetson Orin Nano, FluidNC 6-axis board, PCA9685 servo board, 24 V and 5 V supplies, fuses, safety relay",
+          DARK, x0 + Lx + 20, x0 + Lx + 180, -100, 100, 0, 110)
+    m.box("estop", "Emergency stop: 40 mm red mushroom, 2 NC contacts, yellow box (BS EN ISO 13850)", YELLOW,
+          x0 + Lx + 40, x0 + Lx + 110, -W / 2 - 80, -W / 2 - 10, 0, 70)
+    m.cyl("estop_head", "Emergency stop head", RED, (x0 + Lx + 75, -W / 2 - 45, 70), (x0 + Lx + 75, -W / 2 - 45, 95), 20)
+    m.box("enclosure_front", "Enclosure door: 2 mm polycarbonate on a 20x20 frame, with a safety interlock switch", (0.8, 0.85, 0.9),
+          x0 + 100, x0 + Lx - 100, -W / 2 - 22, -W / 2 - 20, 20, rail_z - 20)
     m.box("door_switch", "Door interlock switch (magnetic coded, NC) - opens = protective stop", RED,
-          x0 + 880, x0 + 900, -W / 2 - 70, -W / 2 - 52, 300, 340)
+          x0 + Lx - 115, x0 + Lx - 100, -W / 2 - 36, -W / 2 - 22, 150, 180)
     m.box("camera", "Camera: USB wide-angle (or IMX219 CSI) on a 20x20 post - YOLO watches the cell", RUBBER,
           x0 - 60, x0 - 20, -W / 2 - 20, -W / 2 + 20, rail_z + 60, rail_z + 100)
-    m.extrusion("camera_post", "20x20 V-slot camera post", ALU, (20, 20), (x0 - 40, -W / 2, 20), (x0 - 40, -W / 2, rail_z + 60))
+    m.extrusion("camera_post", f"{E} - camera post", ALU, (20, 20), (x0 - 40, -W / 2, 10), (x0 - 40, -W / 2, rail_z + 60))
     return m
 
 
 # which shopping-list line (docs/prototype_bom.csv) each solid in the prototype is
 PROTO_PARTS = {
-    "base_rail": "V-slot 20x40 aluminium extrusion", "top_rail": "V-slot 20x40 aluminium extrusion",
-    "upright": "V-slot 20x40 aluminium extrusion", "cross_member": "V-slot 20x40 aluminium extrusion",
-    "bed_rail": "V-slot 20x20 aluminium extrusion", "bed_leg": "V-slot 20x20 aluminium extrusion",
-    "z_axis": "V-slot 20x20 aluminium extrusion", "camera_post": "V-slot 20x20 aluminium extrusion",
-    "bridge": "V-slot 20x60 aluminium extrusion",
-    "bed_roller": "Bed rollers", "bed_bracket": "Roller brackets", "outfeed_table": "Outfeed table board",
-    "scrap_tray": "Scrap tray", "model_beam": "Model beams",
-    "gantry_plate": "V-wheel gantry plate kits", "carriage_plate": "V-wheel gantry plate kits",
-    "v_wheel": "V-wheel gantry plate kits",
+    "base_rail": "V-slot 20x20 aluminium extrusion", "top_rail": "V-slot 20x20 aluminium extrusion",
+    "upright": "V-slot 20x20 aluminium extrusion", "cross_member": "V-slot 20x20 aluminium extrusion",
+    "bed_rail": "V-slot 20x20 aluminium extrusion", "z_axis": "V-slot 20x20 aluminium extrusion",
+    "camera_post": "V-slot 20x20 aluminium extrusion", "bridge": "V-slot 20x20 aluminium extrusion",
+    "bed_roller": "Bed rollers", "bed_bracket": "Roller brackets (3D printed)", "bed_riser": "Bed riser blocks (3D printed)",
+    "outfeed_table": "Outfeed table board", "outfeed_riser": "Outfeed table risers (3D printed)",
+    "scrap_tray": "Scrap tray (3D printed)", "model_beam": "Model beams (3D printed)",
+    "gantry_plate": "Mini V-wheel gantry plate kits", "carriage_plate": "Mini V-wheel gantry plate kits",
+    "v_wheel": "Mini V-wheel gantry plate kits",
     "x_motor": "NEMA 17 stepper motor", "y_motor": "NEMA 17 stepper motor",
     "z_motor": "NEMA 17 with integrated T8 lead screw", "lead_screw": "NEMA 17 with integrated T8 lead screw",
     "z_motor_mount": "Z motor bracket (3D printed)", "lead_nut": "Lead-screw nut block (3D printed)",
-    "cross_shaft": "8 mm cross shafts + pillow blocks",
+    "cross_shaft": "5 mm cross shafts + bearings",
     "arm_mount": "Arm mount plate (3D printed)",
-    "arm_base": "SO-101 6-servo arm kit (follower)", "arm_upper": "SO-101 6-servo arm kit (follower)",
-    "arm_fore": "SO-101 6-servo arm kit (follower)", "arm_wrist": "SO-101 6-servo arm kit (follower)",
-    "pen_tool": "Cutter 'torch' for the prototype", "magnet_tool": "Handler magnet",
+    "arm_base": "MeArm-type 4-servo arm kit", "arm_upper": "MeArm-type 4-servo arm kit",
+    "arm_fore": "MeArm-type 4-servo arm kit", "arm_wrist": "MeArm-type 4-servo arm kit",
+    "pen_tool": "Cutter 'torch' for the prototype (pen holder)", "magnet_tool": "Handler magnet",
     "control_box": "Control box", "estop": "Emergency stop station", "estop_head": "Emergency stop station",
-    "enclosure_front": "Polycarbonate sheet 3 mm", "door_switch": "Door interlock switch",
+    "enclosure_front": "Polycarbonate sheet 2 mm", "door_switch": "Door interlock switch",
     "camera": "USB wide-angle camera (safety zone)",
 }
 
@@ -717,7 +718,10 @@ def export_prototype():
     m = build_prototype()
     os.makedirs(CAD_DIR, exist_ok=True)
     positions = prototype_positions(m)
-    path = os.path.join(CAD_DIR, "prototype_1to5.step")
+    path = os.path.join(CAD_DIR, "prototype_1to10.step")
+    old_step = os.path.join(CAD_DIR, "prototype_1to5.step")
+    if os.path.exists(old_step):
+        os.remove(old_step)
     m.assembly().export(path)                       # every solid is named 'P11-2 x_motor' in the CAD tree
     # the 3D assembly in the app (Prototype tab): the same solids, in metres, and where each one is
     os.makedirs(WEB_MODELS, exist_ok=True)

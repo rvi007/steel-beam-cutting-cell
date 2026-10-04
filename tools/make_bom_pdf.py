@@ -1,6 +1,6 @@
 """
 Writes docs/Prototype_Shopping_List.pdf from docs/prototype_bom.csv and cad/prototype_cut_list.csv:
-the 1:5 prototype's buying list, stage by stage, with tick boxes.
+the 1:10 prototype's buying list, stage by stage, with tick boxes.
 
     pip install reportlab
     python3 tools/make_bom_pdf.py
@@ -63,20 +63,20 @@ def main():
         canvas.saveState()
         canvas.setFont("Helvetica", 7.5)
         canvas.setFillColor(colors.HexColor("#7b8794"))
-        canvas.drawString(15 * mm, 9 * mm, "Steel Beam Cutting Cell - 1:5 prototype shopping list - Ravi Mahadeva")
+        canvas.drawString(15 * mm, 9 * mm, "Steel Beam Cutting Cell - 1:10 prototype shopping list - Ravi Mahadeva")
         canvas.drawRightString(A4[1] - 15 * mm, 9 * mm, f"Page {doc.page}")
         canvas.restoreState()
 
     doc = SimpleDocTemplate(OUT, pagesize=landscape(A4), leftMargin=15 * mm, rightMargin=15 * mm, topMargin=13 * mm,
                             bottomMargin=15 * mm, title="Prototype Shopping List", author="Ravi Mahadeva",
-                            subject="Steel Beam Cutting Cell - 1:5 prototype")
+                            subject="Steel Beam Cutting Cell - 1:10 prototype")
     story = []
     totals = {s: sum(qty_number(r["qty"]) * float(r["approx_gbp_each"]) for r in rows if r["stage"] == s) for s in STAGES}
     grand = sum(totals.values())
 
     big = ParagraphStyle("big", parent=body, fontName="Helvetica-Bold", fontSize=15, leading=19, textColor=colors.white)
     story.append(Paragraph("Prototype Shopping List", h1))
-    story.append(Paragraph(f"<b>Steel Beam Cutting Cell - 1:5 desktop prototype</b> &nbsp;|&nbsp; Ravi Mahadeva &nbsp;|&nbsp; "
+    story.append(Paragraph(f"<b>Steel Beam Cutting Cell - 1:10 desk-top prototype</b> &nbsp;|&nbsp; Ravi Mahadeva &nbsp;|&nbsp; "
                            f"{time.strftime('%d %B %Y')}", body))
     story.append(Spacer(1, 6))
     box = Table([[Paragraph(f"TOTAL BUYING COST: about {money(round(grand, -1))}", big),
@@ -109,8 +109,7 @@ def main():
         "relay must cut motor power. Have the mains wiring checked by a competent person.<br/>"
         "- Cheapest way to start: stages 1 and 2 first (frame and moving gantry, about "
         f"{money(round(totals['1'] + totals['2'], -1))}), then arms, cameras and the rest.<br/>"
-        "- Save on the arms by buying the STS3215 servos and printing the SO-101 parts yourself "
-        "(about £130 per arm instead of £240). A used Pilz PNOZ s3 is about £75.<br/>"
+        "- A used Pilz PNOZ s3 is about £75 instead of £180 - but don't skip the safety relay or the E-stop.<br/>"
         "- No real cutting on the prototype: the Cutter holds a <b>pen</b> that marks the cut lines.", note)
     top = Table([[t, tips]], colWidths=[110 * mm, 155 * mm])
     top.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (1, 0), (1, 0), 10)]))
@@ -152,7 +151,7 @@ def main():
     style += [("BOX", (0, i), (0, i), 0.8, DARK) for i in range(1, len(data))]
     tbl.setStyle(TableStyle(style))
     story.append(KeepTogether([cut_title, tbl, Spacer(1, 8), Paragraph(
-        "The lengths come from the CAD model (cad/prototype_1to5.step). The build steps, the safety "
+        "The lengths come from the CAD model (cad/prototype_1to10.step). The build steps, the safety "
         "wiring and why each part was chosen are in docs/PROTOTYPE.md.", small)]))
     doc.build(story, onFirstPage=footer, onLaterPages=footer)
     print(OUT)
