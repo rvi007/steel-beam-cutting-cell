@@ -2,6 +2,7 @@
 #   orin-like : the same versions as the Jetson Orin (Python 3.12, numpy 1.26.4, OpenCV 4.6)
 #   latest    : the newest Python libraries
 #   browser   : the real web app in headless Chromium (no JavaScript errors, plan, import, STL)
+#   cad       : CadQuery builds every solid (parts, the cell, the 1:5 prototype) and checks them
 name: tests
 
 on:
@@ -35,6 +36,21 @@ jobs:
         run: python -m compileall -q beamcell tests
       - name: Unit tests (sections, UK rules, NC1, planner, server, camera)
         run: python -m unittest discover -s tests -t . -v
+
+  cad:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install CadQuery
+        run: pip install cadquery
+      - name: Build every CAD file
+        run: python -m beamcell.cad
+      - name: Check the solids
+        run: python -m unittest tests.test_cad -v
 
   browser:
     runs-on: ubuntu-latest

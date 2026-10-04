@@ -140,7 +140,27 @@ function exportCell() {
   toast(`Machine exported at 1:${k} - see docs/SCALE_MODEL.md for how to build it`);
 }
 
+const CAD_NAMES = {
+  "beam_cell.step": "The whole 12 m cell, full size (every solid named)",
+  "prototype_1to5.step": "The 1:5 desktop prototype - bought parts and printed parts (docs/PROTOTYPE.md)",
+  "prototype_cut_list.csv": "Prototype: aluminium extrusion cut list",
+  "prototype_parts.csv": "Prototype: every part and what to buy or print",
+};
+
+async function renderCad() {
+  const box = $("cad-files");
+  try {
+    const r = await get("/api/cad");
+    const row = (f) => `<li><a href="/cad/${f.path}" download>${f.path}</a> <span class="muted">${f.kb} kB${CAD_NAMES[f.path] ? " - " + CAD_NAMES[f.path] : ""}</span></li>`;
+    const main = r.files.filter((f) => !f.path.startsWith("parts/")), parts = r.files.filter((f) => f.path.startsWith("parts/"));
+    box.innerHTML = `<ul>${main.map(row).join("")}</ul>
+      <div>Example parts as solids (holes, notches, end cuts): ${parts.map((f) => `<a href="/cad/${f.path}" download>${f.path.slice(6, -5)}</a>`).join(", ")}</div>
+      <div>${r.can_make_parts ? "Any part: <b>Export STEP</b> on the Parts tab." : "Any part: export its NC1, then on a PC run <code>python3 -m beamcell.cad parts part.nc1</code>."}</div>`;
+  } catch (e) { box.textContent = "CAD files not found: " + e.message; }
+}
+
 export function initLibrary() {
+  renderCad();
   renderFamilies();
   renderList();
   $("lib-search").oninput = renderList;

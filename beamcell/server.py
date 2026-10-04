@@ -17,6 +17,8 @@ API (all JSON):
     POST /api/plan                  {parts, stock_length, bar} -> motion plan for one bar
     POST /api/manual/check          {section, length, cuts} -> pieces + UK checks for a manual cut
     POST /api/manual/plan           {section, length, cuts} -> motion plan for the manual cuts
+    GET  /api/cad                   the CAD files in cad/;  GET /cad/<file> downloads one
+    POST /api/cad/part              {part} -> STEP solid of the part (needs CadQuery: a PC, not the Jetson)
     GET  /api/jobs, GET/POST /api/jobs/<name>   saved jobs (jobs/ folder)
     GET  /api/camera, POST /api/camera, GET /camera.mjpg   camera + person detection
     GET  /api/safety                safety controller status
@@ -85,6 +87,37 @@ def part_view(part):
             "section": dict(S.summary(s), outline=outer, holes=holes, plates=S.plates(s)),
             "faces": {f: part.face_outline(f) for f in part.faces()},
             "checks": part.check()}
+
+
+CAD = os.path.join(ROOT, "cad")
+
+
+def cad_files():
+    """The CAD files in cad/ (made on a PC with python3 -m beamcell.cad) and whether this
+    computer can make new part STEP files itself (it needs CadQuery)."""
+    out = []
+    for dirpath, _, files in os.walk(CAD):
+        for f in sorted(files):
+            if f.endswith((".step", ".csv")):
+                full = os.path.join(dirpath, f)
+                out.append({"path": os.path.relpath(full, CAD).replace(os.sep, "/"), "kb": round(os.path.getsize(full) / 1024)})
+    from beamcell import cad
+    return {"files": sorted(out, key=lambda f: f["path"]), "can_make_parts": cad.cq is not None}
+
+
+def part_step(body):
+    """One part as a STEP solid (text), if CadQuery is installed on this computer."""
+    from beamcell import cad
+    if cad.cq is None:
+        return {"error": "Making STEP files needs CadQuery, which is for a PC (pip install cadquery). Export the "
+                         "NC1 file instead and run: python3 -m beamcell.cad parts your_part.nc1"}
+    import tempfile
+    part = Part.from_dict(body["part"])
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "part.step")
+        cad.cq.exporters.export(cad.part_solid(part), path)
+        with open(path) as fh:
+            return {"step": fh.read(), "name": f"{part.mark}.step"}
 
 
 def parts_from(body):
@@ -171,6 +204,19 @@ class Handler(BaseHTTPRequestHandler):
         with open(full, "rb") as fh:
             self._send(200, fh.read(), ctype)
 
+    def _cad_file(self, rel):
+        full = os.path.normpath(os.path.join(CAD, rel))
+        if not full.startswith(CAD + os.sep) or not os.path.isfile(full):
+            return self._send(404, {"error": "not found"})
+        with open(full, "rb") as fh:
+            data = fh.read()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/csv" if full.endswith(".csv") else "application/step")
+        self.send_header("Content-Disposition", f'attachment; filename="{os.path.basename(full)}"')
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     # ---------------------------------------------------------------- routes
     def do_GET(self):
         url = urlparse(self.path)
@@ -217,6 +263,10 @@ class Handler(BaseHTTPRequestHandler):
                 safe = {k: v for k, v in CONFIG.items()}
                 return self._send(200, {"config": safe, "problems": config_problems(CONFIG),
                                         "api_key_set": bool(os.environ.get("ANTHROPIC_API_KEY"))})
+            if path == "/api/cad":
+                return self._send(200, cad_files())
+            if path.startswith("/cad/"):
+                return self._cad_file(path[len("/cad/"):])
             if path == "/camera.mjpg":
                 return self._mjpeg()
             if path == "/api/system":
@@ -247,6 +297,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, manual_check(body))
             if path == "/api/manual/plan":
                 return self._send(200, manual_plan(body))
+            if path == "/api/cad/part":
+                return self._send(200, part_step(body))
             if path == "/api/plan":
                 return self._send(200, plan_bar(body))
             if path.startswith("/api/jobs/"):

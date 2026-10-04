@@ -90,7 +90,7 @@ export function renderEditor() {
 
   ed.innerHTML = `
   <div class="toolbar"><h2 style="margin:0 12px 0 0">Part ${esc(p.mark)}</h2>
-    <button id="ed-nc1">Export NC1</button><button id="ed-dup">Duplicate</button><button id="ed-del" class="danger">Delete</button>
+    <button id="ed-nc1">Export NC1</button><button id="ed-step" title="The part as a solid for CAD (needs CadQuery on the computer running the app)">Export STEP</button><button id="ed-dup">Duplicate</button><button id="ed-del" class="danger">Delete</button>
     <span class="muted small">${fromFile ? "Shape from " + esc(p.source) : "Made here"}</span></div>
   <div class="grid">
     ${field("Mark", `<input data-k="mark" value="${esc(p.mark)}">`)}
@@ -237,6 +237,10 @@ function wireEditor(p, sec) {
     changed(true);
   };
   $("ed-nc1").onclick = async () => download(`${p.mark}.nc1`, await post("/api/nc1/export", { part: clean(p) }, true));
+  $("ed-step").onclick = async () => {
+    try { const r = await post("/api/cad/part", { part: clean(p) }); download(r.name, r.step, "application/step"); }
+    catch (e) { toast(e.message, true); }
+  };
   $("ed-dup").onclick = () => {
     const copy = JSON.parse(JSON.stringify(p));
     copy.mark = p.mark + "-2";

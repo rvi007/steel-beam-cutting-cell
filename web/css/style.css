@@ -172,3 +172,7 @@ td.nowrap { white-space: nowrap; }
 .mc-type.hole { background: #1f6fb2; } .mc-type.cut { background: #c0392b; } .mc-type.notch { background: #7d3c98; }
 #mc-check ul { margin: 4px 0; padding-left: 18px; }
 .checks .warn { color: #b7791f; }
+.hover-label { position: absolute; pointer-events: none; background: rgba(20, 24, 28, 0.88); color: #fff; font-size: 12px;
+  padding: 4px 8px; border-radius: 5px; max-width: 320px; z-index: 5; }
+.cad-files ul { margin: 4px 0 8px; padding-left: 18px; }
+.cad-files li { margin: 2px 0; }
