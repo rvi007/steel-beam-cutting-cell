@@ -122,7 +122,11 @@ for (const t of [0.3, 0.6, 1.0]) {
 await shot("2c_finished", true);
 
 // a finished job: the "Job finished" window, the checklist is needed again, Clear the job deletes it
-await until("no Job finished window", () => document.getElementById("job-done").open, null, 30000);
+try { await page.waitForFunction(() => document.getElementById("job-done").open, null, { timeout: 30000, polling: 200 }); }
+catch (e) {
+  const st = await state(), t = await page.evaluate(() => [app.t, app.plan && app.plan.summary.duration_s]);
+  fail(`no Job finished window (safety ${st.state}, mode ${st.mode}, stops: ${st.latched.map((f) => f.code).join(", ")}, t ${t[0]} of ${t[1]})`);
+}
 const done = await state();
 if (!done.job || done.job.state !== "finished" || done.checklist_ok) fail("finished job: " + JSON.stringify(done.job) + " checklist " + done.checklist_ok);
 const again = await page.evaluate(() => fetch("/api/safety/start", { method: "POST", body: "{}" }).then((r) => r.json()));
