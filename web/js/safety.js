@@ -37,10 +37,10 @@ export async function estop() {
 }
 export const startMachine = () => act("start");
 export const stopMachine = (reason) => act("stop", { reason });
-export const jobFinished = () => act("finished");
+export const jobFinished = (details) => act("finished", { details });
 // every planned job is registered with the safety controller: each one needs its own checklist
 export const loadJob = (name) => act("job", { name });
-export const clearSafetyJob = () => act("clear-job");
+export const clearSafetyJob = (details) => act("clear-job", { details });
 
 function accept(st) {
   safety.status = st;

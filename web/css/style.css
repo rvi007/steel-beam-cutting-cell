@@ -199,3 +199,13 @@ dialog.job-done .safety-note ol { margin: 6px 0 0; padding-left: 20px; }
 .pr-list .pn { font-weight: 700; white-space: nowrap; }
 .pr-info { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 8px 0; color: var(--ink, #222); }
 .pr-info h3 { margin: 0 0 4px; font-size: 14px; }
+dialog.jobs-dlg { max-width: 860px; width: 92vw; }
+dialog.jobs-dlg h3 { display: flex; align-items: center; gap: 8px; margin: 14px 0 6px; }
+dialog.jobs-dlg h3 .mini { margin-left: auto; }
+dialog.jobs-dlg .scroll { max-height: 34vh; overflow: auto; }
+dialog.jobs-dlg td { vertical-align: top; }
+.nowrap { white-space: nowrap; }
+button.wide { width: 100%; margin: 6px 0; }
+.tag { display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 12px; background: #eef1f4; }
+.tag.good { background: #dff3e4; color: #1e7d3a; }
+.tag.warn { background: #fff1d6; color: #8a5a00; }

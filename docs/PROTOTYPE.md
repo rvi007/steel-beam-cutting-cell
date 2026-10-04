@@ -109,7 +109,7 @@ Same as `docs/prototype_bom.csv` and the PDF. Prices approximate (GBP, incl. VAT
 | P10 | Mini V-wheel gantry plate kits | 20-series mini gantry plate + 4 mini V-wheels (625 bearings) + eccentric spacers *(2 per bridge end x 2 bridges + 1 per carriage x 2)* | 6 | 12 | [Ooznest](https://ooznest.co.uk/?s=mini+V-wheel+gantry+plate&post_type=product) |
 | P11 | NEMA 17 stepper motor | 1.5-2 A, 40 mm body, 5 mm shaft (a NEMA 14 is lighter if you prefer) *(X (one per bridge) and Y (one per carriage))* | 4 | 12 | [Ooznest, StepperOnline](https://www.omc-stepperonline.com/search?search=nema+17+stepper+motor+40mm) |
 | P12 | NEMA 17 with integrated T8 lead screw | T8 x 2 mm lead, 150 mm screw, with brass nut *(Z axes)* | 2 | 22 | [StepperOnline, Amazon UK](https://www.omc-stepperonline.com/search?search=nema+17+lead+screw+T8+150mm) |
-| P13 | Z motor bracket (3D printed) | PETG, holds the Z motor on the carriage plate *(filament counted under Consumables)* | 2 | 0 | print |
+| P13 | Z motor bracket (3D printed) | PETG shelf on top of the carriage plate, holds the Z and Y motors *(filament counted under Consumables)* | 2 | 0 | print |
 | P14 | Lead-screw nut block (3D printed) | PETG block with the brass T8 nut, fixed to the Z axis *(filament counted under Consumables)* | 2 | 0 | print |
 | P15 | GT2 belt 6 mm | 5 m (2 per bridge along the rails, 1 per carriage) | 1 | 8 | [Ooznest](https://ooznest.co.uk/?s=GT2+belt+6mm&post_type=product) |
 | P16 | GT2 16T pulleys + idlers | 4 x 16T 5 mm bore (cross shafts), 2 x 16T (Y), 8 idlers | 1 set | 20 | [Ooznest, Amazon UK](https://ooznest.co.uk/?s=GT2+pulley+16+tooth&post_type=product) |

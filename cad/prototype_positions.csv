@@ -45,50 +45,82 @@ P08-1,P08,1,Outfeed table risers (3D printed),Outfeed table riser (3D printed),"
 P08-2,P08,2,Outfeed table risers (3D printed),Outfeed table riser (3D printed),"back, middle, 44 mm up",300.0,85.0,43.5
 P08-3,P08,3,Outfeed table risers (3D printed),Outfeed table riser (3D printed),"back, middle, 44 mm up",640.0,85.0,43.5
 P28-1,P28,1,Model beams (3D printed),"Model beam: UB 305x165x40 at 1:10 (30 x 16 mm), 3D printed, steel tape on top","middle, middle, 105 mm up",260.0,-50.0,105.2
-P01-17,P01,17,V-slot 20x20 aluminium extrusion,Handler bridge: 20x20 V-slot aluminium extrusion 340 mm,"middle, infeed end, 362 mm up",50.0,0.0,362.0
-P10-1,P10,1,Mini V-wheel gantry plate kits,Handler bridge end: mini V-wheel gantry plate (20 series),"front (operator side), infeed end, 350 mm up",50.0,-150.0,350.5
-P10-2,P10,2,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing),"front (operator side), infeed end, 343 mm up",32.0,-150.0,343.0
-P10-3,P10,3,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing),"front (operator side), infeed end, 343 mm up",68.0,-150.0,343.0
-P10-4,P10,4,Mini V-wheel gantry plate kits,Handler bridge end: mini V-wheel gantry plate (20 series),"back, infeed end, 350 mm up",50.0,150.0,350.5
-P10-5,P10,5,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing),"back, infeed end, 343 mm up",32.0,150.0,343.0
-P10-6,P10,6,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing),"back, infeed end, 343 mm up",68.0,150.0,343.0
-P11-1,P11,1,NEMA 17 stepper motor,Handler X motor: NEMA 17 driving both rails through a 5 mm cross shaft and GT2 belts,"front (operator side), infeed end, 393 mm up",85.0,-105.0,393.0
-P17-1,P17,1,5 mm cross shafts + bearings,5 mm cross shaft with GT2 16T pulleys at both ends,"middle, infeed end, 382 mm up",85.0,0.0,382.0
-P10-7,P10,7,Mini V-wheel gantry plate kits,Handler carriage: mini V-wheel gantry plate on the bridge (Y axis),"middle, infeed end, 348 mm up",50.0,0.0,347.5
-P11-2,P11,2,NEMA 17 stepper motor,Handler Y motor: NEMA 17 + GT2 belt along the bridge,"middle, infeed end, 326 mm up",83.0,0.0,326.0
-P01-18,P01,18,V-slot 20x20 aluminium extrusion,Handler Z axis: 20x20 V-slot aluminium extrusion 200 mm on a T8 lead screw (slides through the carriage),"middle, infeed end, 350 mm up",50.0,0.0,350.3
-P12-1,P12,1,NEMA 17 with integrated T8 lead screw,Handler Z motor: NEMA 17 with integrated T8 x 2 mm lead screw (150 mm),"middle, infeed end, 369 mm up",3.0,0.0,369.0
-P13-1,P13,1,Z motor bracket (3D printed),Handler Z motor bracket (3D printed),"middle, infeed end, 348 mm up",9.0,0.0,347.5
-P12-2,P12,2,NEMA 17 with integrated T8 lead screw,"T8 x 2 mm lead screw, 150 mm","middle, infeed end, 310 mm up",3.0,0.0,309.7
-P14-1,P14,1,Lead-screw nut block (3D printed),Handler lead-screw nut block on the Z axis (3D printed + brass T8 nut),"middle, infeed end, 276 mm up",17.5,0.0,276.3
-P23-1,P23,1,Arm mount plate (3D printed),Handler arm mount plate (3D printed),"middle, infeed end, 248 mm up",50.0,0.0,248.3
-P22-1,P22,1,MeArm-type 4-servo arm kit,Handler arm: MeArm-type 4-servo arm kit (MG90S servos) - base,"middle, infeed end, 233 mm up",50.0,0.0,233.3
-P22-2,P22,2,MeArm-type 4-servo arm kit,Handler arm: upper arm (~80 mm),"middle, infeed end, 188 mm up",50.0,0.0,187.8
-P22-3,P22,3,MeArm-type 4-servo arm kit,Handler arm: forearm (~80 mm),"middle, infeed end, 149 mm up",82.0,0.0,148.8
-P22-4,P22,4,MeArm-type 4-servo arm kit,Handler arm: wrist / tool holder,"middle, infeed end, 136 mm up",120.0,0.0,136.3
-P27-1,P27,1,Handler magnet,Handler magnet: 5 V 20 mm lifting electromagnet (holds about 2.5 kg),"middle, infeed end, 125 mm up",120.0,0.0,125.3
-P01-19,P01,19,V-slot 20x20 aluminium extrusion,Cutter bridge: 20x20 V-slot aluminium extrusion 340 mm,"middle, middle, 362 mm up",450.0,0.0,362.0
-P10-8,P10,8,Mini V-wheel gantry plate kits,Cutter bridge end: mini V-wheel gantry plate (20 series),"front (operator side), middle, 350 mm up",450.0,-150.0,350.5
-P10-9,P10,9,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing),"front (operator side), middle, 343 mm up",432.0,-150.0,343.0
-P10-10,P10,10,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing),"front (operator side), middle, 343 mm up",468.0,-150.0,343.0
-P10-11,P10,11,Mini V-wheel gantry plate kits,Cutter bridge end: mini V-wheel gantry plate (20 series),"back, middle, 350 mm up",450.0,150.0,350.5
-P10-12,P10,12,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing),"back, middle, 343 mm up",432.0,150.0,343.0
-P10-13,P10,13,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing),"back, middle, 343 mm up",468.0,150.0,343.0
-P11-3,P11,3,NEMA 17 stepper motor,Cutter X motor: NEMA 17 driving both rails through a 5 mm cross shaft and GT2 belts,"front (operator side), middle, 393 mm up",485.0,-105.0,393.0
-P17-2,P17,2,5 mm cross shafts + bearings,5 mm cross shaft with GT2 16T pulleys at both ends,"middle, middle, 382 mm up",485.0,0.0,382.0
-P10-14,P10,14,Mini V-wheel gantry plate kits,Cutter carriage: mini V-wheel gantry plate on the bridge (Y axis),"middle, middle, 348 mm up",450.0,0.0,347.5
-P11-4,P11,4,NEMA 17 stepper motor,Cutter Y motor: NEMA 17 + GT2 belt along the bridge,"middle, middle, 326 mm up",483.0,0.0,326.0
-P01-20,P01,20,V-slot 20x20 aluminium extrusion,Cutter Z axis: 20x20 V-slot aluminium extrusion 200 mm on a T8 lead screw (slides through the carriage),"middle, middle, 375 mm up",450.0,0.0,375.3
-P12-3,P12,3,NEMA 17 with integrated T8 lead screw,Cutter Z motor: NEMA 17 with integrated T8 x 2 mm lead screw (150 mm),"middle, middle, 369 mm up",403.0,0.0,369.0
-P13-2,P13,2,Z motor bracket (3D printed),Cutter Z motor bracket (3D printed),"middle, middle, 348 mm up",409.0,0.0,347.5
-P12-4,P12,4,NEMA 17 with integrated T8 lead screw,"T8 x 2 mm lead screw, 150 mm","middle, middle, 322 mm up",403.0,0.0,322.2
-P14-2,P14,2,Lead-screw nut block (3D printed),Cutter lead-screw nut block on the Z axis (3D printed + brass T8 nut),"middle, middle, 301 mm up",417.5,0.0,301.3
-P23-2,P23,2,Arm mount plate (3D printed),Cutter arm mount plate (3D printed),"middle, middle, 273 mm up",450.0,0.0,273.3
-P22-5,P22,5,MeArm-type 4-servo arm kit,Cutter arm: MeArm-type 4-servo arm kit (MG90S servos) - base,"middle, middle, 258 mm up",450.0,0.0,258.3
-P22-6,P22,6,MeArm-type 4-servo arm kit,Cutter arm: upper arm (~80 mm),"middle, middle, 213 mm up",450.0,0.0,212.8
-P22-7,P22,7,MeArm-type 4-servo arm kit,Cutter arm: forearm (~80 mm),"middle, middle, 174 mm up",482.0,0.0,173.8
-P22-8,P22,8,MeArm-type 4-servo arm kit,Cutter arm: wrist / tool holder,"middle, middle, 161 mm up",520.0,0.0,161.3
-P26-1,P26,1,Cutter 'torch' for the prototype (pen holder),Cutter 'torch' for the prototype: fine-liner pen in a sprung 3D-printed holder (marks the cut lines),"middle, middle, 140 mm up",520.0,0.0,140.3
+P01-17,P01,17,V-slot 20x20 aluminium extrusion,Handler bridge: 20x20 V-slot aluminium extrusion 340 mm,"middle, infeed end, 359 mm up",50.0,0.0,359.0
+P10-1,P10,1,Mini V-wheel gantry plate kits,"Handler bridge end: mini V-wheel gantry plate (20 series), clamps the gantry rail","front (operator side), infeed end, 348 mm up",50.0,-150.0,347.5
+P10-2,P10,2,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot,"front (operator side), infeed end, 330 mm up",32.0,-165.6,330.0
+P10-3,P10,3,Mini V-wheel gantry plate kits,Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate,"front (operator side), infeed end, 340 mm up",32.0,-165.6,340.2
+P10-4,P10,4,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot,"front (operator side), infeed end, 330 mm up",32.0,-134.4,330.0
+P10-5,P10,5,Mini V-wheel gantry plate kits,Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate,"front (operator side), infeed end, 340 mm up",32.0,-134.4,340.2
+P10-6,P10,6,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot,"front (operator side), infeed end, 330 mm up",68.0,-165.6,330.0
+P10-7,P10,7,Mini V-wheel gantry plate kits,Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate,"front (operator side), infeed end, 340 mm up",68.0,-165.6,340.2
+P10-8,P10,8,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot,"front (operator side), infeed end, 330 mm up",68.0,-134.4,330.0
+P10-9,P10,9,Mini V-wheel gantry plate kits,Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate,"front (operator side), infeed end, 340 mm up",68.0,-134.4,340.2
+P10-10,P10,10,Mini V-wheel gantry plate kits,"Handler bridge end: mini V-wheel gantry plate (20 series), clamps the gantry rail","back, infeed end, 348 mm up",50.0,150.0,347.5
+P10-11,P10,11,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot,"back, infeed end, 330 mm up",32.0,134.4,330.0
+P10-12,P10,12,Mini V-wheel gantry plate kits,Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate,"back, infeed end, 340 mm up",32.0,134.4,340.2
+P10-13,P10,13,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot,"back, infeed end, 330 mm up",32.0,165.6,330.0
+P10-14,P10,14,Mini V-wheel gantry plate kits,Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate,"back, infeed end, 340 mm up",32.0,165.6,340.2
+P10-15,P10,15,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot,"back, infeed end, 330 mm up",68.0,134.4,330.0
+P10-16,P10,16,Mini V-wheel gantry plate kits,Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate,"back, infeed end, 340 mm up",68.0,134.4,340.2
+P10-17,P10,17,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot,"back, infeed end, 330 mm up",68.0,165.6,330.0
+P10-18,P10,18,Mini V-wheel gantry plate kits,Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate,"back, infeed end, 340 mm up",68.0,165.6,340.2
+P11-1,P11,1,NEMA 17 stepper motor,Handler X motor: NEMA 17 driving both rails through a 5 mm cross shaft and GT2 belts,"front (operator side), infeed end, 390 mm up",85.0,-105.0,390.0
+P17-1,P17,1,5 mm cross shafts + bearings,5 mm cross shaft with GT2 16T pulleys at both ends,"middle, infeed end, 379 mm up",85.0,0.0,379.0
+P10-19,P10,19,Mini V-wheel gantry plate kits,Handler carriage: mini V-wheel gantry plate on the side of the bridge (Y axis),"middle, infeed end, 359 mm up",32.5,0.0,359.0
+P10-20,P10,20,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot,"middle, infeed end, 343 mm up",38.4,-18.0,343.4
+P10-21,P10,21,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot,"middle, infeed end, 375 mm up",38.4,-18.0,374.6
+P10-22,P10,22,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot,"middle, infeed end, 343 mm up",38.4,18.0,343.4
+P10-23,P10,23,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot,"middle, infeed end, 375 mm up",38.4,18.0,374.6
+P13-1,P13,1,Z motor bracket (3D printed),Handler motor shelf (3D printed): holds the Z and Y motors on top of the carriage plate,"middle, infeed end, 384 mm up",10.5,0.0,384.5
+P11-2,P11,2,NEMA 17 stepper motor,Handler Y motor: NEMA 17 + GT2 belt along the bridge,"middle, infeed end, 406 mm up",10.0,-35.0,406.0
+P12-1,P12,1,NEMA 17 with integrated T8 lead screw,Handler Z motor: NEMA 17 with integrated T8 x 2 mm lead screw (150 mm),"middle, infeed end, 406 mm up",10.0,35.0,406.0
+P01-18,P01,18,V-slot 20x20 aluminium extrusion,Handler Z axis: 20x20 V-slot aluminium extrusion 200 mm on a T8 lead screw (slides on the carriage plate),"middle, infeed end, 350 mm up",21.0,0.0,350.3
+P12-2,P12,2,NEMA 17 with integrated T8 lead screw,"T8 x 2 mm lead screw, 150 mm","middle, infeed end, 327 mm up",10.0,35.0,326.7
+P14-1,P14,1,Lead-screw nut block (3D printed),Handler lead-screw nut block on the Z axis (3D printed + brass T8 nut),"middle, infeed end, 276 mm up",10.0,28.5,276.3
+P23-1,P23,1,Arm mount plate (3D printed),Handler arm mount plate (3D printed),"middle, infeed end, 248 mm up",21.0,0.0,248.3
+P22-1,P22,1,MeArm-type 4-servo arm kit,Handler arm: MeArm-type 4-servo arm kit (MG90S servos) - base,"middle, infeed end, 233 mm up",21.0,0.0,233.3
+P22-2,P22,2,MeArm-type 4-servo arm kit,Handler arm: upper arm (~80 mm),"middle, infeed end, 188 mm up",21.0,0.0,187.8
+P22-3,P22,3,MeArm-type 4-servo arm kit,Handler arm: forearm (~80 mm),"middle, infeed end, 149 mm up",53.0,0.0,148.8
+P22-4,P22,4,MeArm-type 4-servo arm kit,Handler arm: wrist / tool holder,"middle, infeed end, 136 mm up",91.0,0.0,136.3
+P27-1,P27,1,Handler magnet,Handler magnet: 5 V 20 mm lifting electromagnet (holds about 2.5 kg),"middle, infeed end, 125 mm up",91.0,0.0,125.3
+P01-19,P01,19,V-slot 20x20 aluminium extrusion,Cutter bridge: 20x20 V-slot aluminium extrusion 340 mm,"middle, middle, 359 mm up",450.0,0.0,359.0
+P10-24,P10,24,Mini V-wheel gantry plate kits,"Cutter bridge end: mini V-wheel gantry plate (20 series), clamps the gantry rail","front (operator side), middle, 348 mm up",450.0,-150.0,347.5
+P10-25,P10,25,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot,"front (operator side), middle, 330 mm up",432.0,-165.6,330.0
+P10-26,P10,26,Mini V-wheel gantry plate kits,Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate,"front (operator side), middle, 340 mm up",432.0,-165.6,340.2
+P10-27,P10,27,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot,"front (operator side), middle, 330 mm up",432.0,-134.4,330.0
+P10-28,P10,28,Mini V-wheel gantry plate kits,Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate,"front (operator side), middle, 340 mm up",432.0,-134.4,340.2
+P10-29,P10,29,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot,"front (operator side), middle, 330 mm up",468.0,-165.6,330.0
+P10-30,P10,30,Mini V-wheel gantry plate kits,Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate,"front (operator side), middle, 340 mm up",468.0,-165.6,340.2
+P10-31,P10,31,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot,"front (operator side), middle, 330 mm up",468.0,-134.4,330.0
+P10-32,P10,32,Mini V-wheel gantry plate kits,Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate,"front (operator side), middle, 340 mm up",468.0,-134.4,340.2
+P10-33,P10,33,Mini V-wheel gantry plate kits,"Cutter bridge end: mini V-wheel gantry plate (20 series), clamps the gantry rail","back, middle, 348 mm up",450.0,150.0,347.5
+P10-34,P10,34,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot,"back, middle, 330 mm up",432.0,134.4,330.0
+P10-35,P10,35,Mini V-wheel gantry plate kits,Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate,"back, middle, 340 mm up",432.0,134.4,340.2
+P10-36,P10,36,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot,"back, middle, 330 mm up",432.0,165.6,330.0
+P10-37,P10,37,Mini V-wheel gantry plate kits,Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate,"back, middle, 340 mm up",432.0,165.6,340.2
+P10-38,P10,38,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot,"back, middle, 330 mm up",468.0,134.4,330.0
+P10-39,P10,39,Mini V-wheel gantry plate kits,Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate,"back, middle, 340 mm up",468.0,134.4,340.2
+P10-40,P10,40,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) on an eccentric spacer - runs in the rail's side slot,"back, middle, 330 mm up",468.0,165.6,330.0
+P10-41,P10,41,Mini V-wheel gantry plate kits,Eccentric spacer + M5 bolt: holds the V-wheel under the gantry plate,"back, middle, 340 mm up",468.0,165.6,340.2
+P11-3,P11,3,NEMA 17 stepper motor,Cutter X motor: NEMA 17 driving both rails through a 5 mm cross shaft and GT2 belts,"front (operator side), middle, 390 mm up",485.0,-105.0,390.0
+P17-2,P17,2,5 mm cross shafts + bearings,5 mm cross shaft with GT2 16T pulleys at both ends,"middle, middle, 379 mm up",485.0,0.0,379.0
+P10-42,P10,42,Mini V-wheel gantry plate kits,Cutter carriage: mini V-wheel gantry plate on the side of the bridge (Y axis),"middle, middle, 359 mm up",432.5,0.0,359.0
+P10-43,P10,43,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot,"middle, middle, 343 mm up",438.4,-18.0,343.4
+P10-44,P10,44,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot,"middle, middle, 375 mm up",438.4,-18.0,374.6
+P10-45,P10,45,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot,"middle, middle, 343 mm up",438.4,18.0,343.4
+P10-46,P10,46,Mini V-wheel gantry plate kits,Mini V-wheel (625 bearing) - runs in the bridge's top / bottom slot,"middle, middle, 375 mm up",438.4,18.0,374.6
+P13-2,P13,2,Z motor bracket (3D printed),Cutter motor shelf (3D printed): holds the Z and Y motors on top of the carriage plate,"middle, middle, 384 mm up",410.5,0.0,384.5
+P11-4,P11,4,NEMA 17 stepper motor,Cutter Y motor: NEMA 17 + GT2 belt along the bridge,"middle, middle, 406 mm up",410.0,-35.0,406.0
+P12-3,P12,3,NEMA 17 with integrated T8 lead screw,Cutter Z motor: NEMA 17 with integrated T8 x 2 mm lead screw (150 mm),"middle, middle, 406 mm up",410.0,35.0,406.0
+P01-20,P01,20,V-slot 20x20 aluminium extrusion,Cutter Z axis: 20x20 V-slot aluminium extrusion 200 mm on a T8 lead screw (slides on the carriage plate),"middle, middle, 375 mm up",421.0,0.0,375.3
+P12-4,P12,4,NEMA 17 with integrated T8 lead screw,"T8 x 2 mm lead screw, 150 mm","middle, middle, 339 mm up",410.0,35.0,339.2
+P14-2,P14,2,Lead-screw nut block (3D printed),Cutter lead-screw nut block on the Z axis (3D printed + brass T8 nut),"middle, middle, 301 mm up",410.0,28.5,301.3
+P23-2,P23,2,Arm mount plate (3D printed),Cutter arm mount plate (3D printed),"middle, middle, 273 mm up",421.0,0.0,273.3
+P22-5,P22,5,MeArm-type 4-servo arm kit,Cutter arm: MeArm-type 4-servo arm kit (MG90S servos) - base,"middle, middle, 258 mm up",421.0,0.0,258.3
+P22-6,P22,6,MeArm-type 4-servo arm kit,Cutter arm: upper arm (~80 mm),"middle, middle, 213 mm up",421.0,0.0,212.8
+P22-7,P22,7,MeArm-type 4-servo arm kit,Cutter arm: forearm (~80 mm),"middle, middle, 174 mm up",453.0,0.0,173.8
+P22-8,P22,8,MeArm-type 4-servo arm kit,Cutter arm: wrist / tool holder,"middle, middle, 161 mm up",491.0,0.0,161.3
+P26-1,P26,1,Cutter 'torch' for the prototype (pen holder),Cutter 'torch' for the prototype: fine-liner pen in a sprung 3D-printed holder (marks the cut lines),"middle, middle, 140 mm up",491.0,0.0,140.3
 P44-1,P44,1,Control box,"Control box: Jetson Orin Nano, FluidNC 6-axis board, PCA9685 servo board, 24 V and 5 V supplies, fuses, safety relay","middle, middle, 55 mm up",850.0,0.0,55.0
 P32-1,P32,1,Emergency stop station,"Emergency stop: 40 mm red mushroom, 2 NC contacts, yellow box (BS EN ISO 13850)","front (operator side), middle, 35 mm up",825.0,-195.0,35.0
 P32-2,P32,2,Emergency stop station,Emergency stop head,"front (operator side), middle, 82 mm up",825.0,-195.0,82.5

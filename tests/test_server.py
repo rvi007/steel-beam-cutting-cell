@@ -84,7 +84,13 @@ class Server(unittest.TestCase):
         self.post("/api/safety/input", {"name": "gate_closed", "value": False})
         self.assertEqual(self.get("/api/safety")["state"], "FAULT")
         self.post("/api/safety/input", {"name": "gate_closed", "value": True})
-        self.post("/api/safety/finished", {})
+        self.post("/api/safety/finished", {"details": {"section": "UB 305x165x40", "parts": 3, "duration_s": 412}})
+        self.post("/api/safety/finished", {})                      # again: no second history entry
+        hist = [h for h in self.get("/api/history")["history"] if h["name"] == "test bar"]
+        self.assertEqual(len(hist), 1)
+        self.assertEqual((hist[0]["result"], hist[0]["parts"], hist[0]["section"]), ("finished", 3, "UB 305x165x40"))
+        left = self.post("/api/history-delete/" + hist[0]["id"], {})["history"]
+        self.assertNotIn(hist[0]["id"], [h["id"] for h in left])
         st = self.get("/api/safety")
         self.assertEqual(st["job"]["state"], "finished")
         self.assertFalse(st["checklist_ok"])

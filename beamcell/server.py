@@ -21,6 +21,7 @@ API (all JSON):
     GET  /api/cad                   the CAD files in cad/;  GET /cad/<file> downloads one
     POST /api/cad/part              {part} -> STEP solid of the part (needs CadQuery: a PC, not the Jetson)
     GET  /api/jobs, GET/POST /api/jobs/<name>   saved jobs (jobs/ folder); POST /api/jobs-delete/<name> deletes one
+    GET  /api/history, POST /api/history-delete/<id>, POST /api/history-clear   jobs that ran (jobs/history.json)
     GET  /api/camera, POST /api/camera, GET /camera.mjpg   camera + person detection
     GET  /api/camera/devices        the cameras Linux can see
     GET  /api/safety                safety controller status
@@ -42,7 +43,7 @@ import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlparse
 
-from beamcell import assistant, collisions, machine, manual, nc1, sections as S, uk_codes as UK
+from beamcell import assistant, collisions, history, machine, manual, nc1, sections as S, uk_codes as UK
 from beamcell.config import CONFIG, problems as config_problems
 from beamcell.gpio_inputs import GpioInputs
 from beamcell.parts import Part, nest_all
@@ -256,6 +257,8 @@ class Handler(BaseHTTPRequestHandler):
                 with open(os.path.join(EXAMPLES, name)) as fh:
                     part, report = nc1.read(fh.read(), name)
                 return self._send(200, dict(part_view(part), report=report))
+            if path == "/api/history":
+                return self._send(200, {"history": history.entries()})
             if path == "/api/jobs":
                 os.makedirs(JOBS, exist_ok=True)
                 return self._send(200, sorted(f[:-5] for f in os.listdir(JOBS) if f.endswith(".json")))
@@ -319,6 +322,12 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, part_step(body))
             if path == "/api/plan":
                 return self._send(200, plan_bar(body))
+            if path.startswith("/api/history-delete/"):
+                history.delete(os.path.basename(path))
+                return self._send(200, {"history": history.entries()})
+            if path == "/api/history-clear":
+                history.clear()
+                return self._send(200, {"history": []})
             if path.startswith("/api/jobs-delete/"):
                 name = _safe_name(os.path.basename(path))
                 os.remove(os.path.join(JOBS, name + ".json"))
@@ -359,9 +368,15 @@ class Handler(BaseHTTPRequestHandler):
         elif action == "stop":
             SAFETY.stop(who, body.get("reason", "stop button"))
         elif action == "finished":
+            job = SAFETY.job and dict(SAFETY.job)
             SAFETY.finished()
+            if job and job["state"] != "finished":                # once per job, not on every repeat
+                history.add(job, "finished", body.get("details"))
         elif action in ("job", "clear-job"):
+            job = SAFETY.job and dict(SAFETY.job)
             ok, why = SAFETY.load_job(body.get("name", "job"), who) if action == "job" else SAFETY.clear_job(who)
+            if ok and action == "clear-job" and job and job["started"] and job["state"] != "finished":
+                history.add(job, "cleared before the end", body.get("details"))
             return self._send(200, dict(SAFETY.status(), ok=ok, why=why))
         elif action == "mode":
             SAFETY.set_mode(body["mode"], bool(body.get("lockout_confirmed")))

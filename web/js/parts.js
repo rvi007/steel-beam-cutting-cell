@@ -373,14 +373,9 @@ export async function initParts() {
     refreshJobs();
   };
   $("job-open").onchange = async (e) => {
-    if (!e.target.value) return;
-    app.job = await get("/api/jobs/" + encodeURIComponent(e.target.value));
-    $("job-name").value = e.target.value;
-    $("stock-length").value = app.job.stock_length;
+    const name = e.target.value;
     e.target.value = "";
-    selected = 0;
-    await jobChanged();
-    renderEditor();
+    if (name) await openSavedJob(name);
   };
   $("btn-clear-job").onclick = () => clearJob();
   $("job-delete").onchange = async (e) => {
@@ -395,7 +390,16 @@ export async function initParts() {
   renderEditor();
 }
 
-async function refreshJobs() {
+export async function openSavedJob(name) {
+  app.job = await get("/api/jobs/" + encodeURIComponent(name));
+  $("job-name").value = name;
+  $("stock-length").value = app.job.stock_length;
+  selected = 0;
+  await jobChanged();
+  renderEditor();
+}
+
+export async function refreshJobs() {
   const names = await get("/api/jobs");
   for (const id of ["job-open", "job-delete"]) {
     const sel = $(id);
