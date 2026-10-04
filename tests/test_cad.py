@@ -89,7 +89,7 @@ class ShoppingList(unittest.TestCase):
                 pieces[r["profile"]] = pieces.get(r["profile"], 0) + int(r["quantity"])
         with open(os.path.join(ROOT, "docs", "prototype_bom.csv")) as fh:
             rows = list(csv.DictReader(fh))
-        self.assertTrue(all(len(r) == 8 and r["approx_gbp_each"] for r in rows))
+        self.assertTrue(all(len(r) == 9 and r["approx_gbp_each"] for r in rows))
         for profile, mm in need.items():
             qty = next(r for r in rows if f"V-slot {profile}" in r["item"])["qty"]
             if qty.endswith(" m"):                   # bought by the metre

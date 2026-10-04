@@ -31,6 +31,16 @@ def qty_number(q):
     return float(re.match(r"[\d.]+", q).group())
 
 
+def buy_link(url):
+    """A clickable link: straight to the product where it was checked, else the shop's search."""
+    if not url:
+        return "<i>3D print / make it</i>"
+    shop = url.split("/")[2].replace("www.", "").replace("uk.", "")
+    search = any(k in url for k in ("search", "?s=", "/s?k=", "searchTerm", "?q="))
+    text = f"Search {shop}" if search else "Open product page"
+    return f'<a href="{url}" color="#1a5fb4"><u>{text}</u></a>'
+
+
 def money(v):
     return f"£{v:,.2f}" if v < 10 and v != int(v) else f"£{v:,.0f}"
 
@@ -64,10 +74,21 @@ def main():
     totals = {s: sum(qty_number(r["qty"]) * float(r["approx_gbp_each"]) for r in rows if r["stage"] == s) for s in STAGES}
     grand = sum(totals.values())
 
+    big = ParagraphStyle("big", parent=body, fontName="Helvetica-Bold", fontSize=15, leading=19, textColor=colors.white)
     story.append(Paragraph("Prototype Shopping List", h1))
     story.append(Paragraph(f"<b>Steel Beam Cutting Cell - 1:5 desktop prototype</b> &nbsp;|&nbsp; Ravi Mahadeva &nbsp;|&nbsp; "
                            f"{time.strftime('%d %B %Y')}", body))
     story.append(Spacer(1, 6))
+    box = Table([[Paragraph(f"TOTAL BUYING COST: about {money(round(grand, -1))}", big),
+                  Paragraph(f"<font color='white'>incl. VAT where known, before postage &nbsp;|&nbsp; with 10% spare for postage "
+                            f"and price changes: <b>about {money(round(grand * 1.1, -1))}</b> &nbsp;|&nbsp; "
+                            f"to get moving first (stages 1-2): about {money(round(totals['1'] + totals['2'], -1))}</font>", body)]],
+                colWidths=[95 * mm, 170 * mm])
+    box.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), ORANGE), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                             ("TOPPADDING", (0, 0), (-1, -1), 7), ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+                             ("LEFTPADDING", (0, 0), (-1, -1), 8)]))
+    story.append(box)
+    story.append(Spacer(1, 8))
     summary = [[Paragraph("<b>Stage</b>", head), Paragraph("<b>About</b>", head)]]
     summary += [[Paragraph(STAGES[s], body), Paragraph(money(round(totals[s], -1)), body)] for s in STAGES]
     summary.append([Paragraph("<b>Total</b>", body), Paragraph(f"<b>about {money(round(grand, -1))}</b>", body)])
@@ -79,6 +100,7 @@ def main():
     tips = Paragraph(
         "<b>Before you buy</b><br/>"
         "- Prices are approximate (GBP, October 2026) and change - check each one before ordering.<br/>"
+        "- <b>Every item has a link</b> (blue): a product page where it was checked, otherwise that shop's search.<br/>"
         "- You already have the <b>Jetson Orin Nano</b>; it is not in the total.<br/>"
         "- Order the aluminium <b>cut to size</b> (lengths on the last page) - it saves a lot of work.<br/>"
         "- Buy and wire the <b>safety parts (stage 5) before any motor moves</b>: the E-stop and safety "
@@ -96,13 +118,13 @@ def main():
     for s, title in STAGES.items():
         items = [r for r in rows if r["stage"] == s]
         data = [[Paragraph("<b>OK</b>", head)] + [Paragraph(f"<b>{h}</b>", head) for h in
-                                                    ("Item", "What to look for", "Qty", "Each", "Line total", "Where (UK)")]]
+                                                    ("Item", "What to look for", "Qty", "Each", "Line total", "Where to buy (click)")]]
         for r in items:
             line = qty_number(r["qty"]) * float(r["approx_gbp_each"])
             spec = r["specification / what to look for"] + (f"<br/><font size=7 color='#52606d'>{r['notes']}</font>" if r["notes"] else "")
             data.append(["", Paragraph(f"<b>{r['item']}</b>", body), Paragraph(spec, body), Paragraph(r["qty"], body),
                          Paragraph(money(float(r["approx_gbp_each"])), body), Paragraph(money(line), body),
-                         Paragraph(r["where (UK)"], small)])
+                         Paragraph(f'{r["where (UK)"]}<br/>{buy_link(r.get("link", ""))}', small)])
         data.append(["", "", Paragraph("<b>Stage total</b>", body), "", "", Paragraph(f"<b>{money(round(totals[s]))}</b>", body), ""])
         tbl = Table(data, colWidths=widths, repeatRows=1)
         style = [("BACKGROUND", (0, 0), (-1, 0), ORANGE), ("VALIGN", (0, 0), (-1, -1), "TOP"),
