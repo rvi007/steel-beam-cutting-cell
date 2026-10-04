@@ -8,8 +8,9 @@ How a bar runs (part by part, from X = 0 towards the far end):
      time (top hole first) - never jumping back and forth.
   3. Cutter goes to the cut-off and waits; Handler comes in and grips the part (magnet).
   4. Cutter cuts the cut-off through every face.
-  5. Handler lifts the free part and puts it on the outfeed rack, while the Cutter is
-     already working on the next part. Offcuts drop into the scrap bin; the remnant stays.
+  5. Handler lifts the free part and puts it on the outfeed table, while the Cutter is
+     already working on the next part. Offcuts fall between the rollers into the scrap tray; the remnant stays on the
+     rollers if it spans two of them, otherwise it falls too.
 
 Torch passes per face (machine Y+ is the Cutter's side, see sections.py for how parts lie):
     top flange              straight down
@@ -28,8 +29,8 @@ import math
 import numpy as np
 
 from beamcell import sections as S
-from beamcell.machine import (BEAM_Y, BED_Z, MIN_GAP, OUTFEED_Y, X_LIMITS, Y_LIMITS, Z_LIMITS, Z_SAFE,
-                              make_hands, move_time)
+from beamcell.machine import (BEAM_Y, BED_Z, MIN_GAP, OUTFEED_Y, SCRAP_TRAY_Z, X_LIMITS, Y_LIMITS, Z_LIMITS, Z_SAFE,
+                              fall_time, make_hands, move_time, supported_on_rollers)
 from beamcell.parts import inside
 
 DT = 0.1                  # time between plan samples (s)
@@ -313,7 +314,7 @@ class Plan:
         self.cuts = []          # each torch pass: op, placement, points, times
         self.ops = []           # every operation with its finish time
         self.carries = []       # parts moved by the Handler
-        self.drops = []         # offcuts falling into the scrap bin: (x0, x1, t)
+        self.drops = []         # pieces falling into the scrap tray: {x0, x1 (mm), t (cut free), t_land}
         self.steps = []         # (time, who, text) for the status line
         self.warnings = []
         self.near = None        # Cutter waiting at an approach point with this torch direction
@@ -516,7 +517,7 @@ class Plan:
         t_grip = self.th.end
         self.th.hold(t_free)
         part = self.bar.parts[self.bar.placements[k]["part"]]
-        self._say(t_free, "Handler", f"carrying {part.mark} ({part.weight:.0f} kg) to the outfeed rack")
+        self._say(t_free, "Handler", f"carrying {part.mark} ({part.weight:.0f} kg) to the outfeed table")
         up = g + [0, 0, LIFT]
         over = up + [0, OUTFEED_Y - BEAM_Y, 0]
         down = over - [0, 0, LIFT]
@@ -524,10 +525,16 @@ class Plan:
             self._commit(self.th, self._joint_move(a, q, b, q, hand))
         t_release = self.th.end
         self.th.hold(t_release + MAGNET_S)
-        self._say(self.th.end, "Handler", f"{part.mark} is on the outfeed rack - waiting")
+        self._say(self.th.end, "Handler", f"{part.mark} is on the outfeed table - waiting")
         self._go(self.th, np.array([down[0], down[1], Z_SAFE]), q, direct=True)
         self.carries.append({"placement": k, "t_grip": t_grip, "t_free": t_free, "t_release": t_release,
                              "offset": (down - g).tolist()})
+
+    def _drop(self, x0, x1, t, remnant=False):
+        """A loose piece falls between the rollers into the scrap tray (straight down, gravity)."""
+        self.drops.append({"x0": x0, "x1": x1, "t": t, "t_land": t + fall_time(BED_Z - SCRAP_TRAY_Z),
+                           "remnant": remnant})
+        self._say(t, "Cutter", "short remnant falls into the scrap tray" if remnant else "offcut falls into the scrap tray")
 
     # ---------------------------------------------------------------- main
     def build(self):
@@ -543,7 +550,7 @@ class Plan:
                 self._do_op(op)
                 if round(pl["x0"], 3) in scraps:
                     x0, x1 = scraps[round(pl["x0"], 3)]
-                    self.drops.append({"x0": x0, "x1": x1, "t": op["t_done"]})
+                    self._drop(x0, x1, op["t_done"])
             for op in [o for o in ops if o["kind"] not in ("start", "end")]:
                 self._say(self.tc.end, "Cutter", f"{part.mark}: {op['label']}")
                 self._do_op(op)
@@ -572,9 +579,15 @@ class Plan:
                     self.tc.hold(t_hold)
             if end_ops:
                 self._do_op(end_ops[0], first_go=first)
+            if heavy and not supported_on_rollers((pl["x0"]) / 1000, pl["x1"] / 1000):
+                self.warnings.append(f"{part.mark} is too short to stay on the rollers and too heavy to lift - "
+                                     "it would fall: support it before the cut-off")
             if grip is not None:
                 self._handler_carry(k, self.tc.end, *grip)
 
+        rem = bar.remnant
+        if rem and not supported_on_rollers(rem[0] / 1000, rem[1] / 1000):
+            self._drop(rem[0], rem[1], self.tc.end, remnant=True)          # too short to stay on the bed
         self._say(self.tc.end, "Cutter", "going home")
         self._say(self.th.end, "Handler", "going home")
         self.near = None

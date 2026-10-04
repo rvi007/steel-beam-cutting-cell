@@ -92,3 +92,41 @@ class CutOrder(unittest.TestCase):
                 xs = [float(o["passes"][0][0][:, 0].mean()) for o in ops if o["kind"] not in ("start", "end")]
                 for a, b in zip(xs, xs[1:]):
                     self.assertGreater(b, a - 0.16, "went back along the bar")
+
+
+class Gravity(unittest.TestCase):
+    """Nothing floats: every piece ends up resting on the rollers, the outfeed table or the scrap tray."""
+
+    def test_every_piece_rests_on_something(self):
+        from beamcell.machine import BED_Z, OUTFEED_DECK, SCRAP_TRAY_Z, fall_time, supported_on_rollers
+        parts = []
+        for f in sorted(glob.glob(os.path.join(EXAMPLES, "*.nc1"))):
+            with open(f) as fh:
+                parts.append(nc1.read(fh.read(), f)[0])
+        for stock in (12000, 6000):
+            for bar in nest_all(parts, stock):
+                plan = Plan(bar).build()
+                carried = {c["placement"] for c in plan.carries}
+                for c in plan.carries:                   # put down ON the table, not above or in it
+                    pl = bar.placements[c["placement"]]
+                    self.assertAlmostEqual(c["offset"][2], 0.0, places=6)
+                    y = -0.5 + c["offset"][1]
+                    self.assertTrue(OUTFEED_DECK[2] < y < OUTFEED_DECK[3])
+                    self.assertTrue(OUTFEED_DECK[0] <= pl["x0"] / 1000 and pl["x1"] / 1000 <= OUTFEED_DECK[1])
+                for k, pl in enumerate(bar.placements):  # parts not carried stay on two rollers
+                    if k not in carried:
+                        self.assertTrue(supported_on_rollers(pl["x0"] / 1000, pl["x1"] / 1000), bar.section_title)
+                for d in plan.drops:                     # offcuts fall for the right time into the tray
+                    self.assertAlmostEqual(d["t_land"] - d["t"], fall_time(BED_Z - SCRAP_TRAY_Z), places=6)
+                    self.assertTrue(d["remnant"] or d["x1"] - d["x0"] <= 25)
+                rem = bar.remnant
+                if rem:
+                    dropped = any(d["remnant"] for d in plan.drops)
+                    self.assertEqual(dropped, not supported_on_rollers(rem[0] / 1000, rem[1] / 1000))
+
+    def test_supported_on_rollers(self):
+        from beamcell.machine import supported_on_rollers
+        self.assertTrue(supported_on_rollers(0.0, 12.0))
+        self.assertTrue(supported_on_rollers(4.4, 5.6))      # rollers at 4.5 and 5.5
+        self.assertFalse(supported_on_rollers(4.6, 5.4))     # no roller under it
+        self.assertFalse(supported_on_rollers(4.4, 4.9))     # one roller only: it tips off

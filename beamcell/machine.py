@@ -3,7 +3,7 @@ The gantry cell: a 12 m long, 3 m wide work area with two overhead hands.
 
             Y (width, 3 m)
             ^
-            |   outfeed rack (finished parts)       y = +0.85
+            |   outfeed table (finished parts)      y = +0.85
             |   ===================================
             |   steel beam on the bed               y = -0.50
             +-------------------------------------> X (length, 12 m work area)
@@ -34,6 +34,26 @@ Y_LIMITS = (-1.4, 1.4)
 Z_LIMITS = (1.25, 3.0)         # height of the arm base (bottom of the column)
 Z_SAFE = 3.0                   # column fully up: safe to travel anywhere
 MIN_GAP = 1.0                  # closest the two bridges may get (centre to centre)
+
+# ---- what holds the steel up: every loose piece must rest on one of these (gravity) ----
+G = 9.81                       # m/s^2
+ROLLER_R = 0.05                # bed rollers, top of each roller = BED_Z
+ROLLER_X = [0.5 + i for i in range(12)]          # every 1 m; the bar ends overhang, so the trim falls clear
+OUTFEED_DECK = (-0.3, WORK_LENGTH + 0.3, OUTFEED_Y - 0.45, OUTFEED_Y + 0.45)   # x0, x1, y0, y1; top = BED_Z
+SCRAP_TRAY_Z = 0.10            # floor of the scrap tray under the bed (offcuts fall onto it)
+
+
+def supported_on_rollers(x0, x1):
+    """Does a loose piece lying from x0 to x1 (m) stay on the bed? It needs a roller on each side
+    of its middle - one roller alone would let it tip over and fall into the scrap tray."""
+    mid = (x0 + x1) / 2
+    return any(x0 <= r < mid for r in ROLLER_X) and any(mid <= r <= x1 for r in ROLLER_X)
+
+
+def fall_time(height):
+    """Seconds for a piece to drop `height` metres (from rest, no air drag)."""
+    return (2 * max(height, 0.0) / G) ** 0.5
+
 
 # Gantry axis speeds (m/s) and acceleration (m/s^2)
 AXIS_SPEED = np.array([1.0, 0.8, 0.5])
@@ -151,7 +171,8 @@ def move_time(g0, g1, q0, q1, joint_speed):
 def describe():
     """Everything the 3D view needs to draw and move the machine (sent to the browser)."""
     out = {"work_length": WORK_LENGTH, "width": WIDTH, "rail_z": RAIL_Z, "bed_z": BED_Z, "beam_y": BEAM_Y,
-           "outfeed_y": OUTFEED_Y, "x_limits": X_LIMITS, "z_safe": Z_SAFE, "min_gap": MIN_GAP, "hands": {}}
+           "outfeed_y": OUTFEED_Y, "x_limits": X_LIMITS, "z_safe": Z_SAFE, "min_gap": MIN_GAP, "hands": {},
+           "roller_x": ROLLER_X, "roller_r": ROLLER_R, "outfeed_deck": OUTFEED_DECK, "scrap_tray_z": SCRAP_TRAY_Z, "g": G}
     for hand in make_hands():
         a = hand.arm
         out["hands"][hand.name.lower()] = {"name": hand.name, "tool": hand.tool, "color": hand.color,
