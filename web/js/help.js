@@ -4,7 +4,7 @@ export function initHelp() {
 <h2>What this is</h2>
 <p>A working model of a <b>12 m beam cutting cell</b> for UK structural steel. Two robot "hands" hang from an
 overhead gantry: the <b>Cutter</b> (orange, plasma torch) cuts holes, slots, notches and parts to length; the
-<b>Handler</b> (blue, magnet) holds each part while it is cut free and puts it on the outfeed rack.</p>
+<b>Handler</b> (blue, magnet) holds each part while it is cut free and puts it on the outfeed table. Offcuts fall between the rollers into the scrap tray.</p>
 
 <h2>Quick start</h2>
 <ol>
