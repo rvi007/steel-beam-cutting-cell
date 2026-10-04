@@ -6,6 +6,7 @@ import { trackAt } from "./kinematics.js";
 import { MAT, partGroup, stockMesh, disposeGroup } from "./geometry.js";
 import { initParts, renderPartList, clearAllParts } from "./parts.js";
 import { initLibrary } from "./library.js";
+import { initPrototype } from "./prototype.js";
 import { initCamera } from "./camera.js";
 import { initHelp } from "./help.js";
 import { initSafety, safety, connected, startMachine, stopMachine, jobFinished, loadJob, clearSafetyJob } from "./safety.js";
@@ -439,6 +440,7 @@ async function start() {
   sel.value = app.job.stock_length;
   initParts();
   initLibrary();
+  initPrototype();
   initCamera();
   initHelp();
   initManual();

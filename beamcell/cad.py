@@ -657,11 +657,75 @@ def build_prototype():
     return m
 
 
+# which shopping-list line (docs/prototype_bom.csv) each solid in the prototype is
+PROTO_PARTS = {
+    "base_rail": "V-slot 20x40 aluminium extrusion", "top_rail": "V-slot 20x40 aluminium extrusion",
+    "upright": "V-slot 20x40 aluminium extrusion", "cross_member": "V-slot 20x40 aluminium extrusion",
+    "bed_rail": "V-slot 20x20 aluminium extrusion", "bed_leg": "V-slot 20x20 aluminium extrusion",
+    "z_axis": "V-slot 20x20 aluminium extrusion", "camera_post": "V-slot 20x20 aluminium extrusion",
+    "bridge": "V-slot 20x60 aluminium extrusion",
+    "bed_roller": "Bed rollers", "bed_bracket": "Roller brackets", "outfeed_table": "Outfeed table board",
+    "scrap_tray": "Scrap tray", "model_beam": "Model beams",
+    "gantry_plate": "V-wheel gantry plate kits", "carriage_plate": "V-wheel gantry plate kits",
+    "v_wheel": "V-wheel gantry plate kits",
+    "x_motor": "NEMA 17 stepper motor", "y_motor": "NEMA 17 stepper motor",
+    "z_motor": "NEMA 17 with integrated T8 lead screw", "lead_screw": "NEMA 17 with integrated T8 lead screw",
+    "z_motor_mount": "Z motor bracket (3D printed)", "lead_nut": "Lead-screw nut block (3D printed)",
+    "cross_shaft": "8 mm cross shafts + pillow blocks",
+    "arm_mount": "Arm mount plate (3D printed)",
+    "arm_base": "SO-101 6-servo arm kit (follower)", "arm_upper": "SO-101 6-servo arm kit (follower)",
+    "arm_fore": "SO-101 6-servo arm kit (follower)", "arm_wrist": "SO-101 6-servo arm kit (follower)",
+    "pen_tool": "Cutter 'torch' for the prototype", "magnet_tool": "Handler magnet",
+    "control_box": "Control box", "estop": "Emergency stop station", "estop_head": "Emergency stop station",
+    "enclosure_front": "Polycarbonate sheet 3 mm", "door_switch": "Door interlock switch",
+    "camera": "USB wide-angle camera (safety zone)",
+}
+
+
+def _base(name):
+    head, _, tail = name.rpartition("_")
+    return head if head and tail.isdigit() else name
+
+
+def prototype_positions(m):
+    """Give every solid of the prototype its part number (the shopping-list line) and a position
+    number (1, 2, 3 ... for each copy). Returns [{pn, pos, tag, item, base, label, centre, size}]
+    and renames the solids to their tag, e.g. 'P11-2 x_motor'."""
+    with open(os.path.join(ROOT, "docs", "prototype_bom.csv")) as fh:
+        bom = {r["item"]: r for r in csv.DictReader(fh)}
+    counts, out, items = {}, [], []
+    for group, name, label, shape, colour in m.items:
+        base = _base(name)
+        row = bom[PROTO_PARTS[base]]
+        pn = row["part_no"]
+        counts[pn] = counts.get(pn, 0) + 1
+        tag = f"{pn}-{counts[pn]}"
+        bb = (shape.val() if hasattr(shape, "val") else shape).BoundingBox()
+        c = bb.center
+        side = "front (operator side)" if c.y < -60 else "back" if c.y > 60 else "middle"
+        end = "infeed end" if c.x < 250 else "outfeed end" if c.x > 950 else "middle"
+        out.append({"pn": pn, "pos": counts[pn], "tag": tag, "item": row["item"], "base": base, "label": label,
+                    "where": f"{side}, {end}, {round(c.z)} mm up",
+                    "centre": [round(bb.center.x, 1), round(bb.center.y, 1), round(bb.center.z, 1)],
+                    "size": [round(bb.xlen, 1), round(bb.ylen, 1), round(bb.zlen, 1)]})
+        items.append((group, f"{tag} {base}", label, shape, colour))
+    m.items = items
+    return out
+
+
 def export_prototype():
     m = build_prototype()
     os.makedirs(CAD_DIR, exist_ok=True)
+    positions = prototype_positions(m)
     path = os.path.join(CAD_DIR, "prototype_1to5.step")
-    m.assembly().export(path)
+    m.assembly().export(path)                       # every solid is named 'P11-2 x_motor' in the CAD tree
+    # the 3D assembly in the app (Prototype tab): the same solids, in metres, and where each one is
+    os.makedirs(WEB_MODELS, exist_ok=True)
+    exportGLTF(m.assembly(scale=0.001), os.path.join(WEB_MODELS, "prototype.glb"), binary=True,
+               tolerance=0.0004, angularTolerance=0.3)
+    import json
+    with open(os.path.join(WEB_MODELS, "prototype_positions.json"), "w") as fh:
+        json.dump(positions, fh, indent=0)
     # cut list: every extrusion, grouped by profile, length and use
     counts = {}
     for c in m.cuts:
@@ -672,12 +736,16 @@ def export_prototype():
         w.writerow(["profile", "length_mm", "use", "quantity"])
         for (profile, length, use), n in sorted(counts.items()):
             w.writerow([profile, length, use, n])
-    with open(os.path.join(CAD_DIR, "prototype_parts.csv"), "w", newline="") as fh:
+    # every position: which part, which copy, what it is, where it sits (mm)
+    with open(os.path.join(CAD_DIR, "prototype_positions.csv"), "w", newline="") as fh:
         w = csv.writer(fh)
-        w.writerow(["name", "what it is / what to buy"])
-        for _, name, label, _, _ in m.items:
-            w.writerow([name, label])
-    return [path, cut]
+        w.writerow(["position", "part_no", "copy", "part (shopping list)", "what it is", "where", "x_mm", "y_mm", "z_mm"])
+        for p in positions:
+            w.writerow([p["tag"], p["pn"], p["pos"], p["item"], p["label"], p["where"], *p["centre"]])
+    old = os.path.join(CAD_DIR, "prototype_parts.csv")
+    if os.path.exists(old):
+        os.remove(old)
+    return [path, cut, os.path.join(WEB_MODELS, "prototype.glb")]
 
 
 # ======================================================================= command line

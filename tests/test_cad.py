@@ -43,6 +43,20 @@ class Files(unittest.TestCase):
         for lamp in ("red", "amber", "green", "blue"):
             self.assertIn(f"lamp_{lamp}", meshes)
 
+    def test_prototype_assembly_numbers(self):
+        """Every solid of the prototype carries its part number and position, and every part number
+        is a line of the shopping list."""
+        import csv
+        glb = glb_json(os.path.join(ROOT, "web", "models", "prototype.glb"))
+        tags = [n["name"].split()[0] for n in glb["nodes"] if n.get("name", "").startswith("P")]
+        with open(os.path.join(ROOT, "web", "models", "prototype_positions.json")) as fh:
+            positions = json.load(fh)
+        with open(os.path.join(ROOT, "docs", "prototype_bom.csv")) as fh:
+            pns = {r["part_no"] for r in csv.DictReader(fh)}
+        self.assertEqual(sorted(tags), sorted(p["tag"] for p in positions))
+        self.assertEqual(len(set(tags)), len(tags))                      # no position twice
+        self.assertTrue(all(p["pn"] in pns for p in positions))
+
     def test_cut_list(self):
         with open(os.path.join(ROOT, "cad", "prototype_cut_list.csv")) as fh:
             rows = fh.read().splitlines()
@@ -89,7 +103,7 @@ class ShoppingList(unittest.TestCase):
                 pieces[r["profile"]] = pieces.get(r["profile"], 0) + int(r["quantity"])
         with open(os.path.join(ROOT, "docs", "prototype_bom.csv")) as fh:
             rows = list(csv.DictReader(fh))
-        self.assertTrue(all(len(r) == 9 and r["approx_gbp_each"] for r in rows))
+        self.assertTrue(all(len(r) == 10 and r["approx_gbp_each"] and r["part_no"] for r in rows))
         for profile, mm in need.items():
             qty = next(r for r in rows if f"V-slot {profile}" in r["item"])["qty"]
             if qty.endswith(" m"):                   # bought by the metre

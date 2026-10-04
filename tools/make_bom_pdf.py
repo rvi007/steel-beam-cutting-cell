@@ -101,6 +101,8 @@ def main():
         "<b>Before you buy</b><br/>"
         "- Prices are approximate (GBP, October 2026) and change - check each one before ordering.<br/>"
         "- <b>Every item has a link</b> (blue): a product page where it was checked, otherwise that shop's search.<br/>"
+        "- <b>Part numbers</b> (P01 ...) are the same as the balloons in docs/Prototype_Assembly.pdf, the Prototype "
+        "tab in the app and the CAD - so you can see where each part goes.<br/>"
         "- You already have the <b>Jetson Orin Nano</b>; it is not in the total.<br/>"
         "- Order the aluminium <b>cut to size</b> (lengths on the last page) - it saves a lot of work.<br/>"
         "- Buy and wire the <b>safety parts (stage 5) before any motor moves</b>: the E-stop and safety "
@@ -114,18 +116,18 @@ def main():
     top.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (1, 0), (1, 0), 10)]))
     story.append(top)
 
-    widths = [11 * mm, 52 * mm, 93 * mm, 17 * mm, 17 * mm, 19 * mm, 58 * mm]
+    widths = [10 * mm, 13 * mm, 50 * mm, 83 * mm, 17 * mm, 15 * mm, 18 * mm, 61 * mm]
     for s, title in STAGES.items():
         items = [r for r in rows if r["stage"] == s]
         data = [[Paragraph("<b>OK</b>", head)] + [Paragraph(f"<b>{h}</b>", head) for h in
-                                                    ("Item", "What to look for", "Qty", "Each", "Line total", "Where to buy (click)")]]
+                                                    ("Part", "Item", "What to look for", "Qty", "Each", "Line total", "Where to buy (click)")]]
         for r in items:
             line = qty_number(r["qty"]) * float(r["approx_gbp_each"])
             spec = r["specification / what to look for"] + (f"<br/><font size=7 color='#52606d'>{r['notes']}</font>" if r["notes"] else "")
-            data.append(["", Paragraph(f"<b>{r['item']}</b>", body), Paragraph(spec, body), Paragraph(r["qty"], body),
+            data.append(["", Paragraph(f"<b>{r['part_no']}</b>", body), Paragraph(f"<b>{r['item']}</b>", body), Paragraph(spec, body), Paragraph(r["qty"], body),
                          Paragraph(money(float(r["approx_gbp_each"])), body), Paragraph(money(line), body),
                          Paragraph(f'{r["where (UK)"]}<br/>{buy_link(r.get("link", ""))}', small)])
-        data.append(["", "", Paragraph("<b>Stage total</b>", body), "", "", Paragraph(f"<b>{money(round(totals[s]))}</b>", body), ""])
+        data.append(["", "", "", Paragraph("<b>Stage total</b>", body), "", "", Paragraph(f"<b>{money(round(totals[s]))}</b>", body), ""])
         tbl = Table(data, colWidths=widths, repeatRows=1)
         style = [("BACKGROUND", (0, 0), (-1, 0), ORANGE), ("VALIGN", (0, 0), (-1, -1), "TOP"),
                  ("ROWBACKGROUNDS", (0, 1), (-1, -2), [colors.white, LIGHT]),
