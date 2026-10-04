@@ -182,8 +182,9 @@
     <aside class="side">
       <h2>Camera &amp; safety zone</h2>
       <label class="row">Camera <select id="cam-source">
-        <option value="0">USB camera 0</option><option value="1">USB camera 1</option>
-        <option value="csi">Jetson CSI camera</option><option value="file">Video file&hellip;</option></select></label>
+        <option value="auto">Auto - find a camera</option><option value="csi">Jetson CSI camera</option>
+        <option value="file">Video file&hellip;</option></select></label>
+      <div id="cam-devices" class="muted small"></div>
       <input id="cam-file" placeholder="/home/ravi/video.mp4" class="full" hidden>
       <label class="row">Detector <select id="cam-model"></select></label>
       <div class="toolbar"><button id="btn-cam-on" class="primary">Start camera</button><button id="btn-cam-off">Stop</button></div>

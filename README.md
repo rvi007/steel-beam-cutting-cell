@@ -1,4 +1,9 @@
-# Beam Cell - a 12 m steel cutting cell with two robot hands
+# Steel Beam Cutting Cell
+
+**A 12 m gantry cell that cuts UK structural steel sections - holes, slots, notches, mitres
+and cut-to-length - with two robot hands on an overhead gantry.**
+
+By **Ravi Mahadeva** · prototype software for the NVIDIA Jetson Orin Nano · UK codes only
 
 A working prototype of a **structural steel beam cutting cell**, to UK codes. Two robot
 "hands" hang from an overhead gantry over a 12 m work area:
@@ -35,13 +40,27 @@ prototype: real machines need these functions in certified safety hardware (see
 ## Start it
 
 ```
-cd ~/robot_arm
+cd ~/steel-beam-cutting-cell
 ./start.sh
 ```
 Open **http://localhost:8080**. From a laptop or tablet on the same Wi-Fi, use the address the
 terminal prints (e.g. `http://172.20.10.5:8080`).
 
 Needs Python 3 and numpy (already on the Jetson). OpenCV is only needed for the camera.
+
+### Camera not working?
+
+1. `python3 -m beamcell.doctor` - the **Cameras** line lists every camera Linux can see
+   (`/dev/video0 USB - ...`, `CSI`, ...) and tells you what's wrong.
+2. In the app, Camera tab: leave **Auto** selected (it tries the USB cameras, then the CSI ribbon
+   camera) or pick the exact camera from the list. The status line says why one won't start.
+3. Common fixes:
+   - No `/dev/video*` at all: plug the USB camera straight into the Jetson (not an unpowered hub),
+     or reseat the CSI ribbon (blue side to the latch), then reboot.
+   - "not in the video group": `sudo usermod -aG video $USER`, then log out and in.
+   - CSI camera: it needs the Jetson's own OpenCV (`sudo apt install python3-opencv`), not
+     `pip install opencv-python` (that one has no GStreamer). Test it with `nvgstcapture-1.0`.
+   - Another program (Cheese, a browser tab) is using the camera: close it.
 
 ## Show it in 5 minutes
 
@@ -67,14 +86,14 @@ Needs Python 3 and numpy (already on the Jetson). OpenCV is only needed for the 
 ## What's in each folder
 
 ```
-robot_arm/
+steel-beam-cutting-cell/
 ├── start.sh              start the app (./start.sh --camera 0 to start with the camera)
 ├── config/cell.toml      ALL settings: safety, camera zones, GPIO wiring, advisor, port
 ├── beamcell/             the engine (Python)
 │   ├── server.py         web server + API the browser talks to
 │   ├── safety.py         the safety controller: E-stop, interlocks, modes, reset/start, watchdogs
 │   ├── gpio_inputs.py    optional real E-stop / gate / light curtain / reset buttons on the Jetson's pins
-│   ├── assistant.py      "what's happening" in plain English + optional Claude advisor
+│   ├── assistant.py      "what's happening" in plain English + optional AI advisor
 │   ├── doctor.py         system check: python3 -m beamcell.doctor
 │   ├── config.py         reads config/cell.toml
 │   ├── sections.py       UK section library and exact cross-sections
@@ -120,7 +139,8 @@ robot_arm/
 | [docs/PROTOTYPE.md](docs/PROTOTYPE.md) | **the 1:5 working prototype: CAD, shopping list (~£1,900), safety wiring, build stages** |
 | [docs/prototype_bom.csv](docs/prototype_bom.csv) | the shopping list as a spreadsheet |
 | [docs/SCALE_MODEL.md](docs/SCALE_MODEL.md) | a static display model at 1:20 / 1:100: sizes, STL files |
-| [docs/JETSON_SPECS.md](docs/JETSON_SPECS.md) | your Orin's hardware and software |
+| [docs/JETSON_SPECS.md](docs/JETSON_SPECS.md) | the Orin's hardware and software |
+| [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | developer notes: how the code fits together, rules for changes |
 
 ## Check your computer
 
@@ -158,3 +178,11 @@ python3 -m beamcell.cad parts my.nc1    # STEP solids of your own NC1 parts
   needs them in certified hardware, and a camera with AI is never a safety device (docs/SAFETY.md).
 - Section sizes are from the Blue Book data in the `steelsnakes` package (GPL-2.0) - check
   against current mill data before real fabrication.
+
+## Author
+
+**Ravi Mahadeva** - design, development and the prototype.
+
+Copyright © 2026 Ravi Mahadeva. All rights reserved. The UK section data comes from the
+`steelsnakes` package (GPL-2.0); three.js is MIT-licensed (`web/vendor/LICENSE-three.txt`).
+

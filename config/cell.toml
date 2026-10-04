@@ -30,7 +30,7 @@ response_ms = 20                # curtain response time
 machine_stop_ms = 600           # measured stopping time of the machine (measure it on the real thing!)
 
 [camera]
-source = "0"                    # "0" USB camera 0, "csi" Jetson ribbon camera, or a video file path
+source = "auto"                 # "auto" finds one; "0"/"1" a USB camera; "csi" the Jetson ribbon camera; or a video file
 autostart = false
 model = ""                      # a YOLO .onnx file in models/ (empty = first one found, else HOG)
 warning_zone = [0.05, 0.15, 0.95, 1.0]   # left, top, right, bottom as fractions of the picture
@@ -48,7 +48,7 @@ reset_pin = 0                   # blue reset push-button (normally open, to GND)
 poll_hz = 50
 
 [assistant]
-# Optional Claude advisor: explains what the cell is doing and answers questions.
+# Optional AI advisor: explains what the cell is doing and answers questions.
 # Advisory only - it can never move or start the machine. Needs internet,
 # `pip install anthropic` and an ANTHROPIC_API_KEY (see docs/ASSISTANT.md).
 enabled = false

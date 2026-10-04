@@ -28,6 +28,17 @@ export async function initCamera() {
   for (const m of info.yolo_models || []) sel.add(new Option("YOLO - " + m, m));
   sel.add(new Option("HOG people detector (built in)", "hog"));
   if (!info.opencv) $("cam-status").innerHTML = '<div class="bad">OpenCV isn\'t installed on the server - the camera can\'t run.</div>';
+  // the cameras Linux can see, so you can pick the right one (and see why one is missing)
+  try {
+    const d = await get("/api/camera/devices");
+    const src = $("cam-source");
+    for (const c of d.cameras.filter((c) => c.kind === "usb" && c.main).reverse())
+      src.insertBefore(new Option(`USB: ${c.name} (${c.dev})`, String(c.index)), src.options[1]);
+    $("cam-devices").innerHTML = d.cameras.length
+      ? "Seen: " + d.cameras.map((c) => `${c.dev} ${c.kind === "csi" ? "CSI" : c.main ? "USB" : "(info channel)"} - ${c.name}`).join("; ")
+      : '<span class="bad">Linux sees no camera (/dev/video*). Plug it in (or check the CSI ribbon) and reboot.</span>';
+    if (!d.video_group) $("cam-devices").innerHTML += '<div class="bad">Your user isn\'t in the "video" group: sudo usermod -aG video $USER, then log out and in.</div>';
+  } catch (e) { /* older server */ }
   $("cam-source").onchange = () => ($("cam-file").hidden = $("cam-source").value !== "file");
   $("btn-cam-on").onclick = async () => {
     const src = $("cam-source").value === "file" ? $("cam-file").value : $("cam-source").value;

@@ -24,7 +24,7 @@ DEFAULTS = {
                       "E-stops tested this shift", "PPE on"],
         "light_curtain": {"resolution_mm": 30, "response_ms": 20, "machine_stop_ms": 600},
     },
-    "camera": {"source": "0", "autostart": False, "model": "",
+    "camera": {"source": "auto", "autostart": False, "model": "",
                "warning_zone": [0.05, 0.15, 0.95, 1.0], "danger_zone": [0.25, 0.35, 0.75, 1.0]},
     "gpio": {"enabled": False, "estop_pin": 0, "gate_pin": 0, "curtain_pin": 0, "reset_pin": 0, "poll_hz": 50},
     "assistant": {"enabled": False, "model": "claude-opus-5-5", "effort": "low", "send_camera": True},
