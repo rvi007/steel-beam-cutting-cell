@@ -30,11 +30,31 @@ export function renderPartList() {
     if (i === selected) tr.className = "sel";
     const status = p._errors ? `<span class="bad" title="has errors">&#10007;</span>` : `<span class="good">&#10003;</span>`;
     tr.innerHTML = `<td><b>${esc(p.mark)}</b></td><td>${esc(p.section)}</td><td>${p.length.toFixed(0)}</td><td>${p.qty}</td>` +
-      `<td>${p._weight ? (p._weight * p.qty).toFixed(0) : ""}</td><td>${status}</td>`;
+      `<td>${p._weight ? (p._weight * p.qty).toFixed(0) : ""}</td><td>${status}</td>` +
+      `<td><button class="mini danger del-part" title="Delete ${esc(p.mark)} from the job">&#128465;</button></td>`;
     tr.onclick = () => { selected = i; renderPartList(); renderEditor(); };
+    tr.querySelector(".del-part").onclick = (e) => { e.stopPropagation(); deletePart(i); };
     tbody.appendChild(tr);
   });
-  if (!app.job.parts.length) tbody.innerHTML = '<tr><td colspan="6" class="muted">No parts yet - import NC1 files or add a part.</td></tr>';
+  if (!app.job.parts.length) tbody.innerHTML = '<tr><td colspan="7" class="muted">No parts yet - import NC1 files or add a part.</td></tr>';
+}
+
+// Delete one part (every copy of it) from the job.
+export async function deletePart(i) {
+  const p = app.job.parts[i];
+  if (!p) return;
+  if (app.playing) return toast("Stop the machine before changing the job", true);
+  if (!confirm(`Delete ${p.mark} (${p.section}, ${p.qty} off) from the job?`)) return;
+  app.job.parts.splice(i, 1);
+  partsRemoved();
+  await jobChanged();
+  toast(`Deleted ${p.mark}`);
+}
+
+// After parts were taken out of the job: keep the editor on a part that still exists.
+export function partsRemoved() {
+  selected = Math.max(0, Math.min(selected, app.job.parts.length - 1));
+  renderEditor();
 }
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
