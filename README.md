@@ -146,8 +146,7 @@ steel-beam-cutting-cell/
 ├── cad/                  STEP files: the whole cell, the 1:10 prototype, every example part
 ├── examples/nc1/         example NC1 files of typical UK parts
 ├── docs/                 the documents above, images, video, PDFs
-├── public/               the public page's README, LICENSE and request forms
-├── tools/                makes the example files, PDFs, assembly pictures, video and the public page
+├── tools/                makes the example files, PDFs, assembly pictures, video and the public page (tools/public_page/)
 ├── deploy/               start-at-boot service for the Jetson
 ├── tests/                automatic tests (GitHub runs them on every push)
 ├── models/               put YOLO .onnx models here (see docs/JETSON_SETUP.md)

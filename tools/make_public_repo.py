@@ -13,7 +13,7 @@ import shutil
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PUBLIC = os.path.join(ROOT, "public")              # README, LICENSE, issue forms for the public repo
+PUBLIC = os.path.join(ROOT, "tools", "public_page")   # README, LICENSE, request forms for the public page
 DOCS = ["MACHINE.md", "SAFETY.md", "SENSORS.md", "PLASMA.md", "UK_CODES.md", "NC1_FILES.md", "PROTOTYPE.md", "SCALE_MODEL.md", "ASSISTANT.md",
         "Prototype_Shopping_List.pdf", "Prototype_Assembly.pdf", "prototype_bom.csv"]
 FOLDERS = ["docs/images", "docs/video"]
