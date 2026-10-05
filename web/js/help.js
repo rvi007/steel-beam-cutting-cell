@@ -52,6 +52,14 @@ danger zone cause a protective stop the same way. Manual mode runs at 250 mm/s a
 regulations: <code>docs/SAFETY.md</code>. These software stops are a prototype - a real machine needs them in
 certified safety hardware.</p>
 
+<h2>Sensors and plasma</h2>
+<p>The <b>Sensors</b> tab lists every sensor: two cameras (the whole cell, and a close-up on the torch), the sensors that
+find and measure the bar, the torch's touch-off and height control, the magnet's current and load cell, and the safety devices.
+Sensors not fitted yet are <b>simulated</b>. Before cutting, the <b>bar check</b> finds where the bar starts and measures its
+real size and bow (BS EN 10034) - you'll see it under every plan. The table of stops says what the Cutter, the Handler and
+you do for each one; <b>Simulate</b> an object on the bed or a slipping load to see it. The <b>plasma settings</b> change for
+each kind of cut - the Cutter's card shows them while it cuts. Details: <code>docs/SENSORS.md</code>, <code>docs/PLASMA.md</code>.</p>
+
 <h2>CAD and the prototype</h2>
 <p>The 3D view is the CAD model - point at anything to see what it is. <b>Section library</b> &rarr; <i>CAD files</i>:
 the whole cell, the 1:10 prototype and the example parts as STEP files (Fusion 360, SolidWorks, FreeCAD, Onshape).

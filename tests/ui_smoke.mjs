@@ -230,10 +230,20 @@ await page.click("#pr-list tr[data-pn=P11]");
 const info = await page.textContent("#pr-info");
 if (!info.includes("P11") || !info.includes("NEMA 17")) fail("prototype info: " + info);
 
+// sensors tab: every sensor listed, the bar check passes, the plasma chart shows; a simulated slipping load is
+// refused at Reset until the load is secure again
+await page.click(".tabs button[data-tab=sensors]");
+await until("sensors tab didn't fill", () => document.querySelectorAll("#sn-list tr").length >= 15 && document.querySelector("#sn-bar .good")
+  && document.querySelectorAll("#sn-plasma tbody tr").length > 5);
+await page.click("[data-sim=LOAD]");
+const blocked = await state();
+if (!blocked.reset_blockers.some((b) => b.includes("Handler"))) fail("simulated load slip not seen: " + JSON.stringify(blocked.reset_blockers));
+await page.evaluate(() => fetch("/api/safety/input", { method: "POST", body: JSON.stringify({ name: "load_secure", value: true }) }));
+
 for (const tab of ["camera", "help", "safety", "cell"]) {
   await page.click(`.tabs button[data-tab=${tab}]`);
   await page.waitForTimeout(500);
 }
 if (errors.length) fail("JavaScript errors:\n" + errors.join("\n"));
-console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; job finished -> checklist again, clear job; NC1 import; editor checks; manual cut (click, check, plan); CAD model + files; prototype assembly; STL ${fs.statSync(file).size} bytes`);
+console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; job finished -> checklist again, clear job; NC1 import; editor checks; manual cut (click, check, plan); CAD model + files; prototype assembly; sensors + bar check + load slip; STL ${fs.statSync(file).size} bytes`);
 await browser.close();

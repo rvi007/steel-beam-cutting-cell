@@ -57,5 +57,16 @@ model = "claude-opus-5-5"
 effort = "low"                  # low = quick answers; medium/high = more careful
 send_camera = true              # include the latest camera picture with a question
 
+[plasma]
+# Which cut chart the planner uses (beamcell/plasma.py): "o2" = O2 plasma production machine,
+# "air" = air plasma, "pen" = the 1:10 prototype's pen. Replace the numbers in plasma.py with the
+# cut chart of YOUR plasma system before cutting real steel.
+process = "o2"
+
+[sensors]
+# Sensors that are not fitted yet are simulated (see the Sensors tab and docs/SENSORS.md).
+simulate = true
+torch_camera = ""               # the second camera, close up on the torch: "0"/"1" USB, "csi", or "" = not fitted
+
 [server]
 port = 8080

@@ -37,13 +37,21 @@ const JOB = { section: "UB 305x165x40", length: 3600, cuts: [
 ] };
 
 // [from s, to s, view, job time at start, job time at end, captions [[from job time, title, text]]]
-const SHOTS = [
-  [0, 10, "orbit", 0, 360, [[0, "A whole job, start to finish", "Time-lapse - notches, bolt holes, a square cut and a 30° mitre on a UB 305x165x40 - planned and cut automatically"]]],
-  [10, 20, "cutter", 17, 128, [[17, "Follow the Cutter", "Plasma notch (cope) at the end of the beam"],
-                               [75, "Follow the Cutter", "Bolt holes in the web and flanges - placed exactly where the drawing says"]]],
-  [20, 30, "handler", 175, 222, [[175, "Follow the Handler", "Holds the part while the Cutter cuts it free"],
-                                 [200, "Follow the Handler", "Carries the finished part to the outfeed table"]]],
-];
+// The job times come from the plan itself (see shotsFrom), so the video still fits if the cutting speeds change.
+let SHOTS = [];
+function shotsFrom(plan) {
+  const step = (re, who) => plan.steps.find((s) => (!who || s[1] === who) && re.test(s[2]))[0];
+  const notch = plan.cuts[0].t_on, holes = step(/hole 1/, "Cutter"), cutoff = step(/cut-off/, "Cutter");
+  const carry = step(/carrying/, "Handler");
+  return [
+    [0, 10, "orbit", 0, plan.summary.duration_s * 0.96, [[0, "A whole job, start to finish",
+      "Time-lapse - notches, bolt holes, a square cut and a 30\u00b0 mitre on a UB 305x165x40 - planned and cut automatically"]]],
+    [10, 20, "cutter", notch, cutoff - 1, [[notch, "Follow the Cutter", "Plasma notch (cope) at the end of the beam"],
+                                          [holes, "Follow the Cutter", "Bolt holes in the web and flanges - placed exactly where the drawing says"]]],
+    [20, 30, "handler", carry - 26, carry + 21, [[carry - 26, "Follow the Handler", "Holds the part while the Cutter cuts it free"],
+                                               [carry - 1, "Follow the Handler", "Carries the finished part to the outfeed table"]]],
+  ];
+}
 const END_CARD = 28.4;                     // seconds: the closing card fades in
 
 const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
@@ -72,6 +80,8 @@ await page.click("#mode-manual");
 await page.waitForTimeout(800);
 await page.click("#btn-plan");
 await page.waitForFunction(() => app.plan && app.plan.manual, null, { timeout: 120000 });
+SHOTS = shotsFrom(await page.evaluate(() => ({ steps: app.plan.steps, cuts: app.plan.cuts.map((c) => ({ t_on: c.t_on })),
+  summary: app.plan.summary })));
 await page.waitForTimeout(500);
 await api("/api/safety/reset");
 await api("/api/safety/checklist");

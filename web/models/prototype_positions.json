@@ -2449,5 +2449,157 @@
 20.0,
 390.0
 ]
+},
+{
+"pn": "P48",
+"pos": 1,
+"tag": "P48-1",
+"item": "VL53L1X time-of-flight distance sensor",
+"base": "tof_sensor",
+"label": "Datum sensor: VL53L1X time-of-flight at the bed's infeed end - finds where the model beam starts",
+"where": "middle, infeed end, 100 mm up",
+"centre": [
+-44.0,
+-50.0,
+100.0
+],
+"size": [
+8.0,
+16.0,
+16.0
+]
+},
+{
+"pn": "P38",
+"pos": 1,
+"tag": "P38-1",
+"item": "IR break-beam sensor pair",
+"base": "break_beam",
+"label": "Bar-present IR break-beam (one each side of the bed)",
+"where": "front (operator side), infeed end, 96 mm up",
+"centre": [
+23.0,
+-88.0,
+96.0
+],
+"size": [
+6.0,
+6.0,
+12.0
+]
+},
+{
+"pn": "P38",
+"pos": 2,
+"tag": "P38-2",
+"item": "IR break-beam sensor pair",
+"base": "break_beam",
+"label": "Bar-present IR break-beam (one each side of the bed)",
+"where": "middle, infeed end, 96 mm up",
+"centre": [
+23.0,
+-12.0,
+96.0
+],
+"size": [
+6.0,
+6.0,
+12.0
+]
+},
+{
+"pn": "P52",
+"pos": 1,
+"tag": "P52-1",
+"item": "IR flame sensor module",
+"base": "flame_sensor",
+"label": "IR flame sensor module (demo of the fire detector)",
+"where": "front (operator side), infeed end, 378 mm up",
+"centre": [
+-190.0,
+-134.0,
+378.0
+],
+"size": [
+24.0,
+12.0,
+16.0
+]
+},
+{
+"pn": "P50",
+"pos": 1,
+"tag": "P50-1",
+"item": "Load cell 1 kg + HX711",
+"base": "load_cell",
+"label": "Load cell (1 kg) between wrist and magnet - weighs the part: slipping, wrong part, not cut free",
+"where": "middle, infeed end, 147 mm up",
+"centre": [
+91.0,
+0.0,
+146.8
+],
+"size": [
+16.0,
+14.0,
+5.0
+]
+},
+{
+"pn": "P30",
+"pos": 1,
+"tag": "P30-1",
+"item": "CSI camera (close-up of the Cutter)",
+"base": "torch_camera",
+"label": "Camera 2: IMX219 close-up beside the pen - the cut line, the bar edge",
+"where": "middle, middle, 149 mm up",
+"centre": [
+477.0,
+-8.0,
+149.3
+],
+"size": [
+8.0,
+8.0,
+12.0
+]
+},
+{
+"pn": "P53",
+"pos": 1,
+"tag": "P53-1",
+"item": "Line laser module (Class 2)",
+"base": "line_laser",
+"label": "Line laser (Class 2) - with camera 2 it shows the beam's real profile",
+"where": "middle, middle, 148 mm up",
+"centre": [
+477.0,
+8.0,
+148.3
+],
+"size": [
+8.0,
+8.0,
+10.0
+]
+},
+{
+"pn": "P49",
+"pos": 1,
+"tag": "P49-1",
+"item": "Pen touch-off micro-switch",
+"base": "pen_switch",
+"label": "Pen touch-off micro-switch on the sprung holder - finds the beam's surface",
+"where": "middle, middle, 152 mm up",
+"centre": [
+500.0,
+0.0,
+152.3
+],
+"size": [
+10.0,
+10.0,
+6.0
+]
 }
 ]

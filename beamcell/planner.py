@@ -28,13 +28,14 @@ import math
 
 import numpy as np
 
+from beamcell import plasma
 from beamcell import sections as S
+from beamcell.config import CONFIG
 from beamcell.machine import (BEAM_Y, BED_Z, MIN_GAP, OUTFEED_Y, SCRAP_TRAY_Z, X_LIMITS, Y_LIMITS, Z_LIMITS, Z_SAFE,
                               fall_time, make_hands, move_time, supported_on_rollers)
 from beamcell.parts import inside
 
 DT = 0.1                  # time between plan samples (s)
-PIERCE_S = 0.6            # torch waits this long to pierce the steel
 MAGNET_S = 0.5            # time for the magnet to grip / let go
 APPROACH_SPEED = 0.10     # m/s, slow move onto / off the steel
 LIFT = 0.25               # how high the Handler lifts a part to carry it
@@ -51,10 +52,21 @@ DIRS = {"D": np.array([0.0, 0.0, -1.0]),          # straight down
 DOWN = DIRS["D"]
 
 
-def cut_speed(thickness_mm):
-    """Plasma cutting speed (m/s) for a thickness - typical 130 A values."""
-    t = thickness_mm
-    return 0.050 if t <= 6 else 0.040 if t <= 10 else 0.028 if t <= 15 else 0.018 if t <= 20 else 0.010
+def process():
+    """The plasma cut chart in use (config/cell.toml [plasma] process)."""
+    return CONFIG.get("plasma", {}).get("process", "o2")
+
+
+def cut_speed(thickness_mm, feature="cut"):
+    """Plasma cutting speed (m/s) for a thickness and kind of cut, from the cut chart (beamcell/plasma.py)."""
+    return plasma.speed_m_s(feature, thickness_mm, process())
+
+
+def op_feature(op):
+    """The kind of cut an operation is, for the plasma settings."""
+    if op["kind"] in ("start", "end"):
+        return "cope" if op.get("coped") else "cut"
+    return op["kind"]
 
 
 def column_side(d):
@@ -271,7 +283,8 @@ def bar_operations(bar):
                 warnings.append(f"{part.mark}: hole {i + 1} can't be reached by the torch")
                 continue
             kind = "slot" if hole.get("slot") else "hole"
-            ops.append({"kind": kind, "hole": i, "face": face, "label": f"{kind} {i + 1} (face {face})", "passes": ps})
+            ops.append({"kind": kind, "hole": i, "face": face, "label": f"{kind} {i + 1} (face {face})", "passes": ps,
+                        "d": float(hole["d"])})
         for i, item in enumerate(part.inner):
             ps = placed.passes(part.norm_face(item["face"]), opening_path(item["points"]))
             if len(ps) != 1:
@@ -290,7 +303,9 @@ def bar_operations(bar):
                     if ch["end"] == end:
                         passes += sorted(placed.passes(face, ch["points"]), key=lambda p: "DSPN".index(p[1]))
             if passes:
-                op = {"kind": end, "label": "start cut" if end == "start" else "cut-off", "passes": passes}
+                coped = any(c["end"] == end for c in part.copes)
+                op = {"kind": end, "label": ("start cut" if end == "start" else "cut-off") + (" with notch" if coped else ""),
+                      "passes": passes, "coped": coped}
                 if end == "start":
                     ops.insert(0, op)                  # square the end first, then the holes, then cut off
                 else:
@@ -430,7 +445,10 @@ class Plan:
         s, q = self._line(hand, g, q, np.linspace(a0, pts[0], 10), d, APPROACH_SPEED, op["label"])
         self._commit(self.tc, s)
         t_on = self.tc.end
-        self.tc.hold(t_on + PIERCE_S)
+        feature = op_feature(op)
+        proc = plasma.settings(feature, thick, process(), op.get("d"))
+        speed = proc["speed_mm_min"] / 60000.0
+        self.tc.hold(t_on + proc["pierce_delay_s"])
         if np.linalg.norm(pts.max(axis=0) - pts.min(axis=0)) > TRACK_OVER:
             # long cut: the gantry moves with the torch (coordinated motion), the arm keeps its pose
             offset = g - pts[0]
@@ -440,16 +458,20 @@ class Plan:
                 q, ep, _ = hand.solve(gi, p, d, q)
                 worst = max(worst, ep)
                 if i:
-                    t += np.linalg.norm(pts[i] - pts[i - 1]) / cut_speed(thick)
+                    t += np.linalg.norm(pts[i] - pts[i - 1]) / speed
                 s.append((t, gi, q))
             g = s[-1][1]
             if worst > 0.001:
                 self.warnings.append(f"Cutter: {op['label']} misses by {worst * 1000:.1f} mm (out of reach)")
         else:
-            s, q = self._line(hand, g, q, pts, d, cut_speed(thick), op["label"])
+            s, q = self._line(hand, g, q, pts, d, speed, op["label"])
         t_start = self._commit(self.tc, s)
         self.cuts.append({"op": op["id"], "placement": op["placement"], "points": pts,
-                          "times": t_start + np.array([x[0] for x in s]), "t_on": t_on})
+                          "times": t_start + np.array([x[0] for x in s]), "t_on": t_on, "process": proc})
+        for w in proc["warnings"]:
+            msg = f"Plasma - {op['label']}: {w}"
+            if msg not in self.warnings:
+                self.warnings.append(msg)
         a1 = pts[-1] - d * self._approach(d, pts[-1])
         s, q = self._line(hand, g, q, np.linspace(pts[-1], a1, 10), d, APPROACH_SPEED * 2, op["label"])
         self._commit(self.tc, s)
@@ -643,9 +665,11 @@ class Plan:
             "steps": [[round(t, 2), w, m] for t, w, m in self.steps],
             "tracks": {"cutter": self.tc.to_json(), "handler": self.th.to_json()},
             "cuts": [{"op": c["op"], "placement": c["placement"], "t_on": round(c["t_on"], 2),
-                      "points": np.round(c["points"], 4).tolist(), "times": np.round(c["times"], 2).tolist()}
+                      "points": np.round(c["points"], 4).tolist(), "times": np.round(c["times"], 2).tolist(),
+                      "process": {k: v for k, v in c["process"].items() if k != "warnings"}}
                      for c in self.cuts],
-            "ops": [{k: op[k] for k in ("id", "placement", "kind", "label", "hole", "opening", "t_done") if k in op}
+            "process": {"name": process(), "label": plasma.chart(process())["label"]},
+            "ops": [{k: op[k] for k in ("id", "placement", "kind", "label", "hole", "opening", "t_done", "d", "coped") if k in op}
                     for op in self.ops],
             "carries": self.carries, "drops": self.drops,
         }

@@ -78,6 +78,9 @@ function render(st) {
   banner.classList.toggle("amber", st.state === "NOT_RESET" || st.state === "ISOLATED");
   $("safety-title").textContent = !connected() ? "NO CONNECTION TO THE SAFETY CONTROLLER" : text;
   $("safety-detail").textContent = why.join(" · ") || (st.state === "NOT_RESET" ? "Press Reset, confirm the checklist, then Start." : "");
+  // what the hands are doing about it (the newest stop's fixed decision)
+  const dec = st.latched.length && st.latched[st.latched.length - 1].decision;
+  $("safety-decision").innerHTML = dec ? `<b>Cutter:</b> ${dec.cutter} <b>Handler:</b> ${dec.handler} <b>You:</b> ${dec.you}` : "";
   $("btn-release").hidden = !st.estop_pressed;
   $("btn-safety-reset").hidden = st.state === "ISOLATED";
   $("btn-hold").hidden = st.mode !== "MANUAL";
@@ -86,6 +89,8 @@ function render(st) {
   s.textContent = text + (st.mode !== "AUTO" ? ` · ${st.mode}` : "") + (st.state === "RUNNING" && st.speed_factor < 1 ? ` · ${Math.round(st.speed_factor * 100)}% speed` : "");
   s.className = "sf-state " + cls;
   $("sf-why").innerHTML = why.map((w) => `<div>&#9888; ${w}</div>`).join("") +
+    st.latched.filter((f) => f.decision).map((f) => `<div class="small">&rarr; <b>${f.code}</b>: Cutter - ${f.decision.cutter}
+      Handler - ${f.decision.handler} You - ${f.decision.you}</div>`).join("") +
     (st.stop_category != null && ["ESTOP", "FAULT"].includes(st.state) ? `<div class="muted">Stop category ${st.stop_category} (BS EN 60204-1)</div>` : "");
   $("sf-release").hidden = !st.estop_pressed;
   $("sf-reset").disabled = !st.can_reset;
@@ -96,12 +101,17 @@ function render(st) {
   $("sf-check-state").innerHTML = st.checklist_ok ? `<span class="good">&#10003; confirmed for ${job}</span>`
     : `<span class="warn">needed for ${job}${st.job && st.job.state === "finished" ? " - the last job finished: clear the table and tray first" : ""}</span>`;
   const inputs = [["gate_closed", "Gate", "closed", "OPEN"], ["curtain_clear", "Light curtain", "clear", "BROKEN"],
-    ["extraction_on", "Fume extraction", "on", "OFF"]];
+    ["extraction_on", "Fume extraction", "on", "OFF"], ["bed_clear", "Bed (camera 1: objects)", "clear", "OBJECT ON BED"],
+    ["load_secure", "Handler load (magnet / load cell)", "secure", "SLIPPING"], ["torch_ok", "Torch breakaway", "OK", "COLLISION"],
+    ["no_fire", "Flame / smoke detector", "clear", "FIRE"]];
+  const SIM = { bed_clear: ["Put an object on the bed", "Remove it"], load_secure: ["Make the load slip", "Load secure again"],
+    torch_ok: ["Knock the torch off", "Re-seat the torch"], no_fire: ["Simulate a fire", "Fire out"] };
   $("sf-inputs").innerHTML = inputs.map(([k, name, good, bad]) => {
     const v = st.inputs[k], gpio = st.input_source[k] === "gpio";
     const btn = gpio ? '<span class="muted small">real switch (GPIO)</span>'
       : k === "curtain_clear" ? `<button data-hold-input="${k}">Hold to break the beam</button>`
-        : `<button data-input="${k}" data-value="${v ? 0 : 1}">${v ? (k === "gate_closed" ? "Open gate" : "Switch off") : (k === "gate_closed" ? "Close gate" : "Switch on")}</button>`;
+        : SIM[k] ? `<button data-input="${k}" data-value="${v ? 0 : 1}">${SIM[k][v ? 0 : 1]}</button>`
+          : `<button data-input="${k}" data-value="${v ? 0 : 1}">${v ? (k === "gate_closed" ? "Open gate" : "Switch off") : (k === "gate_closed" ? "Close gate" : "Switch on")}</button>`;
     return `<tr><td><span class="dot ${v ? "ok" : "bad"}"></span>${name}</td><td><b>${v ? good : bad}</b></td><td>${btn}</td></tr>`;
   }).join("") +
     `<tr><td><span class="dot ${st.estop_pressed ? "bad" : "ok"}"></span>E-stops</td><td><b>${st.estop_pressed ? "PRESSED (" + st.estop_sources.join(", ") + ")" : "released"}</b></td><td></td></tr>` +

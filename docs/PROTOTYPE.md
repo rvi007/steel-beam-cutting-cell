@@ -50,7 +50,7 @@ each hole, notch and cut-off is, in what order, and that the paths are right.
 
 ## Total cost
 
-About **£1100** for everything, about **£1210** with 10% spare for postage and
+About **£1,150** for everything, about **£1,260** with 10% spare for postage and
 price changes (October 2026 prices; check before you buy). The safety relay is the biggest single
 item (~£180 new, ~£75 used) - **don't skip it or the E-stop**; wiring them properly is part of the point.
 To get the gantry moving first (stages 1-2): about £430.
@@ -131,15 +131,21 @@ Same as `docs/prototype_bom.csv` and the PDF. Prices approximate (GBP, incl. VAT
 | P27 | Handler magnet | 5 V 20 mm lifting electromagnet (~2.5 kg hold) + MOSFET module + flyback diode *(switch it from a FluidNC output)* | 1 | 8 | [Amazon UK](https://www.amazon.co.uk/s?k=5V+electromagnet+20mm+lifting) |
 | P28 | Model beams (3D printed) | UB 305x165 at 1:10 (30 x 16 mm), 500 mm long, with steel tape on the top flange *(the magnet needs steel to grip; filament counted under Consumables)* | 4 | 0 | print |
 
-### Stage 4 - vision (about £100)
+### Stage 4 - cameras and sensors (about £130)
 
 | Part | Item | What to look for | Qty | ~£ each | Where |
 |---|---|---|---|---|---|
 | P29 | USB wide-angle camera (safety zone) | 1080p UVC, 90-120 deg view (e.g. Logitech C920/C922 or an Arducam USB wide-angle) *(plug and play on the Jetson; YOLO watches the cell)* | 1 | 50 | [Amazon UK, Pimoroni](https://www.amazon.co.uk/s?k=Logitech+C920+webcam) |
 | P30 | CSI camera (close-up of the Cutter) | Arducam IMX219 for Jetson Orin Nano (22-pin cable), wide-angle lens *(optional; checks the marked lines)* | 1 | 25 | [Arducam, RobotShop UK](https://www.arducam.com/arducam-imx219-pdaf-cdaf-autofocus-camera-module-with-case-for-raspberry-pi-nvidiar-jetson-orin-series.html) |
 | P31 | Powered USB 3 hub | 4-port, own power supply *(controller + camera (+ spare))* | 1 | 20 | [Amazon UK](https://www.amazon.co.uk/s?k=powered+USB+3.0+hub+4+port) |
+| P48 | VL53L1X time-of-flight distance sensor | I2C breakout, up to 4 m - the datum sensor: finds where the model beam starts *(on the Jetson's I2C with the PCA9685)* | 1 | 12 | [Pimoroni, The Pi Hut](https://shop.pimoroni.com/search?q=VL53L1X) |
+| P49 | Pen touch-off micro-switch | micro-switch with roller lever, on the sprung pen holder - finds the beam surface (the prototype's initial height sensing) *(one spare)* | 2 | 1.5 | [Amazon UK, CPC](https://www.amazon.co.uk/s?k=micro+switch+roller+lever) |
+| P50 | Load cell 1 kg + HX711 | bar load cell 1 kg with HX711 amplifier - between the Handler's wrist and magnet: weighs the part (slipping, wrong part, not cut free) | 1 | 7 | [Amazon UK, The Pi Hut](https://www.amazon.co.uk/s?k=load+cell+1kg+HX711) |
+| P51 | INA219 current sensor | I2C current sensor in the magnet supply - checks the magnet is really on *(not drawn (wiring, inside the box))* | 1 | 5 | [Pimoroni, Amazon UK](https://www.amazon.co.uk/s?k=INA219+current+sensor) |
+| P52 | IR flame sensor module | IR flame sensor with digital output - demonstrates the fire detector *(NOT a certified fire detector - demo only)* | 1 | 3 | [Amazon UK](https://www.amazon.co.uk/s?k=IR+flame+sensor+module) |
+| P53 | Line laser module (Class 2) | 650 nm line laser, Class 1 or 2 (1 mW or less) - with camera 2 it shows the beam's real profile *(never look into the beam; Class 2 or below only)* | 1 | 6 | [Amazon UK](https://www.amazon.co.uk/s?k=line+laser+module+650nm+1mW) |
 
-### Stage 5 - safety and enclosure (about £350)
+### Stage 5 - safety and enclosure (about £360)
 
 | Part | Item | What to look for | Qty | ~£ each | Where |
 |---|---|---|---|---|---|
@@ -149,7 +155,7 @@ Same as `docs/prototype_bom.csv` and the PDF. Prices approximate (GBP, incl. VAT
 | P35 | Reset push button | 22 mm blue illuminated, 1 NO *(outside the enclosure with a view inside)* | 1 | 8 | [RS, Amazon UK](https://uk.rs-online.com/web/c/?searchTerm=22mm+blue+illuminated+push+button) |
 | P36 | Stack light | 24 V mini LED tower, red / amber / green *(driven by the Jetson through a relay module)* | 1 | 15 | [Amazon UK](https://www.amazon.co.uk/s?k=24V+mini+LED+stack+light+3+colour) |
 | P37 | 4-channel relay module (opto-isolated) | 3.3 V logic input, 24 V contacts *(stack light and magnet)* | 1 | 8 | [Amazon UK](https://www.amazon.co.uk/s?k=4+channel+relay+module+optocoupler+3.3V) |
-| P38 | IR break-beam sensor pair | 5 mm IR break-beam (demonstrates the light-curtain input) *(NOT a safety light curtain - demo only)* | 1 | 6 | [Pimoroni, The Pi Hut](https://thepihut.com/search?q=IR+break+beam+sensor) |
+| P38 | IR break-beam sensor pair | 5 mm IR break-beam (demonstrates the light-curtain input) *(one pair demonstrates the light curtain, one is the bar-present photo-eye - NOT a safety light curtain)* | 2 | 6 | [Pimoroni, The Pi Hut](https://thepihut.com/search?q=IR+break+beam+sensor) |
 | P39 | Polycarbonate sheet 2 mm | front door, ends and lid (~0.6 m2) - polycarbonate, not acrylic (acrylic shatters) | 0.6 m2 | 35 | [plastics stockist, Amazon UK](https://www.amazon.co.uk/s?k=2mm+polycarbonate+sheet+clear) |
 | P40 | Hinges + handle | 2 small hinges, 1 handle (20-series) | 1 set | 12 | [Ooznest, Amazon UK](https://ooznest.co.uk/?s=hinge+20+series&post_type=product) |
 
@@ -170,7 +176,7 @@ Same as `docs/prototype_bom.csv` and the PDF. Prices approximate (GBP, incl. VAT
 |---|---|---|---|---|---|
 | P47 | PETG and PLA filament | 1 kg each *(brackets, risers, tray, model beams, arm parts)* | 2 | 20 | [Amazon UK, 3DJake](https://www.amazon.co.uk/s?k=PETG+filament+1kg+1.75mm) |
 
-**Total: about £1100.**
+**Total: about £1,150.**
 
 
 ## Safety rules for the prototype (it's still a machine)

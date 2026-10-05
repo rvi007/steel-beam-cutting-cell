@@ -18,6 +18,7 @@
     <button data-tab="library">Section library</button>
     <button data-tab="proto">Prototype</button>
     <button data-tab="safety">Safety</button>
+    <button data-tab="sensors">Sensors</button>
     <button data-tab="camera">Camera</button>
     <button data-tab="help">Help</button>
   </nav>
@@ -69,7 +70,7 @@
       <div class="stacklight" title="Stack light: red = stopped, amber = caution / reduced speed, green = running, blue = reset needed">
         <i id="lamp-red"></i><i id="lamp-amber"></i><i id="lamp-green"></i><i id="lamp-blue"></i></div>
       <div id="safety-banner" class="banner" hidden>
-        <div><b id="safety-title">STOPPED</b><div id="safety-detail" class="small"></div></div>
+        <div><b id="safety-title">STOPPED</b><div id="safety-detail" class="small"></div><div id="safety-decision" class="decision"></div></div>
         <button id="btn-release" hidden>Release E-stop</button>
         <button id="btn-safety-reset">Reset</button>
       </div>
@@ -202,6 +203,33 @@
       <div id="adv-answer" class="report"></div>
       <h3>Event log</h3>
       <div id="sf-log" class="log"></div>
+    </aside>
+  </section>
+
+  <!-- ============================================================ SENSORS -->
+  <section id="tab-sensors" class="tab">
+    <div class="safety-main sensors-main">
+      <div class="box"><h3>Sensors <span class="muted small">two cameras, finding the bar, the torch, the Handler, safety, fumes</span></h3>
+        <p class="muted small">Sensors that aren't fitted yet are <b>simulated</b>: they answer like the real ones, so the software
+          is ready the day they are wired in. Each one says what it does, where it goes and what to buy (prototype; full size).</p>
+        <div id="sn-list"></div></div>
+      <div class="box"><h3>Stops and what each hand does</h3>
+        <p class="muted small">Fixed rules, decided in advance and checked in the risk assessment - never left to an AI to decide.
+          Try them: <b>Simulate</b> sets the sensor as if it had seen the problem (on the Safety tab too).</p>
+        <div id="sn-decisions"></div></div>
+    </div>
+    <aside class="side">
+      <h2>Bar check</h2>
+      <p class="muted small">Before cutting, the machine finds the bar and measures it - a rolled beam is never exactly its
+        catalogue size or exactly where the crane put it (BS EN 10034). Every cut is then moved to the real steel.</p>
+      <label class="row">Section <input id="sn-section" value="UB 305x165x40" size="16"></label>
+      <label class="row">Length (mm) <input id="sn-length" type="number" value="12000" min="300" max="12000" step="10"></label>
+      <button id="sn-measure" class="primary">Measure the bar</button>
+      <div id="sn-bar" class="report"></div>
+      <h2>Plasma settings</h2>
+      <p class="muted small">How the torch finds the steel and holds its height, and the settings for each kind of cut.</p>
+      <label class="row">Cut chart <select id="sn-process"></select></label>
+      <div id="sn-plasma"></div>
     </aside>
   </section>
 

@@ -61,6 +61,11 @@ BS EN ISO 13850, BS EN ISO 10218):
 - **Reset and Start are separate**, and a **pre-start checklist** has to be signed for every job.
 - **Auto, Manual (slow, hold-to-run) and Maintenance (locked off)** modes.
 - **Watchdogs and a full event log** of every stop and start.
+- **Every hazard has a fixed decision** for each arm: an object left on the bed, a load slipping from the magnet, a torch
+  collision, a fire. For example, the magnet never lets go, and nothing is lowered over a person
+  ([what each hand does](docs/SENSORS.md#3-hazards-what-is-detected-and-what-each-hand-decides)).
+- **It measures the beam before cutting**, like the big beam lines do: where it starts, its real size and bow (BS EN 10034),
+  and the true surface before every cut.
 
 The full details are in **[docs/SAFETY.md](docs/SAFETY.md)**: the law, the standards, the risk assessment
 and what certified hardware a real machine needs.
@@ -73,7 +78,7 @@ the cut lines and a small magnet, all with the same safety system.
 
 ![The 1:10 prototype with part numbers](docs/images/assembly_iso.png)
 
-- **Cost: about £1,100** for everything (stages 1–2, the moving frame, are about £430).
+- **Cost: about £1,150** for everything (stages 1–2, the moving frame, are about £430).
 - **[Shopping list (PDF)](docs/Prototype_Shopping_List.pdf)**: every part, its price and a link to buy it.
 - **[Assembly drawing (PDF)](docs/Prototype_Assembly.pdf)**: every part numbered and shown where it goes.
 - **[How to build it](docs/PROTOTYPE.md)**: build stages, safety wiring and honest notes.
@@ -111,6 +116,8 @@ everyone who visits this page.
 |---|---|
 | [How the machine works](docs/MACHINE.md) | the layout, how a beam lies on the bed, how a bar is cut step by step |
 | [Safety](docs/SAFETY.md) | stops, UK law and standards, risk assessment, E-stop wiring |
+| [Sensors](docs/SENSORS.md) | the two cameras, how the beam is found and measured, what each hand does when something goes wrong |
+| [Plasma](docs/PLASMA.md) | how the torch finds the steel and holds its height; settings for each kind of cut |
 | [UK codes](docs/UK_CODES.md) | every UK rule the cell checks, and where it comes from |
 | [NC1 files](docs/NC1_FILES.md) | how parts come in from Tekla and other detailing software |
 | [The 1:10 prototype](docs/PROTOTYPE.md) | what to buy, how to build it, how to wire the safety circuit |

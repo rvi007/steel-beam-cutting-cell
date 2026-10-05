@@ -51,6 +51,8 @@ class Server(unittest.TestCase):
         plan = self.post("/api/plan", {"parts": [b1["part"], t1["part"]], "stock_length": 12000, "bar": 1})
         self.assertEqual(plan["collisions"], 0)
         self.assertEqual(plan["bar"]["section"], "UB 305x165x40")
+        self.assertTrue(plan["bar_check"]["ok"])
+        self.assertTrue(all(c["process"]["speed_mm_min"] > 0 for c in plan["cuts"]))
         self.assertIn("ST", self.post("/api/nc1/export", {"part": t1["part"]}, raw=True))
 
     def test_manual_cut(self):
@@ -101,6 +103,12 @@ class Server(unittest.TestCase):
         self.post("/api/jobs-delete/zz_test_job", {})
         self.assertNotIn("zz_test_job", self.get("/api/jobs"))
         self.assertIn("text", self.get("/api/situation"))
+        sn = self.get("/api/sensors")
+        self.assertGreaterEqual(len(sn["sensors"]), 15)
+        self.assertIn("LOAD", [d["code"] for d in sn["decisions"]])
+        self.assertTrue(self.post("/api/sensors/measure", {"section": "UB 305x165x40", "length": 6000})["ok"])
+        self.assertEqual(self.post("/api/plasma/settings", {"feature": "hole", "thickness": 10, "d": 22})["thc"], "off")
+        self.assertTrue(self.get("/api/plasma")["rows"])
         cfg = self.get("/api/config")
         self.assertEqual(cfg["problems"], [])
         with self.assertRaises(urllib.error.HTTPError) as e:

@@ -28,6 +28,8 @@ DEFAULTS = {
                "warning_zone": [0.05, 0.15, 0.95, 1.0], "danger_zone": [0.25, 0.35, 0.75, 1.0]},
     "gpio": {"enabled": False, "estop_pin": 0, "gate_pin": 0, "curtain_pin": 0, "reset_pin": 0, "poll_hz": 50},
     "assistant": {"enabled": False, "model": "claude-opus-5-5", "effort": "low", "send_camera": True},
+    "plasma": {"process": "o2"},
+    "sensors": {"torch_camera": "", "simulate": True},
     "server": {"port": 8080},
 }
 

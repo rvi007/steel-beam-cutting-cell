@@ -43,7 +43,7 @@ class Manual(unittest.TestCase):
         self.assertEqual([p for p in problems if p["level"] == "error"], [])
         self.assertFalse(bar.placements[1]["start_shared"])
         labels = [o["label"] for o in plan.ops]
-        self.assertIn("start cut", labels)
+        self.assertTrue(any(lb.startswith("start cut") for lb in labels), labels)
         self.assertEqual(check_plan(plan, step=0.4), [])
 
     def test_rules_still_apply(self):

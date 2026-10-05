@@ -35,7 +35,7 @@ You give it parts, as **NC1 files** from Tekla, Advance Steel or SDS2, or drawn 
 Or use **manual cut**: click on the beam to put a hole or a cut exactly there.
 
 Everything in the 3D view is real CAD: the same solids are in the STEP files in `cad/`. There is
-also a **1:10 desk-top prototype**, about £1,100 to build, with a shopping list and an assembly drawing.
+also a **1:10 desk-top prototype**, about £1,150 to build, with a shopping list and an assembly drawing.
 
 ## Start it
 
@@ -72,6 +72,8 @@ use the address the terminal prints (for example `http://192.168.1.20:8080`).
    **Job history & saved jobs** (Machine tab) lists every job that ran, each with a **Delete** button.
 7. **Prototype tab**: the 1:10 prototype in 3D. Every part is numbered, matching the shopping list. Click a part to see what it is and where to buy it.
 8. **Camera tab**: start the camera and walk towards the machine. It slows down when you get close and stops when you get too close.
+9. **Sensors tab**: every sensor (two cameras, bar finding, torch, magnet, safety), the **bar check**, the **plasma settings**,
+   and what each hand does for every stop. Press **Simulate** on "load slipping" or "object on the bed" and watch it react.
 
 <details>
 <summary><b>Camera not working?</b></summary>
@@ -90,10 +92,12 @@ use the address the terminal prints (for example `http://192.168.1.20:8080`).
 | Read this | To learn about |
 |---|---|
 | [Safety](docs/SAFETY.md) | **stops, UK law and standards, risk assessment, E-stop wiring** |
+| [Sensors](docs/SENSORS.md) | **the two cameras, how the beam is found and measured, what each hand does when something goes wrong, the standards** |
+| [Plasma](docs/PLASMA.md) | how the torch finds the steel and holds its height; settings for each kind of cut |
 | [How the machine works](docs/MACHINE.md) | the layout, how a bar is cut, and a map of the code |
 | [UK codes](docs/UK_CODES.md) | every UK rule it checks, and where each one comes from |
 | [NC1 files](docs/NC1_FILES.md) | getting parts out of Tekla: what is read, faces and coordinates |
-| [The 1:10 prototype](docs/PROTOTYPE.md) | **what to buy (about £1,100), how to build it, safety wiring** |
+| [The 1:10 prototype](docs/PROTOTYPE.md) | **what to buy (about £1,150), how to build it, safety wiring** |
 | [Shopping list (PDF)](docs/Prototype_Shopping_List.pdf) | every part with its price and a link to buy it, to print out |
 | [Assembly drawing (PDF)](docs/Prototype_Assembly.pdf) | every part numbered and shown where it goes |
 | [Jetson setup](docs/JETSON_SETUP.md) | running on the Orin: start at boot, full-screen mode, camera, YOLO, memory |
