@@ -1,5 +1,5 @@
 // Makes a 30-second promo video of the cell (1920x1080, 30 fps, MP4) from the app's own 3D view:
-//   0-10 s  the whole job, time-lapse, camera circling the cell
+//   0-10 s  a whole job, start to finish, as a time-lapse, camera circling the cell
 //  10-20 s  following the Cutter: the notch (cope), then the bolt holes
 //  20-30 s  following the Handler: holds the part while it is cut free, carries it to the outfeed table
 // The job is a manual job on a UB 305x165x40: a notch, web and flange holes, a square cut, a second
@@ -38,7 +38,7 @@ const JOB = { section: "UB 305x165x40", length: 3600, cuts: [
 
 // [from s, to s, view, job time at start, job time at end, captions [[from job time, title, text]]]
 const SHOTS = [
-  [0, 10, "orbit", 0, 360, [[0, "The whole job in 10 seconds", "Notches, bolt holes, a square cut and a 30° mitre on a UB 305x165x40 - planned and cut automatically"]]],
+  [0, 10, "orbit", 0, 360, [[0, "A whole job, start to finish", "Time-lapse - notches, bolt holes, a square cut and a 30° mitre on a UB 305x165x40 - planned and cut automatically"]]],
   [10, 20, "cutter", 17, 128, [[17, "Follow the Cutter", "Plasma notch (cope) at the end of the beam"],
                                [75, "Follow the Cutter", "Bolt holes in the web and flanges - placed exactly where the drawing says"]]],
   [20, 30, "handler", 175, 222, [[175, "Follow the Handler", "Holds the part while the Cutter cuts it free"],
