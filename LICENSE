@@ -4,7 +4,7 @@ BEAM CELL - the design, software, CAD models, drawings, documents, images and vi
 property of Ravi Mahadeva.
 
 You may:
-  - read this repository and its documents on GitHub, and
+  - read this repository, its code and its documents on GitHub, and
   - share links to it.
 
 You may not, without written permission from Ravi Mahadeva:
@@ -12,9 +12,8 @@ You may not, without written permission from Ravi Mahadeva:
   - build, manufacture or sell the machine or the prototype from its design, or
   - use any of it in another product or service.
 
-The source code is in a private repository. Access is given on request and on the terms
-agreed at the time. To ask, use "Request access to the code" on the Issues tab of
-https://github.com/rvi007/beam-cell.
+To ask for permission, or to collaborate, use "Permission to use or collaborate" on the
+Issues tab of https://github.com/rvi007/steel-beam-cutting-cell.
 
 Third-party material keeps its own licence: the UK section property data comes from the
 steelsnakes package (GPL-2.0) and the 3D viewer uses three.js (MIT).
