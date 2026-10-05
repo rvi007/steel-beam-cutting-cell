@@ -1,4 +1,4 @@
-# BEAM CELL - source code
+# BEAM CELL
 
 ### Robotic cutting of UK structural steel
 
@@ -9,10 +9,13 @@ By **Ravi Mahadeva** · UK codes · runs on an NVIDIA Jetson Orin Nano · opens 
 
 ![BEAM CELL cutting a beam](docs/images/beam_cell.gif)
 
-▶ [30-second video](docs/video/beam_cell_30s.mp4) · 🌐 Public page: **[github.com/rvi007/beam-cell](https://github.com/rvi007/beam-cell)**
+▶ **[Watch the 30-second video](docs/video/beam_cell_30s.mp4)**
 
-> 🔒 **This repository is private.** You can see it because Ravi has given you access. Please
-> don't share, publish or sell the code or the design. See [LICENSE](LICENSE).
+> 🤝 **Looking for collaborators and sponsors** - steel fabricators, engineers, robotics and automation
+> people, and anyone who can help with parts, workshop space or test steel:
+> **[get in touch](https://github.com/rvi007/steel-beam-cutting-cell/issues/new/choose)**.
+> You're welcome to read everything here; using, building on or selling the code or the design needs
+> written permission - see [LICENSE](LICENSE).
 
 ---
 
@@ -117,7 +120,7 @@ use the address the terminal prints (for example `http://192.168.1.20:8080`).
 - **Section sizes come from published Blue Book data.** Check them against current mill data before real fabrication.
 
 <details>
-<summary><b>For developers: folders, tests, CAD, the public page and the video</b></summary>
+<summary><b>For developers: folders, tests, CAD and the video</b></summary>
 
 ### What's in each folder
 
@@ -146,7 +149,7 @@ steel-beam-cutting-cell/
 ├── cad/                  STEP files: the whole cell, the 1:10 prototype, every example part
 ├── examples/nc1/         example NC1 files of typical UK parts
 ├── docs/                 the documents above, images, video, PDFs
-├── tools/                makes the example files, PDFs, assembly pictures, video and the public page (tools/public_page/)
+├── tools/                makes the example files, PDFs, assembly pictures and the video
 ├── deploy/               start-at-boot service for the Jetson
 ├── tests/                automatic tests (GitHub runs them on every push)
 ├── models/               put YOLO .onnx models here (see docs/JETSON_SETUP.md)
@@ -170,14 +173,6 @@ pip install cadquery
 python3 -m beamcell.cad                 # everything: parts, the cell, the prototype
 python3 -m beamcell.cad parts my.nc1    # STEP solids of your own NC1 parts
 ```
-
-### Update the public page (github.com/rvi007/beam-cell)
-
-```
-python3 tools/make_public_repo.py ../beam-cell     # copies only the readable pages, pictures, video and PDFs
-cd ../beam-cell && git add -A && git commit -m "Update" && git push
-```
-It never copies code, CAD or tools, and it stops if a page has a broken link.
 
 ### Make the video again
 

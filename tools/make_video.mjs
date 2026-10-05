@@ -115,7 +115,7 @@ await page.evaluate(() => {
     <div id="vt-end" class="vt"><h1><span>&#9638;</span> BEAM CELL</h1>
       <p>Two robot arms on gantries: a plasma Cutter and a magnet Handler.<br>NC1 files in, finished beams out - with a full safety system.</p>
       <div class="ask">1:10 prototype in build - looking for sponsors</div>
-      <div class="who">Ravi Mahadeva &middot; github.com/rvi007/beam-cell</div></div>`);
+      <div class="who">Ravi Mahadeva &middot; github.com/rvi007/steel-beam-cutting-cell</div></div>`);
   window.dispatchEvent(new Event("resize"));
   app.scene._adapt = () => {};                      // keep full quality, however slow a frame is
   app.speed = 0;

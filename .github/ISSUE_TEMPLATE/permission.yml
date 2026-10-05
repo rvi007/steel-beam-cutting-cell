@@ -1,13 +1,13 @@
-name: Request access to the code
-description: Ask for access to the private source code, CAD files and build tools.
-title: "Access request: "
-labels: ["access request"]
+name: Permission to use or collaborate
+description: Ask to use, build on or collaborate on BEAM CELL (code, CAD, design).
+title: "Permission / collaboration: "
+labels: ["permission"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for your interest in BEAM CELL. The code is private; I read every request.
-        If it is approved, GitHub will send an invitation to your account.
+        Thanks for your interest in BEAM CELL. You can read everything here; using, building on or
+        selling it needs written permission (see LICENSE). I read every request.
         **This request is public** - please don't add a phone number, address or other private details.
   - type: input
     id: name
@@ -18,9 +18,7 @@ body:
   - type: input
     id: github
     attributes:
-      label: Your GitHub username
-      description: The invitation goes to this account.
-      placeholder: e.g. octocat
+      label: How can I contact you? (LinkedIn profile, company website...)
     validations:
       required: true
   - type: input
