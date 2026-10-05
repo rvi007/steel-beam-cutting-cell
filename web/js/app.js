@@ -4,7 +4,7 @@ import { get, post } from "./api.js";
 import { CellScene } from "./scene.js";
 import { trackAt } from "./kinematics.js";
 import { MAT, partGroup, stockMesh, disposeGroup } from "./geometry.js";
-import { initParts, renderPartList, clearAllParts } from "./parts.js";
+import { initParts, renderPartList, clearAllParts, partsRemoved } from "./parts.js";
 import { initLibrary } from "./library.js";
 import { initPrototype } from "./prototype.js";
 import { initCamera } from "./camera.js";
@@ -72,13 +72,49 @@ function renderBars() {
     div.className = "bar" + (i === app.barIndex ? " on" : "");
     const segs = b.placements.map((pl, k) => `<div class="seg" style="left:${(100 * pl.x0) / b.length}%;width:${(100 * (pl.x1 - pl.x0)) / b.length}%">${b.marks[k]}</div>`).join("") +
       b.scraps.map(([x0, x1]) => `<div class="seg scrap" style="left:${(100 * x0) / b.length}%;width:${Math.max((100 * (x1 - x0)) / b.length, 0.4)}%"></div>`).join("");
-    div.innerHTML = `<b>Bar ${i + 1}</b> &nbsp;${b.section} &times; ${(b.length / 1000).toFixed(0)} m
+    div.innerHTML = `<button class="mini danger del-bar" title="Take this bar's parts out of the job">&#128465;</button>
+      <b>Bar ${i + 1}</b> &nbsp;${b.section} &times; ${(b.length / 1000).toFixed(0)} m
       <span class="muted small">&nbsp;${(100 * b.used).toFixed(0)}% used</span><div class="strip">${segs}</div>`;
     div.onclick = () => { app.barIndex = i; clearPlan(); renderBars(); };
+    div.querySelector(".del-bar").onclick = async (e) => {
+      e.stopPropagation();
+      if (safety.status && safety.status.state === "RUNNING") return toast("Stop the machine before changing the job", true);
+      const what = barContents(b).join(", ");
+      if (!confirm(`Delete bar ${i + 1} (${b.section})? Its parts come out of the job: ${what}.`)) return;
+      await removeBarParts(b);
+      toast(`Bar ${i + 1} deleted: ${what}`);
+    };
     box.appendChild(div);
   });
   const left = new Set();
   app.bars.forEach((b) => b.overflow.forEach((o) => left.add(`${app.job.parts[o.part]?.mark || "?"}: ${o.reason}`)));
+}
+
+// The part marks on a bar, one per piece: a nested bar lists them in .marks, a plan in .placements.
+function barMarks(bar) {
+  return bar.marks || bar.placements.map((pl) => pl.part.mark);
+}
+
+// What a bar holds, e.g. ["B1 x2", "T1 x1"].
+function barContents(bar) {
+  const n = {};
+  for (const m of barMarks(bar)) n[m] = (n[m] || 0) + 1;
+  return Object.entries(n).map(([m, c]) => `${m} x${c}`);
+}
+
+// Take the parts on a bar out of the job (they've been cut, or the bar was deleted); the rest re-nest.
+async function removeBarParts(bar) {
+  const n = {};
+  for (const m of barMarks(bar)) n[m] = (n[m] || 0) + 1;
+  for (const p of app.job.parts) {
+    const take = Math.min(n[p.mark] || 0, p.qty || 1);
+    p.qty = (p.qty || 1) - take;
+    n[p.mark] = (n[p.mark] || 0) - take;
+  }
+  app.job.parts = app.job.parts.filter((p) => p.qty > 0);
+  app.barIndex = 0;
+  partsRemoved();
+  await jobChanged();
 }
 
 // ---------------------------------------------------------------- planning
@@ -299,14 +335,33 @@ let finishing = false;
 async function finishJob() {
   if (finishing) return;
   finishing = true;
-  await jobFinished(jobDetails());
+  await jobFinished(jobDetails());                 // goes into the job history
   const plan = app.plan, dlg = $("job-done");
-  $("job-done-what").innerHTML = `<p><b>${plan.jobName}</b><br>${plan.summary.parts} ${plan.manual ? "piece(s)" : "part(s)"} cut in ${fmtTime(plan.summary.duration_s)}.</p>`;
-  const more = !plan.manual && plan.bar_index + 1 < plan.bar_count;
+  // the bar is done: its parts come off the Machine tab (they're in the job history); the rest re-nest
+  let cut = [], before = null;
+  if (!plan.manual) {
+    before = app.job.parts.map((p) => Object.assign({}, p));
+    cut = barContents(plan);
+    await removeBarParts(plan);
+    await clearSafetyJob();
+    showJobNow();
+  }
+  $("job-done-what").innerHTML = `<p><b>${plan.jobName}</b><br>${plan.summary.parts} ${plan.manual ? "piece(s)" : "part(s)"} cut in ${fmtTime(plan.summary.duration_s)}.</p>` +
+    (plan.manual ? "" : `<p class="small">Cut and taken off the job: <b>${cut.join(", ")}</b> - they're in the job history.
+      ${app.bars.length ? `${app.bars.length} bar(s) still to cut.` : "Nothing left to cut."}</p>`);
+  const more = !plan.manual && app.bars.length > 0;
   $("jd-next").hidden = !more;
-  $("jd-next").textContent = more ? `Next bar (${plan.bar_index + 2} of ${plan.bar_count})` : "Next bar";
-  $("jd-next").onclick = async () => { dlg.close(); app.barIndex = plan.bar_index + 1; clearPlan(); renderBars(); await planBar(); toast("Next bar planned - confirm the checklist (Safety tab), then Run"); };
-  $("jd-again").onclick = () => { dlg.close(); app.t = 0; loadJob(plan.jobName); updateTransport(); toast("Ready to run again - confirm the checklist first (Safety tab)"); };
+  $("jd-next").textContent = `Plan the next bar (${app.bars.length} left)`;
+  $("jd-next").onclick = async () => { dlg.close(); app.barIndex = 0; clearPlan(); renderBars(); await planBar(); toast("Next bar planned - confirm the checklist (Safety tab), then Run"); };
+  $("jd-clear").textContent = plan.manual ? "Delete these cuts" : "Delete the rest of the job";
+  $("jd-clear").hidden = !plan.manual && !app.bars.length;
+  $("jd-again").textContent = plan.manual ? "Run these cuts again" : "Cut the same bar again";
+  $("jd-again").onclick = async () => {
+    dlg.close();
+    if (before) { app.job.parts = before; await jobChanged(); app.barIndex = plan.bar_index; renderBars(); await planBar(); }
+    else { app.t = 0; loadJob(plan.jobName); updateTransport(); }
+    toast("Ready to run again - confirm the checklist first (Safety tab)");
+  };
   $("jd-clear").onclick = async () => { dlg.close(); await clearJob(true); };
   $("jd-history").onclick = () => { dlg.close(); openJobs(); };
   $("jd-keep").onclick = () => dlg.close();

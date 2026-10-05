@@ -121,14 +121,18 @@ for (const t of [0.3, 0.6, 1.0]) {
 }
 await shot("2c_finished", true);
 
-// a finished job: the "Job finished" window, the checklist is needed again, Clear the job deletes it
+// a finished job: the "Job finished" window, the checklist is needed again, "Delete the rest of the job" clears it
 try { await page.waitForFunction(() => document.getElementById("job-done").open, null, { timeout: 30000, polling: 200 }); }
 catch (e) {
   const st = await state(), t = await page.evaluate(() => [app.t, app.plan && app.plan.summary.duration_s]);
   fail(`no Job finished window (safety ${st.state}, mode ${st.mode}, stops: ${st.latched.map((f) => f.code).join(", ")}, t ${t[0]} of ${t[1]})`);
 }
+// the finished bar leaves the Machine tab: its parts come off the job (they're in the job history), the
+// rest re-nest, and the safety controller has no job loaded (the next one needs the checklist again)
 const done = await state();
-if (!done.job || done.job.state !== "finished" || done.checklist_ok) fail("finished job: " + JSON.stringify(done.job) + " checklist " + done.checklist_ok);
+if (done.job || done.checklist_ok) fail("finished job still loaded: " + JSON.stringify(done.job) + " checklist " + done.checklist_ok);
+const left = await page.evaluate(() => ({ bars: app.bars.length, marks: app.job.parts.map((p) => p.mark) }));
+if (left.bars !== 1 || left.marks.includes("B1")) fail("finished bar still on the Machine tab: " + JSON.stringify(left));
 const again = await page.evaluate(() => fetch("/api/safety/start", { method: "POST", body: "{}" }).then((r) => r.json()));
 if (again.ok) fail("a finished job restarted without a new checklist");
 await shot("2d_job_done");
@@ -143,6 +147,17 @@ if (!hist.length || hist[0].result !== "finished" || !hist[0].parts) fail("job h
 await page.click(`[data-hist="${hist[0].id}"]`);
 await until("history entry not deleted", (id) => !document.querySelector(`[data-hist="${id}"]`), hist[0].id);
 await page.click("#jobs-close");
+
+// delete one part from the Parts list (not all of them)
+await page.click(".tabs button[data-tab=parts]");
+await page.evaluate(() => { app.job.parts.push({ mark: "X1", section: "UB 305x165x40", length: 2000, qty: 1, grade: "S355", holes: [], outlines: {},
+  inner: [], copes: [], mitres: {}, source: "manual", custom: null }, { mark: "X2", section: "UB 305x165x40", length: 2500, qty: 1, grade: "S355",
+  holes: [], outlines: {}, inner: [], copes: [], mitres: {}, source: "manual", custom: null }); });
+await page.evaluate(() => import("./js/parts.js").then((m) => m.renderPartList()));
+page.once("dialog", (d) => d.accept());
+await page.click("#part-list tbody tr:first-child .del-part");
+await until("one part not deleted", () => app.job.parts.length === 1 && app.job.parts[0].mark === "X2");
+await page.evaluate(() => { app.job.parts = []; return import("./js/app.js").then((m) => m.jobChanged()); });
 
 // import an NC1 file through the file picker
 await page.click(".tabs button[data-tab=parts]");
@@ -236,7 +251,12 @@ await page.click(".tabs button[data-tab=sensors]");
 await until("sensors tab didn't fill", () => document.querySelectorAll("#sn-list tr").length >= 15 && document.querySelector("#sn-bar .good")
   && document.querySelectorAll("#sn-plasma tbody tr").length > 5);
 await page.click("[data-sim=LOAD]");
-const blocked = await state();
+let blocked;
+for (let i = 0; i < 25; i++) {                       // the click's request may still be on its way
+  blocked = await state();
+  if (blocked.reset_blockers.some((b) => b.includes("Handler"))) break;
+  await page.waitForTimeout(200);
+}
 if (!blocked.reset_blockers.some((b) => b.includes("Handler"))) fail("simulated load slip not seen: " + JSON.stringify(blocked.reset_blockers));
 await page.evaluate(() => fetch("/api/safety/input", { method: "POST", body: JSON.stringify({ name: "load_secure", value: true }) }));
 
@@ -245,5 +265,5 @@ for (const tab of ["camera", "help", "safety", "cell"]) {
   await page.waitForTimeout(500);
 }
 if (errors.length) fail("JavaScript errors:\n" + errors.join("\n"));
-console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; job finished -> checklist again, clear job; NC1 import; editor checks; manual cut (click, check, plan); CAD model + files; prototype assembly; sensors + bar check + load slip; STL ${fs.statSync(file).size} bytes`);
+console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; job finished -> bar leaves the job, history, delete one part; NC1 import; editor checks; manual cut (click, check, plan); CAD model + files; prototype assembly; sensors + bar check + load slip; STL ${fs.statSync(file).size} bytes`);
 await browser.close();
