@@ -107,6 +107,7 @@ use the address the terminal prints (for example `http://192.168.1.20:8080`).
 | [The AI advisor](docs/ASSISTANT.md) | "what's happening" in plain English, and the optional AI advisor |
 | [A scale model](docs/SCALE_MODEL.md) | a static display model at 1:20 or 1:100 |
 | [Jetson specs](docs/JETSON_SPECS.md) | the Orin's hardware and software |
+| [How the code works](docs/HOW_IT_WORKS.md) | **a guided tour: which file does what, how the screen and the engine work together, the journey of a job** |
 | [For developers](docs/DEVELOPMENT.md) | how the code fits together, and the rules for changing it |
 
 ## Honest limits
