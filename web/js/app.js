@@ -11,6 +11,7 @@ import { initCamera } from "./camera.js";
 import { initHelp } from "./help.js";
 import { initSafety, safety, connected, startMachine, stopMachine, jobFinished, loadJob, clearSafetyJob } from "./safety.js";
 import { initJobs, openJobs } from "./jobs.js";
+import { initSensors, barCheckHtml } from "./sensors.js";
 import { initManual, manual, manualPreview, planManual, render as renderManual } from "./manual.js";
 
 export const app = {
@@ -123,7 +124,10 @@ export function loadPlan(plan) {
     <tr><td>Torch on</td><td>${fmtTime(s.torch_on_s)} (${Math.round((100 * s.torch_on_s) / s.duration_s)}%)</td></tr>
     <tr><td>Bridges</td><td>never closer than ${s.min_bridge_gap_m.toFixed(2)} m</td></tr>
     <tr><td>Collision check</td><td class="${plan.collisions ? "bad" : "good"}">${plan.collisions ? plan.collisions + " problems" : "clear"}</td></tr>
-    </table><div class="muted small">Planned in ${plan.planning_s} s</div>`;
+    <tr><td>Plasma</td><td>${plan.process ? plan.process.label : "-"}</td></tr>
+    </table><div class="muted small">Planned in ${plan.planning_s} s</div>
+    ${plan.bar_check ? `<details class="bar-check"><summary class="${plan.bar_check.ok ? "good" : "bad"}">Bar check: ${plan.bar_check.ok ? "within tolerance" : "OUT of tolerance"}
+      ${plan.bar_check.simulated ? "(simulated)" : ""}</summary>${barCheckHtml(plan.bar_check)}</details>` : ""}`;
   $("plan-warnings").innerHTML = plan.warnings.map((w) => `<div>&#9888; ${w}</div>`).join("");
   $("scrub").max = s.duration_s;
   buildSteel();
@@ -350,7 +354,12 @@ function updateHud() {
     const el = $("hud-" + key);
     if (!plan) { el.innerHTML = '<div class="muted">parked</div>'; continue; }
     const [g, q] = trackAt(plan.tracks[key], app.t);
-    el.innerHTML = `<div class="now">${stepAt(app.t, who)}</div><div class="axes">X ${g[0].toFixed(3)}  Y ${g[1].toFixed(3)}  Z ${g[2].toFixed(3)} m<br>` +
+    // the Cutter shows the plasma settings of the cut it is doing
+    const c = key === "cutter" && plan.cuts.find((c) => c.t_on <= app.t && app.t <= c.times[c.times.length - 1]);
+    const p = c && c.process;
+    const torch = p ? `<div class="axes torch">${p.amps ? p.amps + " A &middot; " : ""}${p.speed_mm_min} mm/min &middot; height ${p.cut_height_mm} mm` +
+      `${p.arc_voltage_v ? " &middot; " + p.arc_voltage_v + " V" : ""} &middot; THC ${p.thc.split(" ")[0]} &middot; ${p.thickness_mm} mm ${p.feature}</div>` : "";
+    el.innerHTML = `<div class="now">${stepAt(app.t, who)}</div>${torch}<div class="axes">X ${g[0].toFixed(3)}  Y ${g[1].toFixed(3)}  Z ${g[2].toFixed(3)} m<br>` +
       `J ${q.map((a) => ((a * 180) / Math.PI).toFixed(0).padStart(4)).join(" ")}&deg;</div>`;
   }
 }
@@ -454,6 +463,7 @@ async function start() {
   initLibrary();
   initPrototype();
   initCamera();
+  initSensors();
   initHelp();
   initManual();
   await initSafety();

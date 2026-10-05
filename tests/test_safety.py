@@ -275,3 +275,34 @@ class Jobs(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Hazards(unittest.TestCase):
+    """Objects on the bed, a slipping load, a torch collision, a fire: each stops the machine with
+    a fixed decision for both hands, and Reset waits until the cause is gone."""
+
+    def test_each_hazard_stops_with_a_decision(self):
+        for name, code, cat in (("bed_clear", "OBJECT", 2), ("load_secure", "LOAD", 2), ("torch_ok", "TORCH", 1), ("no_fire", "FIRE", 1)):
+            sc, _ = make()
+            run(sc)
+            sc.set_input(name, False)
+            st = sc.tick()
+            f = next(x for x in st["latched"] if x["code"] == code)
+            self.assertFalse(st["may_move"], code)
+            self.assertEqual(st["stop_category"], cat, code)
+            self.assertTrue(f["decision"]["cutter"] and f["decision"]["handler"] and f["decision"]["you"], code)
+            self.assertFalse(sc.reset()[0], code)              # cause still there
+            sc.set_input(name, True)
+            self.assertTrue(sc.reset()[0], code)
+            self.assertEqual(sc.tick()["state"], "READY")
+
+    def test_magnet_never_lets_go(self):
+        from beamcell.safety import DECISIONS
+        for code, d in DECISIONS.items():
+            self.assertNotIn("releases the part", d["handler"].lower(), code)
+        self.assertIn("magnet stays on", DECISIONS["LOAD"]["handler"].lower())
+
+    def test_fire_stops_even_when_not_running(self):
+        sc, _ = make()
+        sc.set_input("no_fire", False)
+        self.assertIn("FIRE", [f["code"] for f in sc.tick()["latched"]])

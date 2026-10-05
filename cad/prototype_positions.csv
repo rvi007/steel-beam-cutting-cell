@@ -128,3 +128,11 @@ P39-1,P39,1,Polycarbonate sheet 2 mm,"Enclosure door: 2 mm polycarbonate on a 20
 P34-1,P34,1,Door interlock switch,"Door interlock switch (magnetic coded, NC) - opens = protective stop","front (operator side), middle, 165 mm up",642.5,-179.0,165.0
 P29-1,P29,1,USB wide-angle camera (safety zone),Camera: USB wide-angle (or IMX219 CSI) on a 20x20 post - YOLO watches the cell,"front (operator side), infeed end, 420 mm up",-190.0,-150.0,420.0
 P01-21,P01,21,V-slot 20x20 aluminium extrusion,20x20 V-slot aluminium extrusion - camera post,"front (operator side), infeed end, 205 mm up",-190.0,-150.0,205.0
+P48-1,P48,1,VL53L1X time-of-flight distance sensor,Datum sensor: VL53L1X time-of-flight at the bed's infeed end - finds where the model beam starts,"middle, infeed end, 100 mm up",-44.0,-50.0,100.0
+P38-1,P38,1,IR break-beam sensor pair,Bar-present IR break-beam (one each side of the bed),"front (operator side), infeed end, 96 mm up",23.0,-88.0,96.0
+P38-2,P38,2,IR break-beam sensor pair,Bar-present IR break-beam (one each side of the bed),"middle, infeed end, 96 mm up",23.0,-12.0,96.0
+P52-1,P52,1,IR flame sensor module,IR flame sensor module (demo of the fire detector),"front (operator side), infeed end, 378 mm up",-190.0,-134.0,378.0
+P50-1,P50,1,Load cell 1 kg + HX711,"Load cell (1 kg) between wrist and magnet - weighs the part: slipping, wrong part, not cut free","middle, infeed end, 147 mm up",91.0,0.0,146.8
+P30-1,P30,1,CSI camera (close-up of the Cutter),"Camera 2: IMX219 close-up beside the pen - the cut line, the bar edge","middle, middle, 149 mm up",477.0,-8.0,149.3
+P53-1,P53,1,Line laser module (Class 2),Line laser (Class 2) - with camera 2 it shows the beam's real profile,"middle, middle, 148 mm up",477.0,8.0,148.3
+P49-1,P49,1,Pen touch-off micro-switch,Pen touch-off micro-switch on the sprung holder - finds the beam's surface,"middle, middle, 152 mm up",500.0,0.0,152.3

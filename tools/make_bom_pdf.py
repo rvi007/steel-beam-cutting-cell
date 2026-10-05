@@ -20,7 +20,7 @@ from reportlab.platypus import KeepTogether, Paragraph, SimpleDocTemplate, Space
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "docs", "Prototype_Shopping_List.pdf")
 STAGES = {"1": "Stage 1 - Frame and bed", "2": "Stage 2 - Motion and controller", "3": "Stage 3 - Arms and tools",
-          "4": "Stage 4 - Cameras (vision)", "5": "Stage 5 - Safety and enclosure", "6": "Stage 6 - Electrical",
+          "4": "Stage 4 - Cameras and sensors", "5": "Stage 5 - Safety and enclosure", "6": "Stage 6 - Electrical",
           "7": "Consumables"}
 ORANGE = colors.HexColor("#e8641b")
 DARK = colors.HexColor("#1f2933")

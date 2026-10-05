@@ -435,6 +435,19 @@ def build_cell():
     m.box("camera_mast", "Camera mast - the YOLO camera watches the gate and the cell", DARK,
           gx - 1630, gx - 1570, -fy - 430, -fy - 370, 0, 3000)
     m.box("camera", "Safety-zone camera (USB / CSI) on the Jetson", RUBBER, gx - 1680, gx - 1520, -fy - 370, -fy - 270, 2900, 3000)
+    # sensors that find the bar, and watch for fire and people (see beamcell/sensors.py)
+    m.box("end_stop", "Bar end stop at the infeed end - the datum the bar is put against", DARK,
+          -470, -400, by - 120, by + 120, 0, bz + 120)
+    m.box("datum_laser", "Datum laser (SICK DT50 class) on the end stop - measures where the bar really starts", RED,
+          -400, -330, by - 35, by + 35, bz + 40, bz + 110)
+    for dy, what in ((-460, "sender"), (460, "receiver")):
+        m.box("bar_eye", f"Bar-present photo-eye ({what}) - a bar is on the bed", DARK,
+              150, 210, by + dy - 30, by + dy + 30, bz + 20, bz + 120)
+    m.box("fire_detector", "Flame / smoke detector over the bed and scrap tray", RED,
+          xa * mm + 4000, xa * mm + 4160, -W / 2 + 280, -W / 2 + 440, run_z - 120, run_z)
+    for fx in (fx0 + 250, fx1 - 250):
+        m.box("area_scanner", "Safety laser scanner (SICK microScan3 class, PL d) - watches the cell floor", YELLOW,
+              fx - 80, fx + 80, -fy + 120, -fy + 280, 0, 180)
     m.box("stack_pole", "Stack light pole", DARK, gx + 3330, gx + 3370, -fy - 1020, -fy - 980, 900, 2100)
     for i, (lamp, colour) in enumerate((("red", (1, 0.16, 0.12)), ("amber", (1, 0.69, 0)), ("green", (0.13, 0.83, 0.42)), ("blue", (0.18, 0.48, 1)))):
         z = 2600 - i * 120
@@ -472,6 +485,9 @@ def _hand_bodies(m, hand):
     m.box("carriage_band", f"{hand.name} carriage", paint, -315, 315, -255, 255, -180, -120, group=g)
     m.cyl("carriage_motor", f"{hand.name} cross-travel motor (Y axis)", RUBBER, (0, 0, 180), (0, 0, 480), 85, group=g)
     m.cyl("mast_motor", f"{hand.name} lift motor (Z axis)", RUBBER, (200, 150, 180), (200, 150, 420), 70, group=g)
+    if hand.tool == "torch":
+        m.box("profile_scanner", "Laser profile scanner (Micro-Epsilon scanCONTROL class) - measures the real bar as the Cutter passes",
+              DARK, 320, 440, -70, 70, -230, -110, group=g)
     # mast: slides up and down through the carriage (Z axis); the arm hangs under it
     g = f"{key}.mast"
     m.box("mast", f"{hand.name} mast 200x200 - slides through the carriage (Z axis)", paint, -100, 100, -100, 100, 0, 2000, group=g)
@@ -501,6 +517,8 @@ def _hand_bodies(m, hand):
         m.cyl("torch_body", "Plasma torch (machine torch, 400 mm)", RUBBER, (0, 0, 0), (0, 0, T - 40), 22, group=grp)
         m.cyl("torch_sleeve", "Torch holder with crash sensor", DARK, (0, 0, 0), (0, 0, 60), 32, group=grp)
         m.cyl("torch_nozzle", "Plasma nozzle and shield cup", (0.72, 0.45, 0.2), (0, 0, T - 40), (0, 0, T), 16, group=grp, r1=6)
+        m.box("torch_camera", "Camera 2 - close-up on the torch: bar edges, cut line, hole quality, nozzle wear", DARK,
+              30, 90, -25, 25, 70, 140, group=grp)
     else:
         m.cyl("magnet_stem", "Magnet stem with load cell", DARK, (0, 0, 0), (0, 0, T - 30), 30, group=grp)
         m.cyl("magnet_pad", "Lifting magnet (battery-backed, BS EN 13155) - 500 kg", RED, (0, 0, T - 30), (0, 0, T), 110, group=grp)
@@ -681,6 +699,25 @@ def build_prototype():
     m.box("camera", "Camera: USB wide-angle (or IMX219 CSI) on a 20x20 post - YOLO watches the cell", RUBBER,
           x0 - 60, x0 - 20, -W / 2 - 20, -W / 2 + 20, rail_z + 60, rail_z + 100)
     m.extrusion("camera_post", f"{E} - camera post", ALU, (20, 20), (x0 - 40, -W / 2, 10), (x0 - 40, -W / 2, rail_z + 60))
+    # sensors (see beamcell/sensors.py and the Sensors tab): find the bar, check the tools, watch for fire
+    m.box("tof_sensor", "Datum sensor: VL53L1X time-of-flight at the bed's infeed end - finds where the model beam starts", RED,
+          -48, -40, by - 8, by + 8, bz + 2, bz + 18)
+    for dy in (-38, 38):
+        m.box("break_beam", "Bar-present IR break-beam (one each side of the bed)", RUBBER, 20, 26, by + dy - 3, by + dy + 3, bz, bz + 12)
+    m.box("flame_sensor", "IR flame sensor module (demo of the fire detector)", RED, x0 - 52, x0 - 28, -W / 2 + 10, -W / 2 + 22, rail_z + 30, rail_z + 46)
+    for hand, hx in ((M.make_hands()[1], 50.0), (M.make_hands()[0], 450.0)):
+        zx, cy = hx - 29, 0.0
+        zb = bz + tiny["h"] + (5 + 150 if hand.tool == "torch" else 130)
+        if hand.tool == "torch":
+            m.box("torch_camera", "Camera 2: IMX219 close-up beside the pen - the cut line, the bar edge", RUBBER,
+                  zx + 52, zx + 60, cy - 12, cy - 4, zb - 132, zb - 120)
+            m.box("line_laser", "Line laser (Class 2) - with camera 2 it shows the beam's real profile", RED,
+                  zx + 52, zx + 60, cy + 4, cy + 12, zb - 132, zb - 122)
+            m.box("pen_switch", "Pen touch-off micro-switch on the sprung holder - finds the beam's surface", DARK,
+                  zx + 74, zx + 84, cy - 5, cy + 5, zb - 126, zb - 120)
+        else:
+            m.box("load_cell", "Load cell (1 kg) between wrist and magnet - weighs the part: slipping, wrong part, not cut free", ALU,
+                  zx + 62, zx + 78, cy - 7, cy + 7, zb - 106, zb - 101)
     return m
 
 
@@ -706,6 +743,9 @@ PROTO_PARTS = {
     "control_box": "Control box", "estop": "Emergency stop station", "estop_head": "Emergency stop station",
     "enclosure_front": "Polycarbonate sheet 2 mm", "door_switch": "Door interlock switch",
     "camera": "USB wide-angle camera (safety zone)",
+    "torch_camera": "CSI camera (close-up of the Cutter)", "break_beam": "IR break-beam sensor pair",
+    "tof_sensor": "VL53L1X time-of-flight distance sensor", "pen_switch": "Pen touch-off micro-switch",
+    "load_cell": "Load cell 1 kg + HX711", "flame_sensor": "IR flame sensor module", "line_laser": "Line laser module (Class 2)",
 }
 
 

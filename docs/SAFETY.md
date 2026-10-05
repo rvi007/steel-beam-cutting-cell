@@ -65,6 +65,9 @@ safety system. A camera with AI (YOLO) is never a safety device.
 removed; 2 = controlled stop, power kept (normal Pause). The Safety tab shows which one
 happened.
 
+**Hazards beyond people** - an object on the bed, a slipping load, a torch collision, a fire - and the
+fixed decision each hand makes for every stop are in [SENSORS.md](SENSORS.md#3-hazards-what-is-detected-and-what-each-hand-decides).
+
 ## 4. Operating procedure (what the screens enforce)
 
 1. **Plan a job** (a bar, or manual cuts). The safety controller won't start without one.

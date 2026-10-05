@@ -21,6 +21,9 @@ API (all JSON):
     GET  /api/cad                   the CAD files in cad/;  GET /cad/<file> downloads one
     POST /api/cad/part              {part} -> STEP solid of the part (needs CadQuery: a PC, not the Jetson)
     GET  /api/jobs, GET/POST /api/jobs/<name>   saved jobs (jobs/ folder); POST /api/jobs-delete/<name> deletes one
+    GET  /api/sensors               every sensor (camera 1 + 2, bar, torch, Handler, safety), and every stop's decisions
+    POST /api/sensors/measure       {section, length[, measured]} -> the bar check (BS EN 10034 tolerances)
+    GET  /api/plasma[?process=o2]   the plasma cut chart; POST /api/plasma/settings {feature, thickness[, d]}
     GET  /api/history, POST /api/history-delete/<id>, POST /api/history-clear   jobs that ran (jobs/history.json)
     GET  /api/camera, POST /api/camera, GET /camera.mjpg   camera + person detection
     GET  /api/camera/devices        the cameras Linux can see
@@ -43,7 +46,7 @@ import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlparse
 
-from beamcell import assistant, collisions, history, machine, manual, nc1, sections as S, uk_codes as UK
+from beamcell import assistant, collisions, history, machine, manual, nc1, plasma, sensors, sections as S, uk_codes as UK
 from beamcell.config import CONFIG, problems as config_problems
 from beamcell.gpio_inputs import GpioInputs
 from beamcell.parts import Part, nest_all
@@ -169,6 +172,14 @@ def manual_plan(body):
     return out
 
 
+def safety_decisions():
+    """Every stop: what triggers it, the stop category, and what each hand and the operator do."""
+    from beamcell.safety import DECISIONS, FAULTS, STOP_CATEGORY
+    return [{"code": c, "text": FAULTS[c][0], "ref": FAULTS[c][1],
+             "category": STOP_CATEGORY.get(c, 0 if c == "ESTOP" else CONFIG["safety"]["protective_stop_category"]),
+             **DECISIONS[c]} for c in FAULTS]
+
+
 def plan_output(bar, body, i, count):
     t0 = time.time()
     plan = Plan(bar).build()
@@ -181,6 +192,7 @@ def plan_output(bar, body, i, count):
         "stock_section": dict(S.summary(bar.parts[0].sec), outline=S.outline(bar.parts[0].sec)[0],
                               plates=S.plates(bar.parts[0].sec)) if bar.parts else None,
         "collisions": len(hits), "planning_s": round(planned, 2),
+        "bar_check": sensors.measure_bar(bar.section_title, bar.length) if bar.parts else None,
     })
     return out
 
@@ -282,6 +294,13 @@ class Handler(BaseHTTPRequestHandler):
                 safe = {k: v for k, v in CONFIG.items()}
                 return self._send(200, {"config": safe, "problems": config_problems(CONFIG),
                                         "api_key_set": bool(os.environ.get("ANTHROPIC_API_KEY"))})
+            if path == "/api/sensors":
+                return self._send(200, {"sensors": sensors.status(VISION.status()), "groups": sensors.GROUPS,
+                                        "decisions": safety_decisions()})
+            if path == "/api/plasma":
+                proc = parse_qs(urlparse(self.path).query).get("process", [CONFIG["plasma"]["process"]])[0]
+                return self._send(200, dict(plasma.table(proc), processes={k: v["label"] for k, v in plasma.CHARTS.items()},
+                                            current=CONFIG["plasma"]["process"]))
             if path == "/api/prototype":
                 return self._send(200, prototype_info())
             if path == "/api/cad":
@@ -314,6 +333,11 @@ class Handler(BaseHTTPRequestHandler):
                 bars = nest_all(parts_from(body), float(body.get("stock_length", 12000)))
                 return self._send(200, [dict(b.to_dict(), marks=[b.parts[pl["part"]].mark for pl in b.placements])
                                         for b in bars])
+            if path == "/api/sensors/measure":
+                return self._send(200, sensors.measure_bar(body["section"], float(body.get("length", 12000)), body.get("measured")))
+            if path == "/api/plasma/settings":
+                return self._send(200, plasma.settings(body.get("feature", "cut"), float(body["thickness"]),
+                                                       body.get("process", CONFIG["plasma"]["process"]), body.get("d")))
             if path == "/api/manual/check":
                 return self._send(200, manual_check(body))
             if path == "/api/manual/plan":

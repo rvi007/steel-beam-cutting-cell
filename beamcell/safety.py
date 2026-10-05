@@ -47,7 +47,59 @@ FAULTS = {
     "HEARTBEAT": ("Operator screen stopped responding", "watchdog"),
     "EXTRACTION": ("Fume extraction stopped while cutting", "COSHH 2002 - local exhaust ventilation"),
     "GPIO": ("Safety input wiring or GPIO fault", "fail-safe: a broken wire counts as a stop"),
+    "OBJECT": ("Something is on the bed in the hands' path", "PUWER reg 11 - camera 1 object detection (advisory)"),
+    "LOAD": ("The Handler's load is slipping or not what it should be", "LOLER, BS EN 13155 - magnet current / load cell"),
+    "TORCH": ("Torch collision - breakaway switch opened", "BS EN ISO 17916 - safety of thermal cutting machines"),
+    "FIRE": ("Flame or smoke detected in the cell", "Regulatory Reform (Fire Safety) Order 2005, BS EN ISO 17916"),
 }
+
+# Stop category for each stop when the machine was running (BS EN 60204-1). A category 2 stop keeps
+# the drives powered, so the hands hold their position and the magnet keeps its grip.
+STOP_CATEGORY = {"OBJECT": 2, "LOAD": 2}
+
+# What each hand does, and what the operator must do, for every stop. These are fixed rules, decided
+# in advance and checked in the risk assessment - never left to an AI to decide on the spot.
+DECISIONS = {
+    "ESTOP": {"cutter": "Torch off at once; stops dead (power cut).",
+              "handler": "Stops dead. The magnet stays ON (battery backup) - it never drops a part on a stop.",
+              "you": "Find out why, make it safe, release the E-stop, press Reset, then Start."},
+    "GATE": {"cutter": "Torch off; controlled stop.", "handler": "Stops; keeps holding its part.",
+             "you": "Leave the cell, close the gate, press Reset, then Start."},
+    "CURTAIN": {"cutter": "Torch off; controlled stop.", "handler": "Stops; keeps holding its part.",
+                "you": "Step back out of the light curtain, press Reset, then Start."},
+    "PERSON": {"cutter": "Torch off; controlled stop.", "handler": "Stops; keeps holding its part - never lowers a load towards a person.",
+               "you": "Everyone out of the danger zone, then Reset and Start."},
+    "CAMERA": {"cutter": "Torch off; controlled stop.", "handler": "Stops; keeps holding its part.",
+               "you": "Get the camera working again (Camera tab, python3 -m beamcell.doctor), then Reset."},
+    "HEARTBEAT": {"cutter": "Torch off; controlled stop.", "handler": "Stops; keeps holding its part.",
+                  "you": "Reload the operator screen, check the network, then Reset."},
+    "EXTRACTION": {"cutter": "Torch off at once (no plasma without extraction); stops.", "handler": "Stops; keeps holding its part.",
+                   "you": "Get the extraction running and drawing air, then Reset."},
+    "GPIO": {"cutter": "Torch off; stops.", "handler": "Stops; keeps holding its part.",
+             "you": "Check the safety input wiring (a broken wire counts as a stop), then Reset."},
+    "OBJECT": {"cutter": "Torch off; holds where it is (category 2 stop) - won't move into the area with the object.",
+               "handler": "Holds where it is; won't set a part down on the object.",
+               "you": "Open the gate (the machine is stopped), take the object off the bed, close the gate, Reset, Start."},
+    "LOAD": {"cutter": "Torch off; stops and moves no further.",
+             "handler": "Stops moving sideways at once. Magnet stays ON. If the floor and bed under the part are clear, "
+                        "lowers it slowly straight down onto the bed or outfeed table; if not, holds it and sounds the alarm.",
+             "you": "Keep everyone out from under the load. When the part is down, check the magnet, the part's weight "
+                    "and that it was cut free, then Reset."},
+    "TORCH": {"cutter": "Torch off at once; stops; then lifts straight up 50 mm.",
+              "handler": "Stops; keeps holding its part.",
+              "you": "Check the torch, nozzle and cable; re-seat the breakaway mount; re-measure the bar; Reset."},
+    "FIRE": {"cutter": "Torch off at once; stops and lifts clear.", "handler": "Stops; keeps holding its part.",
+             "you": "Fire alarm: follow the fire procedure. The extraction keeps running. Reset only when the fire is out "
+                    "and the scrap tray checked."},
+}
+
+# inputs from the screen (simulated) or from real sensors: name -> (normal text, stop text)
+INPUT_WORDS = {"gate_closed": ("gate closed", "GATE OPENED"), "curtain_clear": ("light curtain clear", "LIGHT CURTAIN BROKEN"),
+               "extraction_on": ("fume extraction on", "fume extraction OFF"),
+               "bed_clear": ("bed clear", "OBJECT ON THE BED (camera 1)"),
+               "load_secure": ("Handler load secure", "HANDLER LOAD SLIPPING (magnet current / load cell)"),
+               "torch_ok": ("torch mount OK", "TORCH COLLISION (breakaway switch)"),
+               "no_fire": ("no flame / smoke", "FLAME / SMOKE DETECTED")}
 
 
 class SafetyController:
@@ -60,8 +112,8 @@ class SafetyController:
         self.latched = {}                       # code -> time latched
         self.stop_category = None
         self.estop_sources = set()              # who is holding the E-stop down
-        self.inputs = {"gate_closed": True, "curtain_clear": True, "extraction_on": True}
-        self.input_source = {"gate_closed": "simulated", "curtain_clear": "simulated", "extraction_on": "simulated"}
+        self.inputs = {k: True for k in INPUT_WORDS}
+        self.input_source = {k: "simulated" for k in INPUT_WORDS}
         self.checklist_ok = False
         self.checklist_for = None               # the job the checklist was confirmed for (None: the next job)
         self.job = None                         # {"name", "state": loaded|running|finished, "started", "runs"}
@@ -111,8 +163,7 @@ class SafetyController:
             self.input_source[name] = source
             if self.inputs[name] != bool(value):
                 self.inputs[name] = bool(value)
-                words = {"gate_closed": ("gate closed", "GATE OPENED"), "curtain_clear": ("light curtain clear", "LIGHT CURTAIN BROKEN"),
-                         "extraction_on": ("fume extraction on", "fume extraction OFF")}[name]
+                words = INPUT_WORDS[name]
                 self._event(words[0] if value else words[1], "info" if value else "warn")
             self._evaluate()
 
@@ -291,6 +342,14 @@ class SafetyController:
             out.append("switch on the fume extraction")
         if not self.gpio_ok:
             out.append("fix the safety input wiring")
+        if not self.inputs["bed_clear"]:
+            out.append("take the object off the bed")
+        if not self.inputs["load_secure"]:
+            out.append("set the Handler's part down and check the magnet")
+        if not self.inputs["torch_ok"]:
+            out.append("re-seat the torch breakaway mount")
+        if not self.inputs["no_fire"]:
+            out.append("the fire detector still sees flame or smoke")
         return out
 
     def _latch(self, code, detail=""):
@@ -304,7 +363,8 @@ class SafetyController:
         else:
             if self.state != "ESTOP" and self.mode != MAINTENANCE:
                 self.state = "FAULT"
-            self.stop_category = self.cfg["protective_stop_category"] if was_running else self.stop_category
+            cat = STOP_CATEGORY.get(code, self.cfg["protective_stop_category"])
+            self.stop_category = cat if was_running else self.stop_category
         text, ref = FAULTS[code]
         self._event(f"STOP: {detail or text} [{ref}]" + (f" - category {self.stop_category} stop" if was_running else ""), "stop")
 
@@ -332,6 +392,15 @@ class SafetyController:
                 self._latch("HEARTBEAT")
             if self.cfg["require_extraction"] and not self.inputs["extraction_on"]:
                 self._latch("EXTRACTION")
+            if not self.inputs["bed_clear"]:
+                self._latch("OBJECT")
+        if active:                              # the Handler can be holding a part while paused
+            if not self.inputs["load_secure"]:
+                self._latch("LOAD")
+            if not self.inputs["torch_ok"]:
+                self._latch("TORCH")
+        if not self.inputs["no_fire"]:          # a fire matters whatever the machine is doing
+            self._latch("FIRE")
 
     # ---------------------------------------------------------------- outputs
     def status(self):
@@ -359,7 +428,8 @@ class SafetyController:
                 "state": self.state, "mode": self.mode, "may_move": may_move, "speed_factor": round(speed, 3),
                 "torch_allowed": torch, "stop_category": self.stop_category, "enable_held": enable,
                 "estop_pressed": bool(self.estop_sources), "estop_sources": sorted(self.estop_sources),
-                "latched": [{"code": c, "text": FAULTS[c][0], "ref": FAULTS[c][1], "since": round(t, 1)}
+                "latched": [{"code": c, "text": FAULTS[c][0], "ref": FAULTS[c][1], "since": round(t, 1),
+                             "decision": DECISIONS.get(c)}
                             for c, t in self.latched.items()],
                 "inputs": dict(self.inputs), "input_source": dict(self.input_source),
                 "camera": {k: cam.get(k) for k in ("enabled", "in_warning", "in_danger", "people", "detector")},

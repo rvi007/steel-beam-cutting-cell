@@ -53,7 +53,7 @@ offsets 109 / 95 / 82 mm, torch 400 mm long.
 ## 4. A working prototype
 
 For a model that really moves, see **[PROTOTYPE.md](PROTOTYPE.md)**: a 1:10 desk-top version
-with its CAD (`cad/prototype_1to10.step`), assembly drawing, cut list, shopping list (~£1,100),
+with its CAD (`cad/prototype_1to10.step`), assembly drawing, cut list, shopping list (~£1,150),
 safety wiring and build stages.
 
 This page is for static display models.
