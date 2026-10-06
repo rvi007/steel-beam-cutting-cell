@@ -348,6 +348,9 @@ class Vision:
                         where = "GPU (OpenCV CUDA)"
                 except Exception:                      # noqa: BLE001 - no CUDA in this OpenCV
                     pass
+                # try it once now: OpenCV 4.6 (the Jetson's) loads newer YOLO files but can't run them
+                net.setInput(np.zeros((1, 3, size, size), np.float32))
+                net.forward()
                 self.detector = f"YOLO on the {where} ({name}, {size}px, OpenCV DNN) - people and objects"
 
                 def detect(frame):
@@ -356,7 +359,9 @@ class Vision:
                     return parse_yolo_all(net.forward(), frame.shape[1], frame.shape[0], size)
                 return detect
             except Exception as e:                     # noqa: BLE001 - fall back to HOG
-                self.message = f"couldn't load {name} ({e}); using HOG"
+                first = str(e).strip().splitlines()[-1][:160] if str(e).strip() else type(e).__name__
+                self.message = (f"this OpenCV ({cv2.__version__}) can't run {name} on the CPU ({first}) - using HOG. "
+                                "Build the GPU engine instead: tools/make_trt_engine.sh")
         if not hasattr(cv2, "HOGDescriptor"):            # OpenCV 5 moved HOG out of the main module
             self.detector = "none - put a YOLO model in models/"
             return lambda frame: []
