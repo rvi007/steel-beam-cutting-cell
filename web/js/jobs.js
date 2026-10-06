@@ -7,6 +7,14 @@ import { openSavedJob, refreshJobs } from "./parts.js";
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
+// what went wrong while the job ran: "clean", or each stop with its time
+function problems(list) {
+  if (!list) return "";                                 // entries from before problems were recorded
+  if (!list.length) return '<span class="tag good">clean</span>';
+  return `<span class="tag warn">${list.length} stop${list.length > 1 ? "s" : ""}</span>` +
+    list.map((p) => `<br><span class="small">${esc(p.time)} ${esc(p.text)}</span>`).join("");
+}
+
 export async function openJobs() {
   await render();
   if (!$("jobs-dlg").open) $("jobs-dlg").showModal();
@@ -21,8 +29,9 @@ async function render() {
       <td><b>${esc(h.name)}</b>${h.what ? `<br><span class="muted small">${esc(h.what)}</span>` : ""}</td>
       <td>${h.parts || ""}</td><td>${h.duration_s ? fmtTime(h.duration_s) : ""}</td>
       <td><span class="tag ${h.result === "finished" ? "good" : "warn"}">${esc(h.result)}</span></td>
+      <td>${problems(h.problems)}</td>
       <td><button class="danger mini" data-hist="${esc(h.id)}" title="Delete this entry">Delete</button></td></tr>`).join("")
-    : '<tr><td colspan="6" class="muted">No jobs have run yet. A job is added here when it finishes (or is cleared part-way).</td></tr>';
+    : '<tr><td colspan="7" class="muted">No jobs have run yet. A job is added here when it finishes (or is cleared part-way).</td></tr>';
   $("saved-body").innerHTML = saved.length ? saved.map((n) => `<tr><td><b>${esc(n)}</b> <span class="muted small">jobs/${esc(n)}.json</span></td>
       <td class="nowrap"><button class="mini" data-open="${esc(n)}">Open</button>
       <button class="danger mini" data-del="${esc(n)}">Delete</button></td></tr>`).join("")

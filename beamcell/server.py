@@ -274,7 +274,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, {"history": history.entries()})
             if path == "/api/jobs":
                 os.makedirs(JOBS, exist_ok=True)
-                return self._send(200, sorted(f[:-5] for f in os.listdir(JOBS) if f.endswith(".json")))
+                return self._send(200, sorted(f[:-5] for f in os.listdir(JOBS)
+                                              if f.endswith(".json") and f.lower() != "history.json"))
             if path.startswith("/api/jobs/"):
                 name = _safe_name(os.path.basename(path))
                 with open(os.path.join(JOBS, name + ".json")) as fh:
@@ -435,6 +436,8 @@ def _safe_name(name):
     name = re.sub(r"[^A-Za-z0-9_. -]", "", name).strip(". ")
     if not name:
         raise ValueError("bad name")
+    if name.lower() == "history":                   # jobs/history.json is the job history, not a saved job
+        raise ValueError("'history' is kept for the job history - choose another name")
     return name
 
 

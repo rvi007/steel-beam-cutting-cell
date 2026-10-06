@@ -116,7 +116,7 @@ class SafetyController:
         self.input_source = {k: "simulated" for k in INPUT_WORDS}
         self.checklist_ok = False
         self.checklist_for = None               # the job the checklist was confirmed for (None: the next job)
-        self.job = None                         # {"name", "state": loaded|running|finished, "started", "runs"}
+        self.job = None                         # {"name", "state": loaded|running|finished, "started", "runs", "problems"}
         self.gpio_ok = True
         self.enable_until = 0.0                 # hold-to-run: enable valid until this time
         self.last_beat = None
@@ -198,7 +198,8 @@ class SafetyController:
                 if self.checklist_ok and prev and prev["started"]:     # the last job ran: walk round again
                     self.checklist_ok = False
                     self.checklist_for = None
-                self.job = {"name": name, "state": "loaded", "started": False, "runs": 0, "loaded_at": time.time()}
+                self.job = {"name": name, "state": "loaded", "started": False, "runs": 0, "loaded_at": time.time(),
+                            "problems": []}
                 if self.checklist_ok:                       # nothing has run since it was confirmed: it carries over
                     self.checklist_for = name
                 self._event(f"job loaded: '{name}'" + ("" if self.checklist_ok else " - confirm the pre-start checklist for it"))
@@ -288,6 +289,7 @@ class SafetyController:
                 self.state = "PAUSED"
                 self.stop_category = 2
                 self._event(f"stop ({reason}) by {who}")
+                self._problem(f"stopped by {who} ({reason})")
 
     def finished(self):
         """The job ran to the end. The next run - of this job or another - needs a new checklist:
@@ -368,6 +370,14 @@ class SafetyController:
             self.stop_category = cat if was_running else self.stop_category
         text, ref = FAULTS[code]
         self._event(f"STOP: {detail or text} [{ref}]" + (f" - category {self.stop_category} stop" if was_running else ""), "stop")
+        self._problem(detail or text)
+
+    def _problem(self, text):
+        """Something went wrong while a job was under way: it goes into that job's history entry."""
+        if self.job and self.job["started"] and self.job["state"] != "finished":
+            probs = self.job.setdefault("problems", [])
+            if len(probs) < 50:
+                probs.append({"time": time.strftime("%H:%M:%S"), "text": text})
 
     def _evaluate(self):
         """Watch every input and latch stops. Called on every status request and by a 10 Hz watchdog."""

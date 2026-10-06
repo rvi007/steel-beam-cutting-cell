@@ -3,7 +3,10 @@ Job history: every job that ran, kept in jobs/history.json (newest first) so the
 what was cut and when, and delete old entries.
 
     {"id", "name", "section", "what", "parts", "duration_s", "result": "finished" | "cleared",
-     "runs", "loaded", "ended"}
+     "runs", "loaded", "ended", "problems": [{"time", "text"}]}
+
+"problems" lists every stop while the job was under way (E-stop, gate, camera, load slipping, the
+Stop button...): an empty list means it ran clean.
 """
 import json
 import os
@@ -47,7 +50,8 @@ def add(job, result, details=None, path=PATH):
          "loaded": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(job["loaded_at"])) if job.get("loaded_at") else "",
          "ended": time.strftime("%Y-%m-%d %H:%M:%S"),
          "section": str(d.get("section", ""))[:60], "what": str(d.get("what", ""))[:200],
-         "parts": int(d.get("parts", 0) or 0), "duration_s": round(float(d.get("duration_s", 0) or 0), 1)}
+         "parts": int(d.get("parts", 0) or 0), "duration_s": round(float(d.get("duration_s", 0) or 0), 1),
+         "problems": [dict(p) for p in job.get("problems", [])]}
     with _lock:
         items = _load(path)
         items.insert(0, e)

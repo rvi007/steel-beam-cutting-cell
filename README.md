@@ -72,7 +72,8 @@ use the address the terminal prints (for example `http://192.168.1.20:8080`).
    press **+ Cut** to cut it, then **Plan these cuts** and **Run**.
 5. **E-STOP** (or the Esc key) while it runs: everything stops. Release it, press Reset, then Start to carry on.
 6. When a job finishes, the **Job finished** window asks what next: next bar, run again or **Delete this job**.
-   **Job history & saved jobs** (Machine tab) lists every job that ran, each with a **Delete** button.
+   **Job history & saved jobs** (Machine tab) lists every job that ran, whether it ran **clean** or was stopped
+   (each E-stop, gate or camera stop with its time), each with a **Delete** button.
 7. **Prototype tab**: the 1:10 prototype in 3D. Every part is numbered, matching the shopping list. Click a part to see what it is and where to buy it.
 8. **Camera tab**: start the camera and walk towards the machine. It slows down when you get close and stops when you get too close.
 9. **Sensors tab**: every sensor (two cameras, bar finding, torch, magnet, safety), the **bar check**, the **plasma settings**,

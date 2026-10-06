@@ -91,6 +91,11 @@ class Server(unittest.TestCase):
         hist = [h for h in self.get("/api/history")["history"] if h["name"] == "test bar"]
         self.assertEqual(len(hist), 1)
         self.assertEqual((hist[0]["result"], hist[0]["parts"], hist[0]["section"]), ("finished", 3, "UB 305x165x40"))
+        self.assertTrue(any("GATE" in p["text"].upper() for p in hist[0]["problems"]), hist[0]["problems"])   # the gate stop is in it
+        self.assertNotIn("history", self.get("/api/jobs"))                 # the history file isn't a saved job
+        with self.assertRaises(Exception):                                  # nor can a saved job overwrite it
+            self.post("/api/jobs/history", {"parts": []})
+        self.assertTrue(self.get("/api/history")["history"])
         left = self.post("/api/history-delete/" + hist[0]["id"], {})["history"]
         self.assertNotIn(hist[0]["id"], [h["id"] for h in left])
         st = self.get("/api/safety")
