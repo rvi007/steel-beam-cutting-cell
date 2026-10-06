@@ -32,13 +32,13 @@ export const app = {
 window.app = app;                         // handy in the browser console
 const $ = (id) => document.getElementById(id);
 
-export function toast(msg, bad = false) {
+export function toast(msg, bad = false, ms = 0) {
   const el = $("toast");
   el.textContent = msg;
   el.className = "toast" + (bad ? " bad" : "");
   el.hidden = false;
   clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => (el.hidden = true), bad ? 5000 : 2500);
+  toast.timer = setTimeout(() => (el.hidden = true), ms || (bad ? 5000 : 2500));
 }
 
 export function fmtTime(s) {
@@ -321,12 +321,24 @@ function jobName(plan) {
     : `${name} - bar ${plan.bar_index + 1} of ${plan.bar_count} (${plan.bar.section})`;
 }
 
+let lastT = 0;
+function barMeasured(st) {
+  const r = st && st.job && st.job.bar_check;
+  if (!r) return;
+  const m = r.measured || {};
+  toast(r.ok ? `\u2714 Bar measured - it matches the job: ${Math.round(m.length || 0).toLocaleString()} mm long (needs ${Math.round(r.needed_mm).toLocaleString()}), `
+    + `depth ${(m.depth || 0).toFixed(1)}, flange ${(m.width || 0).toFixed(1)} x ${(m.flange || 0).toFixed(1)}, web ${(m.web || 0).toFixed(1)} mm`
+    + `${(m.holes || []).length ? "" : ", no holes already in it"}` : "The bar doesn't match the job", !r.ok, 7000);
+}
+
 function showJobNow() {
   const st = safety.status, el = $("job-now");
   if (!el) return;
   const job = st && st.job;
   el.innerHTML = job ? `Loaded: <b>${job.name}</b> &middot; ${job.state === "finished" ? "finished" : job.state}
     &middot; checklist ${st.checklist_ok ? '<span class="good">done</span>' : '<span class="warn">needed</span>'}
+    &middot; bar ${!job.bar_check ? '<span class="muted">measured at Start</span>' : job.bar_check.ok
+      ? `<span class="good">&#10004; matches (${job.bar_check.time || ""})</span>` : '<span class="bad">&#10008; doesn\'t match</span>'}
     <button id="btn-job-clear" class="danger mini" title="Delete this job">Clear job</button>` : "No job loaded - plan a bar.";
   if ($("btn-job-clear")) $("btn-job-clear").onclick = () => clearJob();
 }
@@ -367,7 +379,7 @@ async function finishJob() {
   $("jd-again").onclick = async () => {
     dlg.close();
     if (before) { app.job.parts = before; await jobChanged(); app.barIndex = plan.bar_index; renderBars(); await planBar(); }
-    else { app.t = 0; loadJob(plan.jobName); updateTransport(); }
+    else { app.t = 0; loadJob(plan.jobName, plan.plan_id); updateTransport(); }      // a new bar: measured again at Start
     toast("Ready to run again - confirm the checklist first (Safety tab)");
   };
   $("jd-clear").onclick = async () => { dlg.close(); await clearJob(true); };
@@ -454,6 +466,11 @@ function frame(now) {
     updateSteel(app.t);
     const on = plan.cuts.some((c) => c.t_on <= app.t && app.t <= c.times[c.times.length - 1]);
     scene.torch(on && app.motion > 0 && st && st.torch_allowed, dt, app.motion > 0);
+    // the Cutter measuring the bar before it cuts; at the end, say what it found
+    const scan = plan.scan;
+    scene.scanLaser(!!scan && app.t >= scan.t0 && app.t < scan.t1);
+    if (scan && app.playing && lastT < scan.t1 && app.t >= scan.t1) barMeasured(st);
+    lastT = app.t;
   } else {
     for (const key of ["cutter", "handler"]) {
       const h = app.info.machine.hands[key];
