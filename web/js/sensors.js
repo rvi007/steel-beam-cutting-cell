@@ -10,7 +10,17 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 export const SIMULATE = { OBJECT: "bed_clear", LOAD: "load_secure", TORCH: "torch_ok", FIRE: "no_fire" };
 
 async function renderSensors() {
-  const { sensors, decisions } = await get("/api/sensors");
+  const { sensors, decisions, sim_modes: modes, sim_bar: mode } = await get("/api/sensors");
+  const sim = $("sn-simbar");
+  if (!sim.length) {
+    for (const [k, l] of Object.entries(modes)) sim.add(new Option(l, k));
+    sim.onchange = async () => {
+      await post("/api/sensors/simulate-bar", { mode: sim.value });
+      toast(`Simulated: ${sim.selectedOptions[0].text} on the bed - press Start on the Machine tab to see the bar check`);
+      measure();
+    };
+  }
+  sim.value = mode;
   let html = "", group = "";
   for (const s of sensors) {
     if (s.group !== group) {
@@ -41,7 +51,9 @@ async function renderSensors() {
 export function barCheckHtml(r) {
   if (!r) return "";
   if (r.error) return `<div class="bad">&#10008; ${esc(r.error)}</div>`;
+  const probs = (r.problems || []).map((p) => `<li><b>${esc(p.what)}</b>: ${esc(p.text)}</li>`).join("");
   return `<div class="${r.ok ? "good" : "bad"}"><b>${r.ok ? "&#10004;" : "&#10008;"} ${esc(r.result)}</b></div>
+    ${probs ? `<ul class="bar-problems small">${probs}</ul>` : ""}
     <div class="small">Start at x = <b>${r.start_x} mm</b> &middot; end at x = ${r.end_x} mm &middot; length <b>${r.length} mm</b>
       ${r.simulated ? '<span class="tag sim">simulated readings</span>' : ""}</div>
     <table class="list pl"><thead><tr><th>Check</th><th>Measured</th><th>Nominal</th><th>Allowed</th><th></th></tr></thead><tbody>

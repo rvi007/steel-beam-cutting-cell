@@ -124,6 +124,7 @@ class SafetyController:
         self.events = deque(maxlen=200)
         self.on_stop = None                     # called (code, text) for every stop while a job is under way
         self.on_reset = None                    # called after a Reset
+        self.bar_checker = None                 # called (job) at Start: measures the bar and checks it against the job
         path = log_path if log_path is not None else self.cfg.get("log_file", "")
         self.log_path = os.path.join(ROOT, path) if path and not os.path.isabs(path) else path
         self._event("power on - press Reset to start")
@@ -187,7 +188,7 @@ class SafetyController:
             self._event(f"pre-start checklist confirmed by {who}" + (f" for job '{self.job['name']}'" if self.job else ""))
 
     # ---------------------------------------------------------------- jobs: every job gets its own checklist
-    def load_job(self, name, who="screen"):
+    def load_job(self, name, who="screen", plan_id=None):
         """A job (a planned bar, or manual cuts) is loaded. The checklist done for an earlier job that
         ran doesn't count: the cell has changed (parts on the table, scrap in the tray)."""
         with self.lock:
@@ -196,16 +197,24 @@ class SafetyController:
             name = str(name)[:120] or "job"
             prev = self.job
             same = prev is not None and prev["name"] == name and prev["state"] != "finished"
+            if same and plan_id and prev.get("plan_id") != plan_id:   # planned again: the bar is checked again
+                prev.update(plan_id=plan_id, bar_check=None)
             if not same:
                 if self.checklist_ok and prev and prev["started"]:     # the last job ran: walk round again
                     self.checklist_ok = False
                     self.checklist_for = None
                 self.job = {"name": name, "state": "loaded", "started": False, "runs": 0, "loaded_at": time.time(),
-                            "problems": []}
+                            "problems": [], "plan_id": plan_id, "bar_check": None}
                 if self.checklist_ok:                       # nothing has run since it was confirmed: it carries over
                     self.checklist_for = name
                 self._event(f"job loaded: '{name}'" + ("" if self.checklist_ok else " - confirm the pre-start checklist for it"))
             return True, []
+
+    def recheck_bar(self):
+        """The bar on the bed may have changed: measure it again at the next Start."""
+        with self.lock:
+            if self.job and self.job.get("bar_check") and self.job["state"] != "running":
+                self.job["bar_check"] = None
 
     def clear_job(self, who="screen"):
         """The operator deletes the current job."""
@@ -277,6 +286,15 @@ class SafetyController:
             if why:
                 self._event("start refused: " + "; ".join(why), "warn")
                 return False, why
+            # safe to move: the Cutter measures the bar and it is checked against the job (once per bar)
+            job = self.job
+            if job.get("plan_id") and self.bar_checker and not (job.get("bar_check") or {}).get("ok"):
+                job["bar_check"] = result = self.bar_checker(job)
+                if not result["ok"]:
+                    why = ["bar check: " + p["text"] for p in result["problems"]]
+                    self._event("start refused - the bar doesn't match the job: " + "; ".join(p["text"] for p in result["problems"]), "warn")
+                    return False, why
+                self._event(f"bar check passed for '{job['name']}': the bar matches the job")
             if self.state != "RUNNING":
                 self.state = "RUNNING"
                 self.stop_category = None

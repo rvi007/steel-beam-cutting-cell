@@ -252,6 +252,8 @@
       <label class="row">Section <input id="sn-section" value="UB 305x165x40" size="16"></label>
       <label class="row">Length (mm) <input id="sn-length" type="number" value="12000" min="300" max="12000" step="10"></label>
       <button id="sn-measure" class="primary">Measure the bar</button>
+      <label class="row sim-bar" title="Simulation only: put a wrong bar on the bed to see Start refuse it">Bar on the bed
+        <select id="sn-simbar"></select></label>
       <div id="sn-bar" class="report"></div>
       <h2>Plasma settings</h2>
       <p class="muted small">How the torch finds the steel and holds its height, and the settings for each kind of cut.</p>
@@ -323,6 +325,12 @@
   <h3>Saved jobs</h3>
   <div class="scroll"><table class="list"><tbody id="saved-body"></tbody></table></div>
   <div class="toolbar"><button id="jobs-close" class="primary">Close</button></div>
+</dialog>
+<dialog id="bar-dlg" class="job-done bar-dlg">
+  <h2>&#9888; This bar doesn't match the job</h2>
+  <div id="bar-dlg-body"></div>
+  <div class="toolbar"><button id="bar-dlg-again" class="primary">Measure again and start</button><button id="bar-dlg-close">Close</button></div>
+  <p class="muted small">Fix the bar (or the job), then press <b>Measure again and start</b>. The job only starts when the bar matches.</p>
 </dialog>
 <dialog id="reports-dlg" class="job-done reports-dlg">
   <h2>Problem reports <span id="rep-count" class="muted"></span></h2>

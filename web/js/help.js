@@ -56,7 +56,9 @@ certified safety hardware.</p>
 <p>The <b>Sensors</b> tab lists every sensor: two cameras (the whole cell, and a close-up on the torch), the sensors that
 find and measure the bar, the torch's touch-off and height control, the magnet's current and load cell, and the safety devices.
 Sensors not fitted yet are <b>simulated</b>. Before cutting, the <b>bar check</b> finds where the bar starts and measures its
-real size and bow (BS EN 10034) - you'll see it under every plan. The table of stops says what the Cutter, the Handler and
+real size and bow (BS EN 10034) - you'll see it under every plan. When you press <b>Start</b> the bar is measured and checked
+against the job (section, thicknesses, length, every hole on the real steel, holes already in the bar). If it doesn't match,
+the job doesn't start and a window says exactly what's wrong. Try it: Sensors tab &rarr; <i>Bar on the bed</i>. The table of stops says what the Cutter, the Handler and
 you do for each one; <b>Simulate</b> an object on the bed or a slipping load to see it. The <b>plasma settings</b> change for
 each kind of cut - the Cutter's card shows them while it cuts. Details: <code>docs/SENSORS.md</code>, <code>docs/PLASMA.md</code>.</p>
 

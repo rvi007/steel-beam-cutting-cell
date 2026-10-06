@@ -6,6 +6,7 @@
 //   - holds the Manual-mode enable (hold-to-run) while the button is held down.
 import { get, post } from "./api.js";
 import { app, toast } from "./app.js";
+import { barCheckHtml } from "./sensors.js";
 
 const $ = (id) => document.getElementById(id);
 const client = Math.random().toString(36).slice(2, 10);
@@ -22,12 +23,26 @@ async function act(action, body = {}) {
   try {
     const st = await post("/api/safety/" + action, Object.assign({ who: "screen" }, body));
     accept(st);
-    if (st.ok === false) toast(`${action[0].toUpperCase() + action.slice(1)} refused: ${st.why.join("; ")}`, true);
+    if (st.ok === false && action === "start" && barFailed(st)) showBarCheck(st.job.bar_check);
+    else if (st.ok === false) toast(`${action[0].toUpperCase() + action.slice(1)} refused: ${st.why.join("; ")}`, true);
     return st;
   } catch (e) {
     toast(e.message, true);
     return null;
   }
+}
+
+// ---------------------------------------------------------------- the bar check at Start
+const barFailed = (st) => st.job && st.job.bar_check && !st.job.bar_check.ok;
+const escB = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+export function showBarCheck(r) {
+  $("bar-dlg-body").innerHTML = `<p>The Cutter measured the bar on the bed with the torch camera and the profile laser.
+      <b>It doesn't match this job, so the job hasn't started.</b></p>
+    <ol class="bar-problems">${r.problems.map((p) => `<li><b>${escB(p.what)}</b>: ${escB(p.text)}
+      <div class="fix">&rarr; ${escB(p.fix)}</div></li>`).join("")}</ol>
+    ${r.checks && r.checks.length ? `<details><summary>All the measurements</summary>${barCheckHtml(r)}</details>` : ""}`;
+  if (!$("bar-dlg").open) $("bar-dlg").showModal();
 }
 
 export async function estop() {
@@ -39,7 +54,7 @@ export const startMachine = () => act("start");
 export const stopMachine = (reason) => act("stop", { reason });
 export const jobFinished = (details) => act("finished", { details });
 // every planned job is registered with the safety controller: each one needs its own checklist
-export const loadJob = (name) => act("job", { name });
+export const loadJob = (name, planId) => act("job", { name, plan_id: planId });
 export const clearSafetyJob = (details) => act("clear-job", { details });
 
 function accept(st) {
@@ -177,6 +192,8 @@ export async function initSafety() {
   $("sf-reset").onclick = () => act("reset");
   $("sf-start").onclick = () => act("start");
   $("sf-stop").onclick = () => act("stop");
+  $("bar-dlg-close").onclick = () => $("bar-dlg").close();
+  $("bar-dlg-again").onclick = () => { $("bar-dlg").close(); $("btn-play").click(); };   // Start measures the bar again
   document.querySelectorAll("#sf-modes button").forEach((b) => (b.onclick = async () => {
     let lockout = false;
     if (b.dataset.mode === "MAINTENANCE") {

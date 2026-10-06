@@ -44,6 +44,33 @@ class Server(unittest.TestCase):
         self.post("/api/plasma/presets-delete/UB%20305x165x40%20S275", {})
         self.assertNotIn("UB 305x165x40 S275", [p["name"] for p in self.get("/api/plasma/presets")["presets"]])
 
+    def test_start_measures_the_bar_and_refuses_a_wrong_one(self):
+        from beamcell import sensors
+        plan = self.post("/api/manual/plan", {"section": "UB 305x165x40", "length": 3000, "cuts": [{"type": "cut", "x": 2000}],
+                                              "check": False})
+        self.assertTrue(plan["bar_check"]["ok"])
+        self.post("/api/safety/release", {"source": "screen"})
+        self.post("/api/safety/clear-job", {})
+        self.assertTrue(self.post("/api/safety/job", {"name": "bar check test", "plan_id": plan["plan_id"]})["ok"])
+        self.post("/api/safety/checklist", {})
+        self.post("/api/safety/reset", {})
+        self.post("/api/safety/tick", {"client": "test"})
+        try:
+            self.post("/api/sensors/simulate-bar", {"mode": "short"})
+            st = self.post("/api/safety/start", {})
+            self.assertFalse(st["ok"])
+            self.assertIn("short", st["why"][0])
+            self.assertFalse(st["job"]["bar_check"]["ok"])
+            self.post("/api/sensors/simulate-bar", {"mode": "ok"})          # the right bar loaded: measured again at Start
+            self.post("/api/safety/tick", {"client": "test"})
+            st = self.post("/api/safety/start", {})
+            self.assertTrue(st["ok"], st["why"])
+            self.assertTrue(st["job"]["bar_check"]["ok"])
+        finally:
+            sensors.SIM_BAR["mode"] = "ok"
+            self.post("/api/safety/stop", {})
+            self.post("/api/safety/finished", {})
+
     def test_reports_api(self):
         r = reports.record("ESTOP", "E-STOP pressed (test)", {"job": {"name": "t", "runs": 1}})
         reports.close_incident()

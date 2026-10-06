@@ -48,6 +48,7 @@ import socket
 import sys
 import time
 import traceback
+import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlparse
 
@@ -85,6 +86,18 @@ def _report_stop(code, text):
     })
 
 
+PLANS = {}                                  # plan id -> the bar it was planned for (the bar check at Start needs it)
+
+
+def _bar_check(job):
+    bar = PLANS.get(job.get("plan_id"))
+    if bar is None:
+        return {"ok": False, "checks": [], "problems": [{"what": "Plan", "text": "this job's plan is no longer on the machine (the app was restarted)",
+                                                        "fix": "Press Plan again, then Start."}]}
+    return sensors.job_check(bar)
+
+
+SAFETY.bar_checker = _bar_check
 SAFETY.on_stop = _report_stop
 SAFETY.on_reset = reports.close_incident
 
@@ -227,8 +240,12 @@ def plan_output(bar, body, i, count):
         "stock_section": dict(S.summary(bar.parts[0].sec), outline=S.outline(bar.parts[0].sec)[0],
                               plates=S.plates(bar.parts[0].sec)) if bar.parts else None,
         "collisions": len(hits), "planning_s": round(planned, 2),
-        "bar_check": sensors.measure_bar(bar.section_title, bar.length) if bar.parts else None,
+        "bar_check": sensors.job_check(bar) if bar.parts else None,      # a preview: it is measured for real at Start
     })
+    out["plan_id"] = uuid.uuid4().hex[:12]
+    PLANS[out["plan_id"]] = bar
+    while len(PLANS) > 30:
+        PLANS.pop(next(iter(PLANS)))
     return out
 
 
@@ -332,7 +349,8 @@ class Handler(BaseHTTPRequestHandler):
                                         "api_key_set": bool(os.environ.get("ANTHROPIC_API_KEY"))})
             if path == "/api/sensors":
                 return self._send(200, {"sensors": sensors.status(VISION.status()), "groups": sensors.GROUPS,
-                                        "decisions": safety_decisions()})
+                                        "decisions": safety_decisions(), "sim_modes": sensors.SIM_MODES,
+                                        "sim_bar": sensors.SIM_BAR["mode"]})
             if path == "/api/plasma/presets":
                 return self._send(200, {"presets": plasma_presets.entries(), "fields": plasma_presets.ROW,
                                         "ratings": plasma_presets.RATINGS, "grades": plasma_presets.GRADES,
@@ -384,6 +402,12 @@ class Handler(BaseHTTPRequestHandler):
                 bars = nest_all(parts_from(body), float(body.get("stock_length", 12000)))
                 return self._send(200, [dict(b.to_dict(), marks=[b.parts[pl["part"]].mark for pl in b.placements])
                                         for b in bars])
+            if path == "/api/sensors/simulate-bar":
+                if body.get("mode") not in sensors.SIM_MODES:
+                    raise ValueError("mode must be one of " + ", ".join(sensors.SIM_MODES))
+                sensors.SIM_BAR["mode"] = body["mode"]
+                SAFETY.recheck_bar()
+                return self._send(200, {"mode": body["mode"]})
             if path == "/api/sensors/measure":
                 return self._send(200, sensors.measure_bar(body["section"], float(body.get("length", 12000)), body.get("measured")))
             if path == "/api/plasma/presets":
@@ -464,7 +488,7 @@ class Handler(BaseHTTPRequestHandler):
                 history.add(job, "finished", body.get("details"))
         elif action in ("job", "clear-job"):
             job = SAFETY.job and dict(SAFETY.job)
-            ok, why = SAFETY.load_job(body.get("name", "job"), who) if action == "job" else SAFETY.clear_job(who)
+            ok, why = SAFETY.load_job(body.get("name", "job"), who, body.get("plan_id")) if action == "job" else SAFETY.clear_job(who)
             if ok and action == "clear-job" and job and job["started"] and job["state"] != "finished":
                 history.add(job, "cleared before the end", body.get("details"))
             return self._send(200, dict(SAFETY.status(), ok=ok, why=why))
