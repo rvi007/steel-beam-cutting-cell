@@ -72,7 +72,7 @@ Three detectors, best first - the app uses the best one it finds:
 | | Detector | Speed on the Orin Nano (estimate) | Finds |
 |---|---|---|---|
 | 1 | **YOLO on the GPU** (TensorRT engine, `models/*.engine`) | about 30+ pictures/s, CPU left free | people **and objects** |
-| 2 | YOLO on the CPU (`models/*.onnx`, OpenCV DNN) | a few pictures/s, busy CPU | people and objects |
+| 2 | YOLO on the CPU (`models/*.onnx`, OpenCV DNN) | a few pictures/s, busy CPU | people and objects - **needs OpenCV 4.7 or newer**: the Jetson's OpenCV 4.6 can't run YOLOv8 / YOLO11, so on this board it's the GPU or HOG |
 | 3 | HOG (built into OpenCV, no download) | slow, misses people side-on | people only |
 
 ### Set up YOLO on the GPU (once, about 15 minutes)
@@ -90,6 +90,8 @@ pip install ultralytics
 yolo export model=yolo11n.pt format=onnx imgsz=640 opset=17
 ```
 Copy `yolo11n.onnx` (about 10 MB) to `~/steel-beam-cutting-cell/models/` on the Jetson.
+(Checked: this file finds the people and the bus in Ultralytics' test photo with the app's own
+post-processing, the same as Ultralytics' reference results.)
 
 **3. Build the GPU engine on the Jetson** (close the browser first - it needs memory):
 ```
@@ -103,7 +105,8 @@ TensorRT version it was built on - build it again after a JetPack upgrade.
 The status line says which detector runs and how many pictures per second.
 `python3 -m beamcell.doctor` shows the line "YOLO on the GPU (TensorRT)".
 
-If the engine can't be loaded, the app says why and falls back to the CPU with the `.onnx`, then to HOG.
+If the engine can't be loaded, the app says why and falls back to the CPU with the `.onnx` (if this
+OpenCV can run it - it tries the model once when the camera starts), then to HOG.
 
 **Licence note:** Ultralytics YOLO models (YOLO11, YOLOv8) are AGPL-3.0. That's fine for this
 prototype and for research; selling a product that contains them needs an Ultralytics licence -
