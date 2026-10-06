@@ -126,3 +126,20 @@ class Reports(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MeasuringPass(unittest.TestCase):
+    def test_the_cutter_measures_the_bar_before_any_cut(self):
+        import numpy as np
+        from beamcell.machine import BEAM_Y
+        bar, _ = manual.build("UB 305x165x40", 6000, [{"type": "hole", "face": "v", "x": 800, "d": 22}, {"type": "cut", "x": 1500}])
+        plan = Plan(bar).build()
+        scan = plan.to_json()["scan"]
+        self.assertLess(scan["t0"], scan["t1"])
+        self.assertLessEqual(scan["t1"], min(c["t_on"] for c in plan.cuts))       # measured before the torch lights
+        xs = []
+        for t in np.linspace(scan["t0"], scan["t1"], 5):
+            tip = plan.cutter.tip(*plan.tc.at(t))[0]
+            self.assertAlmostEqual(tip[1], BEAM_Y, places=2)                         # straight above the bar
+            xs.append(tip[0])
+        self.assertGreater(xs[0] - xs[-1], 5.0)                                      # along (nearly) all of it

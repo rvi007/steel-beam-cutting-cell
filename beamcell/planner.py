@@ -42,6 +42,8 @@ LIFT = 0.25               # how high the Handler lifts a part to carry it
 STANDOFF = 0.003          # torch tip height above the steel (m)
 STEP_MM = 3.0             # spacing of path points along a cut
 KERF_COMP = 1.0           # holes are cut 1 mm inside the line (half the kerf)
+SCAN_SPEED = 0.6          # m/s, the Cutter measuring the bar before cutting (torch camera + profile laser)
+SCAN_HEIGHT = 0.25        # m above the top of the bar while measuring
 TRACK_OVER = 0.15         # cuts longer than this (m): the gantry travels with the torch
 
 R2 = math.sqrt(2)
@@ -335,6 +337,7 @@ class Plan:
         self.steps = []         # (time, who, text) for the status line
         self.warnings = []
         self.near = None        # Cutter waiting at an approach point with this torch direction
+        self.scan = None        # when the Cutter measures the bar: {t0, t1}
 
     # ---------------------------------------------------------------- helpers
     def _say(self, t, who, text):
@@ -419,6 +422,29 @@ class Plan:
         else:
             out = p[1] - (BEAM_Y - half)
         return (max(out, 0.0) + 0.06) / abs(d[1])
+
+    # ---------------------------------------------------------------- the bar check
+    def _scan(self):
+        """Before any cut: the Cutter drives along the bar, torch down, with the torch camera and the
+        profile laser - the bar check (beamcell/sensors.py job_check). From the far end back to the start,
+        so it ends where the first cut is."""
+        s = self.bar.parts[0].sec
+        z = BED_Z + s["h"] / 1000 + SCAN_HEIGHT
+        far = np.array([min(self.bar.length / 1000 - 0.05, X_LIMITS[1] - 0.5), BEAM_Y, z])
+        near = np.array([0.3, BEAM_Y, z])
+        g0, q = self._gantry_for(far, DOWN)
+        q, _, _ = self.cutter.solve(g0, far, DOWN, q)
+        t0 = self.tc.end
+        self._say(t0, "Cutter", "measuring the bar: torch camera + profile laser")
+        self._go(self.tc, g0, q)
+        g1 = g0 + (near - far)
+        g1[0] = max(g1[0], X_LIMITS[0])
+        T = max(np.linalg.norm(g1 - g0) / SCAN_SPEED, DT)
+        n = max(3, int(np.ceil(T / DT)) + 1)
+        sm = smooth(n)
+        t_scan = self._commit(self.tc, [(T * i / (n - 1), g0 + sm[i] * (g1 - g0), q) for i in range(n)])
+        self.scan = {"t0": round(float(t_scan), 2), "t1": round(float(self.tc.end), 2)}
+        self._say(self.tc.end, "Cutter", "bar measured - it matches the job")
 
     # ---------------------------------------------------------------- cutter
     def _gantry_for(self, p, d):
@@ -567,6 +593,8 @@ class Plan:
         bar = self.bar
         all_ops, warnings = bar_operations(bar)
         self.warnings += warnings
+        if bar.parts:
+            self._scan()
         scraps = {round(x1, 3): (x0, x1) for x0, x1 in bar.scraps}
         for k, pl in enumerate(bar.placements):
             part = bar.parts[pl["part"]]
@@ -676,5 +704,5 @@ class Plan:
                         "preset": self.preset["name"] if self.preset else None},
             "ops": [{k: op[k] for k in ("id", "placement", "kind", "label", "hole", "opening", "t_done", "d", "coped") if k in op}
                     for op in self.ops],
-            "carries": self.carries, "drops": self.drops,
+            "carries": self.carries, "drops": self.drops, "scan": self.scan,
         }

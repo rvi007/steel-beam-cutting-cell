@@ -261,6 +261,14 @@ export class CellScene {
     this.scene.add(this.arc);
     this.glow = new THREE.PointLight(0xffa040, 0, 1.6, 1.5);
     this.scene.add(this.glow);
+    // the profile laser while the Cutter measures the bar: a red fan of light from the torch down across the bar
+    const fan = new THREE.PlaneGeometry(0.42, 0.25);
+    fan.rotateY(Math.PI / 2);                       // spans across the bar (Y) and down (Z)
+    fan.translate(0, 0, -0.125);
+    this.laser = new THREE.Mesh(fan, new THREE.MeshBasicMaterial({ color: 0xff2a2a, transparent: true, opacity: 0.35,
+      side: THREE.DoubleSide, depthWrite: false }));
+    this.laser.visible = false;
+    this.scene.add(this.laser);
     const n = 260;
     this.sparkPos = new Float32Array(n * 3);
     this.sparkVel = new Float32Array(n * 3);
@@ -275,6 +283,11 @@ export class CellScene {
   }
 
   // Plasma arc, glow and sparks at the Cutter's tip. `emit`: throw new sparks (machine running).
+  scanLaser(on) {
+    this.laser.visible = on;
+    if (on) this.laser.position.copy(this.hands.cutter.tip);
+  }
+
   torch(on, dt, emit) {
     const H = this.hands.cutter;
     this.arc.visible = on;
