@@ -469,6 +469,8 @@ function frame(now) {
 async function start() {
   app.info = await get("/api/info");
   app.sections = await get("/api/sections");
+  $("version").textContent = "v " + (app.info.version || "").split(" ")[0];       // the git commit: shows a git pull + restart worked
+  $("version").title = "Software version " + app.info.version;
   const sel = $("stock-length");
   for (const m of app.info.codes.stock_lengths_m) sel.add(new Option(`${m} m`, m * 1000));
   // tabs

@@ -47,6 +47,7 @@ header.top { position: sticky; top: 0; z-index: 20; display: grid; grid-template
 .statusrow.green { background: linear-gradient(90deg, #067647, #12a150); }
 .statusrow.blue { background: linear-gradient(90deg, #1849a9, #2e72e8); }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: .12em; white-space: nowrap; font-size: 14px; color: #fff; }
+.version { font-weight: 500; letter-spacing: 0; font-size: 11px; opacity: .75; }
 .logo { color: #fff; opacity: .9; font-size: 18px; }
 .tabs { grid-column: 1; grid-row: 2; display: flex; align-items: center; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: none; padding: 0 8px; }
 .tabs::-webkit-scrollbar { display: none; }
