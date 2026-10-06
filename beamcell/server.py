@@ -284,7 +284,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if path == "/api/info":
                 return self._send(200, {
-                    "machine": machine.describe(), "families": S.FAMILY_NAMES,
+                    "machine": machine.describe(), "families": S.FAMILY_NAMES, "version": reports.VERSION,
                     "codes": {"bolts": UK.BOLTS, "standard_bolt": UK.STANDARD_BOLT, "hole_types": UK.HOLE_TYPES,
                               "hole_sizes": {b: {k: UK.hole_size(b, k) for k in UK.HOLE_TYPES} for b in UK.BOLTS},
                               "grades": UK.GRADES, "default_grade": UK.DEFAULT_GRADE,
@@ -531,7 +531,19 @@ def main(argv=None):
     camera = args.camera if args.camera is not None else (CONFIG["camera"]["source"] if CONFIG["camera"]["autostart"] else None)
     if camera is not None:
         print(VISION.configure({"enabled": True, "source": camera, "model": CONFIG["camera"]["model"]}).get("message", ""))
-    httpd = ThreadingHTTPServer((args.host, args.port), Handler)
+    try:
+        httpd = ThreadingHTTPServer((args.host, args.port), Handler)
+    except OSError as e:
+        if e.errno not in (98, 48):                     # 98 Linux / 48 macOS: address already in use
+            raise
+        print(f"\nCAN'T START: port {args.port} is already in use - Beam Cell (an older copy?) is already running.\n"
+              "Stop it first, then run ./start.sh again:\n"
+              "  - started at boot:        sudo systemctl restart beamcell   (this restarts it with the new version)\n"
+              "  - in another terminal:    press Ctrl+C there\n"
+              f"  - not sure:               pkill -f beamcell.server   (stops every copy)\n"
+              f"Or use another port:       ./start.sh --port {args.port + 1}")
+        sys.exit(1)
+    print(f"Beam Cell version {reports.VERSION}")
     print(f"Beam cutting cell running:\n  on this computer:   http://localhost:{args.port}\n"
           f"  from the network:   http://{lan_address()}:{args.port}\nPress Ctrl+C to stop.")
     try:
