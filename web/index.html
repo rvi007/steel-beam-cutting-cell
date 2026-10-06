@@ -247,6 +247,8 @@
       <div class="toolbar"><button id="btn-cam-on" class="primary">Start camera</button><button id="btn-cam-off">Stop</button></div>
       <p class="muted small">Amber WARNING zone: someone near - the machine slows to 25%.<br>
         Red DANGER zone: someone at the machine - protective stop until clear + Reset.<br>
+        Pink BED zone: an object left on the bed (bag, bottle, tool, phone...) is reported - and stops the machine if
+        <code>camera_object_stop = true</code> in config/cell.toml (YOLO only, not HOG).<br>
         Extra protection only - a camera with AI is not a safety-rated device (see Safety tab).</p>
       <h3>Warning zone</h3>
       <label class="row">Left <input data-zone="warning" data-i="0" type="range" min="0" max="1" step="0.01"></label>
@@ -258,6 +260,11 @@
       <label class="row">Top <input data-zone="danger" data-i="1" type="range" min="0" max="1" step="0.01"></label>
       <label class="row">Right <input data-zone="danger" data-i="2" type="range" min="0" max="1" step="0.01"></label>
       <label class="row">Bottom <input data-zone="danger" data-i="3" type="range" min="0" max="1" step="0.01"></label>
+      <h3>Bed zone <span class="muted small">objects lying here are reported</span></h3>
+      <label class="row">Left <input data-zone="bed" data-i="0" type="range" min="0" max="1" step="0.01"></label>
+      <label class="row">Top <input data-zone="bed" data-i="1" type="range" min="0" max="1" step="0.01"></label>
+      <label class="row">Right <input data-zone="bed" data-i="2" type="range" min="0" max="1" step="0.01"></label>
+      <label class="row">Bottom <input data-zone="bed" data-i="3" type="range" min="0" max="1" step="0.01"></label>
       <div id="cam-status" class="report"></div>
     </aside>
   </section>

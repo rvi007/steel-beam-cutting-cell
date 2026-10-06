@@ -59,7 +59,8 @@ WEB = os.path.join(ROOT, "web")
 EXAMPLES = os.path.join(ROOT, "examples", "nc1")
 JOBS = os.path.join(ROOT, "jobs")
 VISION = Vision(os.path.join(ROOT, "models"))
-VISION.configure({"zones": {"warning": CONFIG["camera"]["warning_zone"], "danger": CONFIG["camera"]["danger_zone"]}})
+VISION.configure({"zones": {"warning": CONFIG["camera"]["warning_zone"], "danger": CONFIG["camera"]["danger_zone"],
+                            "bed": CONFIG["camera"]["bed_zone"]}})
 SAFETY = SafetyController(vision=VISION)
 GPIO = GpioInputs(SAFETY, CONFIG["gpio"])
 

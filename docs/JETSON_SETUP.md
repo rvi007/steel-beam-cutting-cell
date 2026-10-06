@@ -65,34 +65,63 @@ When you checked, only ~365 MB was free and swap was full. To keep it smooth:
 Check a USB camera is seen with `ls /dev/video*`. A CSI camera can be tested with
 `nvgstcapture-1.0`.
 
-## Person detection (YOLO)
+## Person and object detection (YOLO) - on the GPU
 
-Two detectors:
+Three detectors, best first - the app uses the best one it finds:
 
-1. **Built in, no download**: OpenCV's HOG people detector. Works straight away with your
-   OpenCV 4.6. OK for a demo; it misses people who are far away or side-on.
-2. **YOLO** (much better): put a YOLO model exported to **ONNX** in the `models/` folder. It
-   runs through OpenCV's DNN module, so PyTorch isn't needed on the Jetson.
+| | Detector | Speed on the Orin Nano (estimate) | Finds |
+|---|---|---|---|
+| 1 | **YOLO on the GPU** (TensorRT engine, `models/*.engine`) | about 30+ pictures/s, CPU left free | people **and objects** |
+| 2 | YOLO on the CPU (`models/*.onnx`, OpenCV DNN) | a few pictures/s, busy CPU | people and objects |
+| 3 | HOG (built into OpenCV, no download) | slow, misses people side-on | people only |
 
-To get the ONNX file, on any PC with Python (not the Jetson - it saves memory and download):
+### Set up YOLO on the GPU (once, about 15 minutes)
+
+**1. Check TensorRT for Python is there** (it comes with JetPack):
+```
+python3 -c "import tensorrt; print(tensorrt.__version__)"
+```
+If that fails: `sudo apt install python3-libnvinfer` (or `sudo apt install nvidia-jetpack`).
+
+**2. Get the model as ONNX** - on any PC with Python, not the Jetson (it has no PyTorch, and
+it saves memory and download):
 ```
 pip install ultralytics
-yolo export model=yolo11n.pt format=onnx imgsz=320 opset=12
+yolo export model=yolo11n.pt format=onnx imgsz=640 opset=17
 ```
-Copy `yolo11n.onnx` to `~/steel-beam-cutting-cell/models/` and rename it `yolo11n_320.onnx` (the `320` in
-the name tells the app the picture size). It's about 10 MB. YOLOv8 (`yolov8n.pt`) and YOLOv5
-ONNX files work too. Then pick it in the **Camera** tab's *Detector* list.
+Copy `yolo11n.onnx` (about 10 MB) to `~/steel-beam-cutting-cell/models/` on the Jetson.
 
-The YOLO path was tested here with synthetic model output, not with a real model on your
-board - if OpenCV 4.6 refuses the file, export again with `opset=11`.
+**3. Build the GPU engine on the Jetson** (close the browser first - it needs memory):
+```
+cd ~/steel-beam-cutting-cell
+tools/make_trt_engine.sh
+```
+It makes `models/yolo11n.engine` (5-10 minutes; FP16). An engine only works on the GPU and
+TensorRT version it was built on - build it again after a JetPack upgrade.
+
+**4. Use it:** restart the app, **Camera** tab, *Detector* "YOLO on the GPU (TensorRT)", Start camera.
+The status line says which detector runs and how many pictures per second.
+`python3 -m beamcell.doctor` shows the line "YOLO on the GPU (TensorRT)".
+
+If the engine can't be loaded, the app says why and falls back to the CPU with the `.onnx`, then to HOG.
+
+**Licence note:** Ultralytics YOLO models (YOLO11, YOLOv8) are AGPL-3.0. That's fine for this
+prototype and for research; selling a product that contains them needs an Ultralytics licence -
+or a model under a permissive licence. The model files aren't kept in git.
 
 ## Camera zones
 
-Two boxes on the camera picture (set them with the sliders, defaults in `config/cell.toml`):
+Three boxes on the camera picture (set them with the sliders, defaults in `config/cell.toml`):
 - **Warning** (amber): someone's feet inside - the machine slows to 25%.
 - **Danger** (red): protective stop, latched until the zone is clear **and** Reset is pressed.
+- **Bed** (pink): YOLO objects lying on the roller bed - a bag, bottle, phone, tool... - are
+  listed on the Camera tab. With `camera_object_stop = true` (`[safety]` in `config/cell.toml`)
+  they also stop the machine (an OBJECT stop: the hands hold where they are). Leave it `false`
+  until you have watched it for a while - YOLO knows everyday objects (COCO), not every tool, and
+  a shadow or the steel itself must never stop a job. A model trained on your own photos of
+  tools on the bed would do better later.
 
-Set `require_camera = true` in `config/cell.toml` to stop the machine if the camera fails.
+Set `require_camera = true` to stop the machine if the camera fails.
 This is an extra layer only - see `SAFETY.md`.
 
 ## Real E-stop and buttons

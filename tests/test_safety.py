@@ -306,3 +306,15 @@ class Hazards(unittest.TestCase):
         sc, _ = make()
         sc.set_input("no_fire", False)
         self.assertIn("FIRE", [f["code"] for f in sc.tick()["latched"]])
+
+    def test_camera_object_on_bed_only_stops_when_switched_on(self):
+        for switched_on in (False, True):
+            sc, cam = make(camera_object_stop=switched_on)
+            run(sc)
+            cam.s.update(bed_blocked=True, objects_on_bed=["bottle"])
+            st = sc.tick()
+            self.assertEqual("OBJECT" in [f["code"] for f in st["latched"]], switched_on)
+            if switched_on:
+                self.assertTrue(any("bottle" in b for b in st["reset_blockers"]))
+                cam.s.update(bed_blocked=False, objects_on_bed=[])
+                self.assertTrue(sc.reset()[0])
