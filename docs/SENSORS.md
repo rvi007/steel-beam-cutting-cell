@@ -19,12 +19,33 @@ A cut that is 10 mm out is a scrapped part, so every production line **measures 
 |---|---|---|---|
 | 1. Is there a bar? | A light beam across the bed is broken by the bar | **Bar-present photo-eye** | IR break-beam pair |
 | 2. Where does it start? | A laser on the end stop measures the distance to the bar's end. That distance is the **x offset** every cut moves by | **Datum laser** | VL53L1X time-of-flight sensor |
-| 3. What shape is it really? | The Cutter runs along the bar with a **laser profile scanner**: real depth, flange width, out-of-square, bow, and where the far end is | **Profile scanner + gantry encoders** | Camera 2 + a line laser |
+| 3. What shape is it really? | The Cutter runs along the bar with a **laser profile scanner** and the **torch camera**: real depth, flange width, web and flange thickness, out-of-square, bow, where the far end is, and any holes already in the bar | **Profile scanner + torch camera + gantry encoders** | Camera 2 + a line laser |
 | 4. Where is the surface, right here? | Before every cut the torch touches the steel (**ohmic touch-off**). That is the true surface, so the cut height is right | **Torch touch-off** | Micro-switch on the sprung pen holder |
 | 5. Check | Every reading is compared with the BS EN 10034 tolerances. Out of tolerance means the machine doesn't start (wrong section, bent bar, bar not seated) | - | the same check, in software |
 
 The result is the **bar check**. It appears under every plan on the Machine tab, and you can try it
 on the Sensors tab. Today its readings are simulated: small, realistic and repeatable.
+
+### The bar check at Start: does this bar fit THIS job?
+
+When you press **Start**, and only once the safety checks have passed (Reset, checklist, gate,
+extraction), the Cutter measures the bar and checks it against the job before it cuts anything:
+
+| Check | Fails when |
+|---|---|
+| Section | depth, flange width, web or flange thickness is outside BS EN 10034 (usually the wrong section) |
+| Straightness | out of square or bowed more than BS EN 10034 allows |
+| Length | the bar is shorter than the job needs (up to its last cut) |
+| Holes on the real steel | a hole would break a UK rule (edge, end distance, root radius) on the bar as measured, even though it passes on the drawing: the steel is at the edge of its tolerance |
+| Holes already in the bar | the torch camera finds a hole that isn't in the job where a part will be (a used bar or offcut) |
+| A bar at all | the bar-present photo-eye sees nothing |
+
+If anything fails, **the job doesn't start**. A window lists each problem and what to do. Fix the bar
+(or the job), then press **Measure again and start**. A bar that passes isn't measured again when you
+pause and carry on; a new plan, a new run or a new bar is measured again.
+
+To try it without real steel, the Sensors tab has **Bar on the bed (simulation)**: put a short,
+bent, wrong, narrow or thin bar, or one with a hole already in it, on the bed, then press Start.
 
 ### How the big suppliers do it
 

@@ -308,3 +308,11 @@ dialog.reports-dlg h2 { color: var(--ink); }
 .plasma-pick select { flex: 1; min-width: 0; max-width: none; }
 .new-pz label.row { display: grid; grid-template-columns: 56px 1fr; }
 .new-pz label.row > * { width: 100%; min-width: 0; }
+
+/* the bar check at Start */
+dialog.bar-dlg { max-width: 680px; }
+dialog.bar-dlg h2 { color: var(--bad); }
+.bar-problems { margin: 8px 0; padding-left: 22px; }
+.bar-problems li { margin: 6px 0; }
+.bar-problems .fix { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.sim-bar { background: #eef4ff; border-radius: 8px; padding: 4px 8px; }

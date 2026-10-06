@@ -124,25 +124,66 @@ def tolerances(s, length_mm):
             "standard": "BS EN 10034" if s["kind"] == "I" else "BS EN 10034 values (check BS EN 10279 / 10056-2)"}
 
 
+def thickness_tolerance(t, flange):
+    """BS EN 10034 Table 2 thickness tolerances (mm): web s or flange t."""
+    if flange:
+        rows = [(6.5, (-0.5, 1.5)), (10, (-1.0, 2.0)), (20, (-1.5, 2.5)), (30, (-2.0, 2.5)), (40, (-2.5, 2.5)), (1e9, (-3.0, 3.0))]
+    else:
+        rows = [(7, (-0.7, 0.7)), (10, (-1.0, 1.0)), (20, (-1.5, 1.5)), (40, (-2.0, 2.0)), (1e9, (-2.5, 2.5))]
+    return next(tol for limit, tol in rows if t < limit)
+
+
 def _sim(seed, lo, hi):
     """A repeatable 'measured' deviation between lo and hi for the simulation."""
     v = int(hashlib.sha256(seed.encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
     return round(lo + (hi - lo) * v, 1)
 
 
-def measure_bar(section, length_mm, measured=None):
+# What the simulated sensors "see" on the bed - the Sensors tab can put a wrong bar there to try the check.
+SIM_MODES = {"ok": "the right bar", "short": "a bar too short for the job", "wrong_section": "the wrong section (bigger)",
+             "narrow_flange": "a bar with a narrow flange", "thin_flange": "a bar with a thin flange",
+             "existing_hole": "a bar that already has a hole", "bent": "a bent bar", "no_bar": "no bar on the bed"}
+SIM_BAR = {"mode": "ok"}
+
+
+def simulated_reading(s, length_mm, needed_mm=None, x_hole=None):
+    """What the simulated sensors measure: small, realistic, repeatable deviations - or the fault
+    chosen on the Sensors tab (SIM_BAR)."""
+    key = f"{s['title']}|{round(float(length_mm))}"
+    tol = tolerances(s, length_mm)
+    tw, tf = s.get("tw", s.get("t", 0)), s.get("tf", s.get("t", 0))
+    m = {"start_x": _sim(key + "x", -6, 6), "length": length_mm + _sim(key + "L", 0, 8),
+         "depth": s["h"] + _sim(key + "h", -1.0, 2.0), "width": s.get("b", s["h"]) + _sim(key + "b", -1.0, 1.5),
+         "web": tw + _sim(key + "tw", -0.2, 0.3), "flange": tf + _sim(key + "tf", -0.3, 0.5),
+         "out_of_square": _sim(key + "q", 0.2, tol["out_of_square"] * 0.6),
+         "bow": _sim(key + "w", 0.5, tol["bow"] * 0.4), "present": True, "holes": []}
+    mode = SIM_BAR["mode"]
+    if mode == "short":
+        m["length"] = round((needed_mm or length_mm) - 120, 1)
+    elif mode == "wrong_section":
+        m.update(depth=s["h"] + 8.2, width=m["width"] + 1.6, web=tw + 1.2, flange=tf + 3.0)
+    elif mode == "narrow_flange":
+        m["width"] = s.get("b", s["h"]) - 4.5
+    elif mode == "thin_flange":
+        m["flange"] = tf - 2.2
+    elif mode == "existing_hole":
+        m["holes"] = [{"x": round(x_hole if x_hole is not None else length_mm / 3), "face": "v", "y": round(s["h"] / 2), "d": 22}]
+    elif mode == "bent":
+        m["bow"] = round(tol["bow"] * 1.8, 1)
+    elif mode == "no_bar":
+        m["present"] = False
+    return m
+
+
+def measure_bar(section, length_mm, measured=None, needed_mm=None, x_hole=None):
     """The bar check before cutting. With real sensors, `measured` holds their readings; without,
     the readings are simulated (small, realistic, repeatable deviations).
     Returns the readings, the tolerance checks and the offsets the machine applies."""
-    s = S.get(section)
+    s = section if isinstance(section, dict) else S.get(section)
     tol = tolerances(s, length_mm)
-    key = f"{s['title']}|{round(float(length_mm))}"
     simulated = measured is None
     if simulated:
-        measured = {"start_x": _sim(key + "x", -6, 6), "length": length_mm + _sim(key + "L", -3, 8),
-                    "depth": s["h"] + _sim(key + "h", -1.0, 2.0), "width": s.get("b", s["h"]) + _sim(key + "b", -1.0, 1.5),
-                    "out_of_square": _sim(key + "q", 0.2, tol["out_of_square"] * 0.6),
-                    "bow": _sim(key + "w", 0.5, tol["bow"] * 0.4), "present": True}
+        measured = simulated_reading(s, length_mm, needed_mm, x_hole)
     checks = []
 
     def check(name, value, nominal, lo, hi, unit="mm"):
@@ -152,20 +193,116 @@ def measure_bar(section, length_mm, measured=None):
                        "allowed": f"{lo:+g} / {hi:+g} {unit}", "ok": ok})
 
     if not measured.get("present", True):
-        return {"ok": False, "simulated": simulated, "error": "no bar on the bed (bar-present photo-eye)", "checks": []}
+        return {"ok": False, "simulated": simulated, "error": "no bar on the bed (bar-present photo-eye)", "checks": [],
+                "measured": measured, "section": s["title"]}
     check("depth (h)", measured["depth"], s["h"], *tol["depth"])
     check("flange width (b)", measured["width"], s.get("b", s["h"]), *tol["width"])
+    if "web" in measured:
+        tw = s.get("tw", s.get("t", 0))
+        check("web thickness", measured["web"], tw, *thickness_tolerance(tw, False))
+    if "flange" in measured:
+        tf = s.get("tf", s.get("t", 0))
+        check("flange thickness", measured["flange"], tf, *thickness_tolerance(tf, True))
     check("out of square", measured["out_of_square"], 0, 0, tol["out_of_square"])
     check(f"bow over {length_mm / 1000:.1f} m", measured["bow"], 0, 0, tol["bow"])
-    check("length", measured["length"], length_mm, -5, 50)
+    if needed_mm is None:
+        check("length", measured["length"], length_mm, -5, 50)
     ok = all(c["ok"] for c in checks)
-    return {"ok": ok, "simulated": simulated, "section": s["title"], "standard": tol["standard"],
+    return {"ok": ok, "simulated": simulated, "section": s["title"], "standard": tol["standard"], "measured": measured,
             "start_x": measured["start_x"], "end_x": round(measured["start_x"] + measured["length"], 1),
             "length": round(measured["length"], 1), "checks": checks,
             "offsets": {"x_mm": measured["start_x"], "depth_mm": round(measured["depth"] - s["h"], 1)},
             "how": ["bar-present photo-eye: a bar is on the bed",
                     "datum laser: finds the bar's start - every cut moves by that much",
-                    "Cutter runs along the bar with the profile scanner: real depth, width, out-of-square, bow and the far end",
+                    "Cutter runs along the bar with the profile scanner and the torch camera: real depth, width, "
+                    "web and flange thickness, out-of-square, bow, the far end and any holes already in the bar",
                     "torch touch-off before every cut: the real surface, so the cut height is right"],
             "result": ("Bar is within tolerance - every cut is shifted to the real bar" if ok else
                        "Bar is OUT of tolerance - check it before cutting (wrong section, bent bar, or not seated on the rollers)")}
+
+
+def _needed_length(bar):
+    """How much steel the job needs: up to its last cut (a piece left on the bed doesn't count)."""
+    cut = [pl["x1"] for pl in bar.placements if not pl.get("keep")]
+    return max(cut) if cut else 0.0
+
+
+def job_check(bar, measured=None):
+    """The check before Start: measure the bar on the bed, then check it against THIS job -
+    the right section, enough length, and every hole still meeting the UK rules on the real steel.
+    Returns {ok, problems: [{what, text, fix}], checks, ...}; Start is refused unless ok."""
+    from beamcell.parts import Part                # here: parts imports a lot, sensors is imported early
+    if not bar.parts:
+        return {"ok": True, "problems": [], "checks": [], "needed_mm": 0}
+    s = bar.parts[0].sec
+    needed = _needed_length(bar)
+    first = bar.placements[0] if bar.placements else None
+    r = measure_bar(s, bar.length, measured, needed_mm=needed,
+                    x_hole=(first["x0"] + first["x1"]) / 2 if first else None)
+    problems = []
+    if r.get("error"):
+        problems.append({"what": "No bar", "text": "No bar was found on the bed.",
+                         "fix": "Load the bar and seat it against the end stop, then press Start again."})
+        r.update(ok=False, problems=problems, needed_mm=round(needed, 1), time=_now())
+        return r
+    m = r["measured"]
+    names = {"depth (h)": "Depth", "flange width (b)": "Flange width", "web thickness": "Web thickness",
+             "flange thickness": "Flange thickness", "out of square": "Out of square"}
+    for c in r["checks"]:
+        if not c["ok"]:
+            if c["what"].startswith("bow"):
+                problems.append({"what": "Bent bar", "text": f"The bar is bowed {c['measured']} mm; up to {c['allowed'].split('/')[1].strip().lstrip('+')} is allowed.",
+                                 "fix": "Straighten the bar, or seat it properly on the rollers, then press Start again."})
+            else:
+                problems.append({"what": names.get(c["what"], c["what"]),
+                                 "text": f"{names.get(c['what'], c['what'])} is {c['measured']} mm; {r['section']} should be {c['nominal']} mm "
+                                         f"({c['allowed']}).",
+                                 "fix": "Check the bar is the section the job needs (look at the label / mill cert)."})
+    # enough steel?
+    have = m["length"]
+    r["needed_mm"] = round(needed, 1)
+    r["checks"].append({"what": "length for this job", "measured": round(have, 1), "nominal": round(needed, 1),
+                        "deviation": round(have - needed, 1), "allowed": "at least what the job needs", "ok": have >= needed - 0.5})
+    if have < needed - 0.5:
+        problems.append({"what": "Bar too short", "text": f"The job needs {needed:,.0f} mm of steel; this bar is {have:,.0f} mm "
+                                                          f"({needed - have:,.0f} mm short).",
+                         "fix": "Load a longer bar, or take the last part off the job."})
+    # every hole on the real section: the same UK checks as the Parts tab, with the measured sizes
+    real = dict(s, h=m["depth"], b=m["width"])
+    if "web" in m:
+        real["tw" if "tw" in s else "t"] = m["web"]
+    if "flange" in m and "tf" in s:
+        real["tf"] = m["flange"]
+    seen = set()
+    for pl in bar.placements:
+        part = bar.parts[pl["part"]]
+        if part.mark in seen or pl.get("scrap"):
+            continue
+        seen.add(part.mark)
+        nominal_items = {i["item"] for i in part.check() if i["level"] == "error"}
+        on_real = Part.from_dict(dict(part.to_dict(), custom=real))
+        for i in on_real.check():
+            if i["level"] == "error" and i["item"].startswith(("hole", "slot")) and i["item"] not in nominal_items:
+                problems.append({"what": f"{part.mark}: {i['item']}",
+                                 "text": f"On the real bar: {i['text']}" + (f" ({i['ref']})" if i.get("ref") else "") + ".",
+                                 "fix": "The steel is at the edge of its tolerance: use another bar, or move the hole (Parts tab)."})
+    # holes already in the bar, where a part will be
+    for h in m.get("holes", []):
+        inside = next((bar.parts[pl["part"]].mark for pl in bar.placements
+                       if pl["x0"] <= h["x"] - m["start_x"] <= pl["x1"] and not pl.get("scrap")), None)
+        if inside:
+            problems.append({"what": "Hole already in the bar",
+                             "text": f"The torch camera found a {h['d']} mm hole at x = {h['x']:,} mm that isn't in this job - "
+                                     f"it would end up in part {inside}.",
+                             "fix": "This looks like a used bar or an offcut. Use a new bar, or put this one aside."})
+    r["ok"] = not problems
+    r["problems"] = problems
+    r["time"] = _now()
+    r["result"] = ("The bar matches the job - every cut is shifted to the real bar" if r["ok"]
+                   else f"The bar doesn't match this job ({len(problems)} problem{'s' if len(problems) > 1 else ''})")
+    return r
+
+
+def _now():
+    import time
+    return time.strftime("%H:%M:%S")

@@ -66,3 +66,43 @@ class Sensors(unittest.TestCase):
         t = sensors.tolerances(S.get("UB 305x165x40"), 12000)
         self.assertEqual(t["depth"], (-2, 4))
         self.assertAlmostEqual(t["bow"], 18.0)
+
+
+class JobCheck(unittest.TestCase):
+    """The bar on the bed is measured at Start and checked against the job."""
+
+    def setUp(self):
+        from beamcell import manual
+        self.bar, _ = manual.build("UB 305x165x40", 6000, [{"type": "hole", "face": "v", "x": 800, "d": 22},
+                                                           {"type": "hole", "face": "o", "x": 500, "y": 138.5, "d": 22},
+                                                           {"type": "cut", "x": 1500}])
+
+    def tearDown(self):
+        sensors.SIM_BAR["mode"] = "ok"
+
+    def test_the_right_bar_passes(self):
+        r = sensors.job_check(self.bar)
+        self.assertTrue(r["ok"], r["problems"])
+        self.assertEqual(r["needed_mm"], 1500)
+        self.assertTrue({"web thickness", "flange thickness", "length for this job"} <= {c["what"] for c in r["checks"]})
+
+    def test_every_wrong_bar_is_refused_with_a_reason(self):
+        expect = {"short": "short", "wrong_section": "Depth", "narrow_flange": "Flange width", "thin_flange": "Flange thickness",
+                  "existing_hole": "hole", "bent": "bowed", "no_bar": "No bar"}
+        for mode, word in expect.items():
+            sensors.SIM_BAR["mode"] = mode
+            r = sensors.job_check(self.bar)
+            self.assertFalse(r["ok"], mode)
+            self.assertTrue(any(word in p["text"] for p in r["problems"]), (mode, r["problems"]))
+            self.assertTrue(all(p["fix"] for p in r["problems"]))
+
+    def test_a_hole_at_the_edge_fails_on_a_narrower_real_flange(self):
+        m = sensors.simulated_reading(self.bar.parts[0].sec, 6000, 1500)
+        m["width"] = 164.0                                   # 1 mm narrow: inside the rolling tolerance
+        r = sensors.job_check(self.bar, m)
+        self.assertFalse(r["ok"])
+        self.assertIn("edge distance", r["problems"][0]["text"])
+
+    def test_thickness_tolerances(self):
+        self.assertEqual(sensors.thickness_tolerance(10.2, True), (-1.5, 2.5))
+        self.assertEqual(sensors.thickness_tolerance(6.0, False), (-0.7, 0.7))

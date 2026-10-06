@@ -156,7 +156,7 @@ export function loadPlan(plan) {
   app.plan = plan;
   app.t = 0;
   plan.jobName = jobName(plan);
-  loadJob(plan.jobName).then(showJobNow);
+  loadJob(plan.jobName, plan.plan_id).then(showJobNow);
   const s = plan.summary;
   $("plan-info").innerHTML = `<table>
     <tr><td>Cycle time</td><td><b>${fmtTime(s.duration_s)}</b></td></tr>
@@ -168,8 +168,10 @@ export function loadPlan(plan) {
     <tr><td>Plasma</td><td>${plan.process ? plan.process.label : "-"}<br><span class="small ${plan.process && plan.process.preset ? "good" : "muted"}">${
       plan.process && plan.process.preset ? "saved settings: " + plan.process.preset : "cut chart values"}</span></td></tr>
     </table><div class="muted small">Planned in ${plan.planning_s} s</div>
-    ${plan.bar_check ? `<details class="bar-check"><summary class="${plan.bar_check.ok ? "good" : "bad"}">Bar check: ${plan.bar_check.ok ? "within tolerance" : "OUT of tolerance"}
-      ${plan.bar_check.simulated ? "(simulated)" : ""}</summary>${barCheckHtml(plan.bar_check)}</details>` : ""}`;
+    ${plan.bar_check ? `<details class="bar-check"><summary class="${plan.bar_check.ok ? "good" : "bad"}">Bar check: ${plan.bar_check.ok
+      ? "the bar on the bed matches the job" : `the bar doesn't match the job (${plan.bar_check.problems.length})`}
+      ${plan.bar_check.simulated ? "(simulated)" : ""}</summary><div class="muted small">Measured again when you press Start - the job only
+      starts if the bar matches.</div>${barCheckHtml(plan.bar_check)}</details>` : ""}`;
   $("plan-warnings").innerHTML = plan.warnings.map((w) => `<div>&#9888; ${w}</div>`).join("");
   $("scrub").max = s.duration_s;
   buildSteel();
@@ -495,7 +497,8 @@ async function start() {
     if (!app.plan) return;
     if (app.t >= app.plan.summary.duration_s - 1e-6) app.t = 0;
     const r = await startMachine();
-    if (r && r.ok === false) toast("Can't start: " + r.why.join("; ") + " (see the Safety tab)", true);
+    if (r && r.ok === false && !(r.job && r.job.bar_check && !r.job.bar_check.ok))   // a bar that doesn't match has its own window
+      toast("Can't start: " + r.why.join("; ") + " (see the Safety tab)", true);
   };
   $("btn-restart").onclick = () => { if (app.playing) stopMachine("back to start"); app.t = 0; updateTransport(); };
   $("scrub").oninput = (e) => {

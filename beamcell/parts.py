@@ -252,7 +252,7 @@ class Part:
                 if c + half_y > hi + 1e-6:
                     add("error", f"runs into the flange root (the hole edge must be below {hi:.0f} mm)")
             elif s["h"] - c < mins["e2"] - 1e-6:
-                add("error", f"edge distance {s['h'] - c:.0f} mm, minimum {mins['e2']:.0f}",
+                add("error", f"edge distance {s['h'] - c:.1f} mm, minimum {mins['e2']:.1f}",
                     "BS EN 1993-1-8 Table 3.3 (e2 >= 1.2 d0)")
         else:
             if k == "I":
@@ -265,7 +265,7 @@ class Part:
             if clear < -1e-6:
                 add("error", "runs into the web root radius" if k == "I" else "runs into the root radius")
             if edge < mins["e2"] - 1e-6:
-                add("error", f"edge distance {edge:.0f} mm, minimum {mins['e2']:.0f}",
+                add("error", f"edge distance {edge:.1f} mm, minimum {mins['e2']:.1f}",
                     "BS EN 1993-1-8 Table 3.3 (e2 >= 1.2 d0)")
         outline = self.face_outline(face)
         if not inside(outline, hole["x"], hole["y"]):
@@ -275,7 +275,7 @@ class Part:
             near = min(_dist_to_polyline(ch["points"], hole["x"], hole["y"]) for ch in chains) if chains else 1e9
             e1 = near - (half_x - d / 2)
             if e1 < mins["e1"] - 1e-6:
-                add("error", f"end distance {e1:.0f} mm, minimum {mins['e1']:.0f}",
+                add("error", f"end distance {e1:.1f} mm, minimum {mins['e1']:.1f}",
                     "BS EN 1993-1-8 Table 3.3 (e1 >= 1.2 d0)")
         return out
 

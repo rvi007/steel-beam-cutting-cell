@@ -283,6 +283,22 @@ await until("delete button missing", () => document.getElementById("pz-del"));
 await page.click("#pz-del");
 await until("plasma settings not deleted", () => ![...document.querySelectorAll("[data-pz]")].some((b) => b.dataset.pz === "Smoke test UB 305") && app.plasma === "");
 
+// bar check at Start: a bar too short for the job is refused with a window that says why; the right bar starts
+const api = (u, x = {}) => page.evaluate(([u, x]) => fetch(u, { method: "POST", body: JSON.stringify(x) }).then((r) => r.json()), [u, x]);
+await api("/api/sensors/simulate-bar", { mode: "short" });
+await api("/api/safety/release", { source: "screen" });
+await api("/api/safety/reset");
+await api("/api/safety/checklist");
+await page.click(".tabs button[data-tab=cell]");
+await page.click("#btn-play");
+await until("no bar check window for a short bar", () => document.getElementById("bar-dlg").open && document.getElementById("bar-dlg-body").textContent.includes("short"));
+if (await page.evaluate(() => app.playing)) fail("the job started on a bar that is too short");
+await shot("11_bar_check");
+await api("/api/sensors/simulate-bar", { mode: "ok" });
+await page.click("#bar-dlg-again");
+await until("the job didn't start once the right bar was on the bed", () => app.playing);
+await page.click("#btn-play");                               // pause
+
 // problem reports: the E-stop during the job above saved one; it opens with the full text
 await page.click("#btn-reports");
 await until("no problem report after the E-stop", () => document.querySelector("#rep-list [data-rep]") && document.querySelector(".rep-text")
@@ -295,5 +311,5 @@ for (const tab of ["camera", "help", "safety", "cell"]) {
   await page.waitForTimeout(500);
 }
 if (errors.length) fail("JavaScript errors:\n" + errors.join("\n"));
-console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; job finished -> bar leaves the job, history, delete one part; NC1 import; editor checks; manual cut (click, check, plan); CAD model + files; prototype assembly; sensors + bar check + load slip; plasma settings saved, used, deleted; problem report; STL ${fs.statSync(file).size} bytes`);
+console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; job finished -> bar leaves the job, history, delete one part; NC1 import; editor checks; manual cut (click, check, plan); CAD model + files; prototype assembly; sensors + bar check + load slip; plasma settings saved, used, deleted; bar check refuses a short bar; problem report; STL ${fs.statSync(file).size} bytes`);
 await browser.close();
