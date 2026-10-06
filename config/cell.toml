@@ -9,6 +9,8 @@ estop_category = 0              # BS EN 60204-1 stop category for the E-stop: 0 
 protective_stop_category = 1    # gate / light curtain / person in danger zone
 require_extraction = true       # no plasma cutting unless fume extraction is running (COSHH, LEV)
 require_camera = false          # true: the machine won't run unless the camera is working
+camera_object_stop = false      # true: an object YOLO sees lying on the bed (camera bed zone) stops the machine.
+                                # Leave false until you've watched it on the Camera tab - a shadow must not stop a job
 camera_stale_s = 1.5            # camera counts as failed if no picture for this long
 heartbeat_timeout_s = 2.0       # the operator screen must check in this often, or the machine stops
 warning_speed = 0.25            # speed when someone is in the camera's warning zone
@@ -36,6 +38,7 @@ autostart = false
 model = ""                      # a YOLO .onnx file in models/ (empty = first one found, else HOG)
 warning_zone = [0.05, 0.15, 0.95, 1.0]   # left, top, right, bottom as fractions of the picture
 danger_zone  = [0.25, 0.35, 0.75, 1.0]
+bed_zone     = [0.15, 0.45, 0.85, 0.85] # the roller bed in the picture: objects lying here are reported
 
 [gpio]
 # Optional wiring of real buttons/switches to the Orin's 40-pin header (BOARD pin numbers).

@@ -18,14 +18,15 @@ PATH = os.path.join(ROOT, "config", "cell.toml")
 DEFAULTS = {
     "safety": {
         "estop_category": 0, "protective_stop_category": 1, "require_extraction": True,
-        "require_camera": False, "camera_stale_s": 1.5, "heartbeat_timeout_s": 2.0,
+        "require_camera": False, "camera_object_stop": False, "camera_stale_s": 1.5, "heartbeat_timeout_s": 2.0,
         "warning_speed": 0.25, "manual_speed_mm_s": 250, "log_file": "logs/safety_log.jsonl",
         "checklist": ["Outfeed table and scrap tray cleared from the last job", "Fence and gate closed", "Nobody inside the cell", "Fume extraction running",
                       "E-stops tested this shift", "PPE on"],
         "light_curtain": {"resolution_mm": 30, "response_ms": 20, "machine_stop_ms": 600},
     },
     "camera": {"source": "auto", "autostart": False, "model": "",
-               "warning_zone": [0.05, 0.15, 0.95, 1.0], "danger_zone": [0.25, 0.35, 0.75, 1.0]},
+               "warning_zone": [0.05, 0.15, 0.95, 1.0], "danger_zone": [0.25, 0.35, 0.75, 1.0],
+               "bed_zone": [0.15, 0.45, 0.85, 0.85]},
     "gpio": {"enabled": False, "estop_pin": 0, "gate_pin": 0, "curtain_pin": 0, "reset_pin": 0, "poll_hz": 50},
     "assistant": {"enabled": False, "model": "claude-opus-5-5", "effort": "low", "send_camera": True},
     "plasma": {"process": "o2"},
@@ -53,7 +54,7 @@ def problems(cfg):
         out.append("safety.warning_speed must be between 0 and 1")
     if s["manual_speed_mm_s"] > 250:
         out.append("safety.manual_speed_mm_s above 250 mm/s is not 'reduced speed' (BS EN ISO 10218-1)")
-    for name in ("warning_zone", "danger_zone"):
+    for name in ("warning_zone", "danger_zone", "bed_zone"):
         z = cfg["camera"][name]
         if len(z) != 4 or not (0 <= z[0] < z[2] <= 1 and 0 <= z[1] < z[3] <= 1):
             out.append(f"camera.{name} must be [left, top, right, bottom] fractions between 0 and 1")

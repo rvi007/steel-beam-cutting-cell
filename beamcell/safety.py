@@ -342,8 +342,9 @@ class SafetyController:
             out.append("switch on the fume extraction")
         if not self.gpio_ok:
             out.append("fix the safety input wiring")
-        if not self.inputs["bed_clear"]:
-            out.append("take the object off the bed")
+        if not self.inputs["bed_clear"] or (self.cfg.get("camera_object_stop") and cam.get("bed_blocked")):
+            out.append("take the object off the bed" + (f" (camera 1 sees: {', '.join(cam.get('objects_on_bed') or [])})"
+                                                         if cam.get("bed_blocked") else ""))
         if not self.inputs["load_secure"]:
             out.append("set the Handler's part down and check the magnet")
         if not self.inputs["torch_ok"]:
@@ -392,7 +393,7 @@ class SafetyController:
                 self._latch("HEARTBEAT")
             if self.cfg["require_extraction"] and not self.inputs["extraction_on"]:
                 self._latch("EXTRACTION")
-            if not self.inputs["bed_clear"]:
+            if not self.inputs["bed_clear"] or (self.cfg.get("camera_object_stop") and cam.get("bed_blocked")):
                 self._latch("OBJECT")
         if active:                              # the Handler can be holding a part while paused
             if not self.inputs["load_secure"]:
@@ -432,7 +433,8 @@ class SafetyController:
                              "decision": DECISIONS.get(c)}
                             for c, t in self.latched.items()],
                 "inputs": dict(self.inputs), "input_source": dict(self.input_source),
-                "camera": {k: cam.get(k) for k in ("enabled", "in_warning", "in_danger", "people", "detector")},
+                "camera": {k: cam.get(k) for k in ("enabled", "in_warning", "in_danger", "people", "detector",
+                                                   "objects_on_bed", "bed_blocked")},
                 "checklist_ok": self.checklist_ok, "checklist": self.cfg["checklist"],
                 "checklist_for": self.checklist_for, "job": dict(self.job) if self.job else None,
                 "can_reset": not blockers and self.mode != MAINTENANCE, "reset_blockers": blockers,

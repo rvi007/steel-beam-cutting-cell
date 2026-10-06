@@ -98,8 +98,15 @@ def checks():
         csi = "nvarguscamerasrc" in _run(["gst-inspect-1.0", "nvarguscamerasrc"])
         add("CSI camera support", OK if csi else INFO, "nvarguscamerasrc found" if csi else "nvarguscamerasrc not found")
     models = sorted(os.path.basename(p) for p in glob.glob(os.path.join(ROOT, "models", "*.onnx")))
-    add("YOLO models", OK if models else WARN, ", ".join(models) or "none in models/",
-        "" if models else "Export yolo11n to ONNX on a PC and copy it to models/ (docs/JETSON_SETUP.md); HOG works meanwhile")
+    engines = sorted(os.path.basename(p) for p in glob.glob(os.path.join(ROOT, "models", "*.engine")))
+    add("YOLO models", OK if models or engines else WARN, ", ".join(engines + models) or "none in models/",
+        "" if models or engines else "Copy yolo11n.onnx to models/ (docs/JETSON_SETUP.md, 'YOLO on the GPU'); HOG works meanwhile")
+    from beamcell.trt_runner import available
+    gpu, why = available()
+    add("YOLO on the GPU (TensorRT)", OK if gpu and engines else WARN if gpu else INFO,
+        (f"TensorRT {why}, engine: {', '.join(engines)}" if engines else f"TensorRT {why} ready - no engine built yet") if gpu else why,
+        "" if engines or not gpu else ("tools/make_trt_engine.sh  (builds the GPU engine from the .onnx, 5-10 min)" if models
+                                       else "first copy yolo11n.onnx to models/, then: tools/make_trt_engine.sh"))
     chips = sorted(glob.glob("/dev/gpiochip*"))
     add("GPIO chips", INFO, ", ".join(chips) or "none")
     try:

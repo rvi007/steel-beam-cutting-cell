@@ -3,12 +3,19 @@ Camera + person detection for the safety zone (optional - the cell runs without 
 
     Camera   "auto" (finds one: USB cameras first, then a Jetson CSI camera), a USB camera
              number (0, 1, ... = /dev/video0, /dev/video1 ...), "csi", or a video file.
-    Detector YOLO (an ONNX model in models/, run with OpenCV's DNN module - no PyTorch needed)
-             or, with no model, OpenCV's built-in HOG people detector (no download at all).
+    Detector best first:
+               1. YOLO on the GPU with TensorRT (a models/*.engine built on the Jetson - see
+                  tools/make_trt_engine.sh): fast, and it also finds OBJECTS, not only people,
+               2. YOLO on the CPU (a models/*.onnx run with OpenCV's DNN module - no PyTorch needed),
+               3. with no model, OpenCV's built-in HOG people detector (no download at all).
     Zones    WARNING zone: someone near the cell - the machine slows down.
              DANGER zone: someone at the machine - protective stop (the safety controller,
              beamcell/safety.py, latches it until the zone is clear and Reset is pressed).
-             A person counts as "in" a zone when their feet (bottom of the box) are inside it.
+             BED zone: the roller bed. An object YOLO recognises lying there (a bag, a bottle, a tool,
+             a phone...) is reported as "object on the bed"; with safety.camera_object_stop = true
+             in config/cell.toml it stops the machine (OBJECT stop, beamcell/safety.py).
+             A person counts as "in" a zone when their feet (bottom of the box) are inside it;
+             an object when the middle of its box is.
              This is an extra layer of protection, not a safety-rated device.
 
 Everything heavy (OpenCV, the camera) is only loaded when the camera is switched on, to keep
@@ -24,6 +31,17 @@ import numpy as np
 CSI_PIPELINE = ("nvarguscamerasrc ! video/x-raw(memory:NVMM),width=1280,height=720,framerate=30/1 ! "
                 "nvvidconv ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=BGR ! appsink drop=1")
 PERSON = 0                 # COCO class number for "person"
+COCO = ("person bicycle car motorcycle airplane bus train truck boat traffic_light fire_hydrant stop_sign "
+        "parking_meter bench bird cat dog horse sheep cow elephant bear zebra giraffe backpack umbrella handbag tie "
+        "suitcase frisbee skis snowboard sports_ball kite baseball_bat baseball_glove skateboard surfboard tennis_racket "
+        "bottle wine_glass cup fork knife spoon bowl banana apple sandwich orange broccoli carrot hot_dog pizza donut cake "
+        "chair couch potted_plant bed dining_table toilet tv laptop mouse remote keyboard cell_phone microwave oven toaster "
+        "sink refrigerator book clock vase scissors teddy_bear hair_drier toothbrush").split()
+# things that must not be lying on the bed when the hands move (COCO has no "spanner", so the
+# nearest everyday objects stand in for tools, rags and bags left behind)
+BED_OBJECTS = {COCO.index(n) for n in ("backpack", "umbrella", "handbag", "suitcase", "sports_ball", "baseball_bat",
+                                         "bottle", "cup", "knife", "scissors", "cell_phone", "laptop", "mouse",
+                                         "remote", "keyboard", "book", "chair", "bench", "toothbrush", "hair_drier")}
 CSI_NAMES = ("vi-output", "imx", "ov5", "ar0", "tegra")   # how Jetson CSI sensors name their /dev/video node
 
 
@@ -90,25 +108,41 @@ def nms(boxes, scores, iou=0.45):
     return keep
 
 
-def parse_yolo(output, frame_w, frame_h, size, conf=0.4):
-    """YOLO output -> person boxes [(x, y, w, h, score)] in frame pixels.
+def parse_yolo_all(output, frame_w, frame_h, size, conf=0.4):
+    """YOLO output -> every detection [(x, y, w, h, score, class)] in frame pixels.
     Handles YOLOv8/YOLO11 (1, 84, N) and YOLOv5 (1, N, 85) layouts."""
-    out = np.squeeze(np.asarray(output))
+    out = np.squeeze(np.asarray(output, dtype=np.float32))
     if out.ndim != 2:
         return []
     if out.shape[0] in (84, 85) and out.shape[1] not in (84, 85):
         out = out.T                                      # v8 / 11 come as (84, N)
     if out.shape[1] == 85:                               # v5: x, y, w, h, objectness, 80 classes
-        scores = out[:, 4] * out[:, 5 + PERSON]
-        boxes = out[:, :4]
+        cls_scores = out[:, 5:] * out[:, 4:5]
     else:                                                # v8 / 11: x, y, w, h, 80 classes
-        scores = out[:, 4 + PERSON]
-        boxes = out[:, :4]
+        cls_scores = out[:, 4:]
+    cls = np.argmax(cls_scores, axis=1)
+    scores = cls_scores[np.arange(len(cls)), cls]
     keep = scores > conf
-    boxes, scores = boxes[keep], scores[keep]
+    boxes, scores, cls = out[keep, :4], scores[keep], cls[keep]
     sx, sy = frame_w / size, frame_h / size
     xywh = [((cx - w / 2) * sx, (cy - h / 2) * sy, w * sx, h * sy) for cx, cy, w, h in boxes]
-    return [tuple(xywh[i]) + (float(scores[i]),) for i in nms(xywh, scores)]
+    # one NMS per class: shift each class's boxes far apart so they never suppress each other
+    shifted = [(x + 10000 * c, y, w, h) for (x, y, w, h), c in zip(xywh, cls)]
+    return [tuple(xywh[i]) + (float(scores[i]), int(cls[i])) for i in nms(shifted, scores)]
+
+
+def parse_yolo(output, frame_w, frame_h, size, conf=0.4):
+    """YOLO output -> person boxes [(x, y, w, h, score)] in frame pixels."""
+    return [d[:5] for d in parse_yolo_all(output, frame_w, frame_h, size, conf) if d[5] == PERSON]
+
+
+def split(detections, bed_zone, frame_w, frame_h):
+    """(people, objects on the bed) from all detections."""
+    people = [d[:5] for d in detections if d[5] == PERSON]
+    z = bed_zone
+    objects = [d for d in detections if d[5] in BED_OBJECTS
+               and z[0] * frame_w <= d[0] + d[2] / 2 <= z[2] * frame_w and z[1] * frame_h <= d[1] + d[3] / 2 <= z[3] * frame_h]
+    return people, objects
 
 
 class Vision:
@@ -117,8 +151,9 @@ class Vision:
         self.lock = threading.Lock()
         self.enabled = False
         self.source = None
-        self.zones = {"warning": [0.05, 0.15, 0.95, 1.0], "danger": [0.25, 0.35, 0.75, 1.0]}
+        self.zones = {"warning": [0.05, 0.15, 0.95, 1.0], "danger": [0.25, 0.35, 0.75, 1.0], "bed": [0.15, 0.45, 0.85, 0.85]}
         self.people = []                        # [(x, y, w, h, score)] in the last frame
+        self.objects = []                       # [(x, y, w, h, score, class)] lying on the bed
         self.in_warning = False
         self.in_danger = False
         self.last_frame = 0.0
@@ -131,16 +166,22 @@ class Vision:
 
     # ---------------------------------------------------------------- info
     def models(self):
-        return sorted(os.path.basename(p) for p in glob.glob(os.path.join(self.models_dir, "*.onnx")))
+        """YOLO models in models/: GPU engines (.engine) first, then .onnx."""
+        engines = sorted(os.path.basename(p) for p in glob.glob(os.path.join(self.models_dir, "*.engine")))
+        return engines + sorted(os.path.basename(p) for p in glob.glob(os.path.join(self.models_dir, "*.onnx")))
 
     def capabilities(self):
         cv2 = _cv2()
-        return {"opencv": cv2.__version__ if cv2 else None, "yolo_models": self.models()}
+        from beamcell.trt_runner import available
+        gpu, why = available()
+        return {"opencv": cv2.__version__ if cv2 else None, "yolo_models": self.models(),
+                "tensorrt": why if gpu else None, "tensorrt_why": None if gpu else why}
 
     def status(self):
         with self.lock:
             return {"enabled": self.enabled, "source": self.source, "detector": self.detector,
                     "people": len(self.people), "in_warning": self.in_warning, "in_danger": self.in_danger,
+                    "objects_on_bed": [COCO[o[5]].replace("_", " ") for o in self.objects], "bed_blocked": bool(self.objects),
                     "zones": self.zones, "fps": round(self.fps, 1), "message": self.message,
                     "has_frame": self._jpeg is not None,
                     "frame_age": round(time.time() - self.last_frame, 2) if self.last_frame else None}
@@ -172,6 +213,7 @@ class Vision:
             self.enabled = False
             self._jpeg = None
             self.people = []
+            self.objects = []
             self.in_warning = self.in_danger = False
             self.last_frame = 0.0
 
@@ -272,36 +314,61 @@ class Vision:
         return "no camera found: " + "; ".join(parts)
 
     def _make_detector(self, cv2, model):
+        """detect(frame) -> all detections [(x, y, w, h, score, class)]. The best one available:
+        a TensorRT engine on the GPU, then YOLO on the CPU, then HOG (people only)."""
         models = self.models()
         if model == "none":                              # the operator picked the built-in detector
             name = None
         else:
             name = model if model in models else (models[0] if models else None)
+        if name and name.endswith(".engine"):
+            try:
+                from beamcell.trt_runner import TrtRunner
+                runner = TrtRunner(os.path.join(self.models_dir, name))
+                size = runner.size
+                self.detector = f"YOLO on the GPU (TensorRT, {name}, {size}px) - people and objects"
+
+                def detect(frame):
+                    blob = cv2.dnn.blobFromImage(frame, 1 / 255.0, (size, size), swapRB=True, crop=False)
+                    return parse_yolo_all(runner.infer(blob), frame.shape[1], frame.shape[0], size)
+                return detect
+            except Exception as e:                     # noqa: BLE001 - fall back to the CPU
+                self.message = f"couldn't run {name} on the GPU ({e}); using the CPU"
+                onnx = [m for m in models if m.endswith(".onnx")]
+                name = onnx[0] if onnx else None
         if name:
             try:
                 net = cv2.dnn.readNetFromONNX(os.path.join(self.models_dir, name))
                 size = 320 if "320" in name else 640
-                self.detector = f"YOLO ({name}, {size}px, OpenCV DNN)"
+                where = "CPU"
+                try:                                     # an OpenCV built with CUDA can use the GPU
+                    if cv2.cuda.getCudaEnabledDeviceCount() > 0:
+                        net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+                        net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA_FP16)
+                        where = "GPU (OpenCV CUDA)"
+                except Exception:                      # noqa: BLE001 - no CUDA in this OpenCV
+                    pass
+                self.detector = f"YOLO on the {where} ({name}, {size}px, OpenCV DNN) - people and objects"
 
                 def detect(frame):
                     blob = cv2.dnn.blobFromImage(frame, 1 / 255.0, (size, size), swapRB=True, crop=False)
                     net.setInput(blob)
-                    return parse_yolo(net.forward(), frame.shape[1], frame.shape[0], size)
+                    return parse_yolo_all(net.forward(), frame.shape[1], frame.shape[0], size)
                 return detect
             except Exception as e:                     # noqa: BLE001 - fall back to HOG
                 self.message = f"couldn't load {name} ({e}); using HOG"
         if not hasattr(cv2, "HOGDescriptor"):            # OpenCV 5 moved HOG out of the main module
-            self.detector = "none - put a YOLO .onnx model in models/"
+            self.detector = "none - put a YOLO model in models/"
             return lambda frame: []
         hog = cv2.HOGDescriptor()
         hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
-        self.detector = "HOG people detector (OpenCV built-in)"
+        self.detector = "HOG people detector (OpenCV built-in, CPU) - people only"
 
         def detect(frame):
             scale = 400 / frame.shape[1]
             small = cv2.resize(frame, (400, int(frame.shape[0] * scale)))
             rects, weights = hog.detectMultiScale(small, winStride=(8, 8), padding=(8, 8), scale=1.05)
-            return [(x / scale, y / scale, w / scale, h / scale, float(s))
+            return [(x / scale, y / scale, w / scale, h / scale, float(s), PERSON)
                     for (x, y, w, h), s in zip(rects, np.ravel(weights)) if s > 0.5]
         return detect
 
@@ -343,16 +410,16 @@ class Vision:
             misses = 0
             if frame.shape[1] > 640:
                 frame = cv2.resize(frame, (640, int(frame.shape[0] * 640 / frame.shape[1])))
-            people = detect(frame)
             H, W = frame.shape[:2]
+            people, objects = split(detect(frame), self.zones["bed"], W, H)
             feet = [(x + w / 2, y + h) for x, y, w, h, _ in people]
 
             def inside(z):
                 return any(z[0] * W <= fx <= z[2] * W and z[1] * H <= fy <= z[3] * H for fx, fy in feet)
             in_warning, in_danger = inside(self.zones["warning"]), inside(self.zones["danger"])
-            for name, colour in (("warning", (0, 190, 255)), ("danger", (0, 0, 255))):
+            for name, colour in (("bed", (255, 0, 200)), ("warning", (0, 190, 255)), ("danger", (0, 0, 255))):
                 z = self.zones[name]
-                hit = in_danger if name == "danger" else in_warning
+                hit = {"danger": in_danger, "warning": in_warning, "bed": bool(objects)}[name]
                 cv2.rectangle(frame, (int(z[0] * W), int(z[1] * H)), (int(z[2] * W) - 1, int(z[3] * H) - 1),
                               colour if hit else (0, 200, 0), 3 if hit else 1)
                 cv2.putText(frame, name.upper(), (int(z[0] * W) + 4, int(z[1] * H) + 16), cv2.FONT_HERSHEY_SIMPLEX,
@@ -361,10 +428,15 @@ class Vision:
                 cv2.rectangle(frame, (int(x), int(y)), (int(x + w), int(y + h)), (255, 120, 0), 2)
                 cv2.putText(frame, f"person {s:.2f}", (int(x), max(12, int(y) - 4)), cv2.FONT_HERSHEY_SIMPLEX,
                             0.45, (255, 120, 0), 1)
+            for x, y, w, h, sc, c in objects:
+                cv2.rectangle(frame, (int(x), int(y)), (int(x + w), int(y + h)), (255, 0, 200), 2)
+                cv2.putText(frame, f"{COCO[c].replace('_', ' ')} {sc:.2f}", (int(x), max(12, int(y) - 4)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 200), 1)
             ok, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
             now = time.time()
             with self.lock:
                 self.people = people
+                self.objects = objects
                 self.in_warning, self.in_danger = in_warning or in_danger, in_danger
                 if ok:
                     self._jpeg = buf.tobytes()

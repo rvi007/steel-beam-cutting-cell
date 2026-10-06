@@ -8,6 +8,7 @@ const $ = (id) => document.getElementById(id);
 function show(st) {
   $("cam-status").innerHTML = `<div>Status: <b>${st.message}</b></div><div>Detector: ${st.detector}</div>
     <div>People seen: ${st.people} ${st.in_danger ? '<b class="bad">- in the DANGER zone</b>' : st.in_warning ? '<b class="warn">- in the warning zone</b>' : ""}</div>
+    <div>On the bed: ${st.objects_on_bed && st.objects_on_bed.length ? `<b class="warn">${st.objects_on_bed.join(", ")}</b>` : "clear"}</div>
     <div>${st.fps} pictures/s</div>`;
   const pill = $("pill-camera");
   pill.textContent = st.enabled ? (st.in_danger ? "Person: danger zone" : st.in_warning ? "Person: warning zone" : "Camera on") : "Camera off";
@@ -25,8 +26,12 @@ async function poll() {
 export async function initCamera() {
   const info = app.info.system;
   const sel = $("cam-model");
-  for (const m of info.yolo_models || []) sel.add(new Option("YOLO - " + m, m));
+  for (const m of info.yolo_models || [])
+    sel.add(new Option((m.endsWith(".engine") ? "YOLO on the GPU (TensorRT) - " : "YOLO on the CPU - ") + m, m));
   sel.add(new Option("HOG people detector (built in)", "hog"));
+  if (info.yolo_models && info.yolo_models.length && !info.yolo_models.some((m) => m.endsWith(".engine")))
+    $("cam-devices").insertAdjacentHTML("afterend", `<p class="muted small">Tip: build a GPU engine for much faster detection
+      (tools/make_trt_engine.sh on the Jetson)${info.tensorrt ? ` - TensorRT ${info.tensorrt} is ready` : ""}.</p>`);
   if (!info.opencv) $("cam-status").innerHTML = '<div class="bad">OpenCV isn\'t installed on the server - the camera can\'t run.</div>';
   // the cameras Linux can see, so you can pick the right one (and see why one is missing)
   try {
