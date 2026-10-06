@@ -70,6 +70,7 @@ function render(st) {
   eb.textContent = st.estop_pressed ? "PRESSED" : "E-STOP";
   // stack light (on screen and in 3D)
   for (const c of ["red", "amber", "green", "blue"]) $("lamp-" + c).classList.toggle("on", !!st.lamps[c]);
+  $("statebar").className = "statusrow " + (["red", "amber", "green", "blue"].find((c) => st.lamps[c]) || "");
   if (app.scene && app.scene.setSafety) app.scene.setSafety(st);
   // banner on the machine view
   const banner = $("safety-banner");

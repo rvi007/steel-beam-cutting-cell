@@ -67,5 +67,31 @@ process = "o2"     # "o2" production O2 plasma, "air" air plasma, "pen" the 1:10
 To use your own machine's numbers, edit the rows in `beamcell/plasma.py` (`CHARTS`). Each row is
 thickness, speed, arc volts, cut height, pierce height, pierce delay and kerf. Then restart the app.
 
+## 5. Saved settings: the numbers that worked on YOUR machine
+
+A cut chart is only a starting point. Plasma behaves differently with every machine, set of
+consumables, gas supply and batch of steel, so the right numbers have to be found by trying them.
+The **Plasma** tab is for that:
+
+1. **Start new settings**: pick the beam (for example UB 305x165x40), the grade and the plasma.
+   The numbers are filled in from the cut chart. A beam has two thicknesses, so there is a column
+   for the **web** and one for the **flange**.
+2. Cut a test piece. Change the numbers until the cut is clean: square edges, little dross, holes
+   the right size. Changed numbers are highlighted, with the chart's value in grey beside them.
+3. Mark it **Works well** (or *Still trying* / *Doesn't work*), write what you saw in **Notes**,
+   and **Save**. Each one is a file named after the beam, in `plasma_settings/` (for example
+   `plasma_settings/UB 305x165x40 S355.json`).
+4. Next time you cut that beam, the Machine tab picks its saved settings automatically (the ones
+   marked *Works well* first). The **Plasma** list above **Plan** shows which are used, and you can
+   choose others or the plain cut chart. A saved job remembers its plasma settings too.
+
+What each saved setting holds, for the web and for the flange: thickness, current (A), cut speed,
+hole speed, corner speed (% of the cut speed), arc voltage, cut height, pierce height, pierce delay,
+kerf width, gas pressure and torch height control on/off. Holes always cut with height control off,
+and edge starts skip the pierce delay.
+
+`plasma_settings/` stays on the machine (it is not in git, so `git pull` never touches it).
+**Back it up**: it holds what you learned.
+
 Sources: Hypertherm, *Torch height control for plasma cutting* and *True Hole technology*; Hypertherm
 XPR300 published cut speeds for mild steel; BS EN ISO 9013; BS EN 1090-2.

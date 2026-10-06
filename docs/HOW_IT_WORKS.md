@@ -70,7 +70,7 @@ safety controller's **watchdog** stops the machine within 2 seconds.
 ```mermaid
 flowchart TD
     A["1 NC1 file from Tekla"] -->|"POST /api/nc1"| B["nc1.py reads it<br/>parts.py makes a Part<br/>uk_codes.py checks it"]
-    B --> C["Parts &amp; NC1 tab<br/>(parts.js) shows it + the checks"]
+    B --> C["Parts tab<br/>(parts.js) shows it + the checks"]
     C -->|"POST /api/nest"| D["parts.py nest_all()<br/>fits parts on 12 m bars"]
     D --> E["Machine tab: the bars<br/>(app.js renderBars)"]
     E -->|"Plan this bar: POST /api/plan"| F["planner.py Plan.build()<br/>every move of both arms"]
@@ -144,6 +144,8 @@ flowchart LR
 | `arm.py` | the 6-axis arm maths: joint angles for a tool position (inverse kinematics) |
 | `planner.py` | **plans the job**: order of cuts, every move of both hands, timing |
 | `plasma.py` | the plasma cut chart: amps, speed, heights, pierce time for each kind of cut |
+| `plasma_presets.py` | saved plasma settings that worked (`plasma_settings/`), used by the planner instead of the chart |
+| `reports.py` | a problem report for the developer every time the machine stops during a job (`reports/`) |
 | `collisions.py` | checks the arms never touch the steel or each other |
 | `sensors.py` | every sensor (simulated until fitted) and the bar check |
 | `history.py` | the job history (`jobs/history.json`) |
@@ -162,12 +164,14 @@ flowchart LR
 | `js/scene.js` | the 3D cell (three.js): lights, the machine models, the arms, sparks, camera views |
 | `js/kinematics.js` | where each arm is at time *t* (reads the plan's tracks) |
 | `js/geometry.js` | turns a steel section and its cuts into 3D shapes |
-| `js/parts.js` | Parts & NC1 tab: list, editor, import, save / open jobs |
+| `js/parts.js` | Parts tab: list, editor, import, save / open jobs |
 | `js/manual.js` | Manual cut mode |
 | `js/safety.js` | Safety tab, the E-stop button, the 200 ms tick to the engine |
 | `js/sensors.js` | Sensors tab: sensors, bar check, stops and decisions, plasma chart |
 | `js/jobs.js` | the Job history & saved jobs window |
-| `js/library.js` | Section library tab (and STL / STEP downloads) |
+| `js/plasma.js` | Plasma tab: try, save and reuse settings; the Machine tab's plasma choice |
+| `js/reports.js` | the Reports button and window: problem reports, send to the developer |
+| `js/library.js` | Sections tab (and STL / STEP downloads) |
 | `js/prototype.js` | Prototype tab: the 1:10 model with part numbers |
 | `js/camera.js` | Camera tab |
 | `js/help.js` | Help tab |
@@ -209,7 +213,8 @@ Every other button works the same way: **HTML button → a function in a `web/js
 |---|---|
 | change a setting (speeds, zones, checklist, plasma chart) | `config/cell.toml`, then restart |
 | change a UK rule | `beamcell/uk_codes.py` / `parts.py` `check()` |
-| change how fast plasma cuts, or use your own cut chart | `beamcell/plasma.py` `CHARTS` |
+| change how fast plasma cuts, or use your own cut chart | `beamcell/plasma.py` `CHARTS`, or save tried settings on the Plasma tab |
+| send problem reports somewhere else | `config/cell.toml` `[reports]` (`github_repo`, `webhook_url`) |
 | change a safety rule or what a hand does on a stop | `beamcell/safety.py` (`FAULTS`, `DECISIONS`) - and update the risk assessment |
 | add a sensor | `beamcell/sensors.py` `SENSORS` (it then appears on the Sensors tab) |
 | change how something looks | `web/css/style.css`, `web/index.html` |

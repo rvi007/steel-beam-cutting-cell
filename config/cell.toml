@@ -73,3 +73,12 @@ torch_camera = ""               # the second camera, close up on the torch: "0"/
 
 [server]
 port = 8080
+
+[reports]
+# Every stop during a job saves a problem report in reports/ (the Reports button, top right).
+# "Send to developer" opens it as a new issue on this GitHub repository, ready to submit:
+github_repo = "rvi007/steel-beam-cutting-cell"
+# Optional: also send each report the moment it is made, as JSON, to a web address - e.g. a Slack,
+# Microsoft Teams or Discord "incoming webhook". Leave "" to send them by hand.
+webhook_url = ""
+keep = 200                      # the oldest reports are deleted after this many

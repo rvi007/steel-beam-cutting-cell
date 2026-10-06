@@ -9,7 +9,7 @@ overhead gantry: the <b>Cutter</b> (orange, plasma torch) cuts holes, slots, not
 <h2>Quick start</h2>
 <ol>
 <li><b>Safety</b>: press <b>Reset</b>, tick the pre-start checklist and confirm. Nothing moves until you do.</li>
-<li><b>Parts &amp; NC1</b>: drop NC1 files from Tekla / Advance Steel / SDS2 onto the page, pick an example, or press <b>+ New part</b>.</li>
+<li><b>Parts</b>: drop NC1 files from Tekla / Advance Steel / SDS2 onto the page, pick an example, or press <b>+ New part</b>.</li>
 <li>Check each part: the <b>Checks</b> box lists anything that breaks a UK rule, with the clause. The drawing shows every face.</li>
 <li><b>Machine</b>: parts are nested onto stock bars (pick the stock length). Click a bar, then <b>Plan this bar</b>.</li>
 <li>Press <b>Run</b> (or the space bar). Drag the time bar to jump, pick a speed, and use the view buttons to follow either hand.</li>
@@ -34,7 +34,7 @@ The same UK checks run, then <b>Plan these cuts</b> and <b>Run</b>.</li>
 150 mm long; bottom-flange holes on I sections and channels can't be reached from above; the Handler lifts up to 500 kg.</p>
 
 <h2>Sections</h2>
-<p>All UK sections are in the <b>Section library</b>: UB, UC, UBP, PFC (BS 4-1), equal and unequal angles (BS EN 10056-1)
+<p>All UK sections are on the <b>Sections</b> tab: UB, UC, UBP, PFC (BS 4-1), equal and unequal angles (BS EN 10056-1)
 and hollow sections (BS EN 10210-2 / 10219-2) - 993 sizes with their real root and toe radii. You can download any of
 them as an STL file at any scale for 3D printing, and the whole machine too.</p>
 
@@ -60,8 +60,20 @@ real size and bow (BS EN 10034) - you'll see it under every plan. The table of s
 you do for each one; <b>Simulate</b> an object on the bed or a slipping load to see it. The <b>plasma settings</b> change for
 each kind of cut - the Cutter's card shows them while it cuts. Details: <code>docs/SENSORS.md</code>, <code>docs/PLASMA.md</code>.</p>
 
+<h2>Plasma settings that work</h2>
+<p>Plasma doesn't always cut the same way, so the right numbers are found by trying. On the <b>Plasma</b> tab, start new settings
+for a beam (filled in from the cut chart), cut a test piece, adjust, mark it <b>Works well</b> and <b>Save</b>. Each one is a file
+named after the beam in <code>plasma_settings/</code>. Next time that beam is cut, the Machine tab picks its saved settings
+automatically (the <b>Plasma</b> list above Plan) and the plan uses them.</p>
+
+<h2>Problem reports</h2>
+<p>Every time the machine stops during a job, a report is saved with everything the developer needs: the stops, what each hand
+was doing, the safety inputs, the camera and the last events. The <b>Reports</b> button (top right) shows how many haven't been
+sent. Open one, add a note about what you saw, and press <b>Send to developer</b>: it opens a GitHub issue ready to submit.
+To send them automatically, set <code>webhook_url</code> under <code>[reports]</code> in config/cell.toml.</p>
+
 <h2>CAD and the prototype</h2>
-<p>The 3D view is the CAD model - point at anything to see what it is. <b>Section library</b> &rarr; <i>CAD files</i>:
+<p>The 3D view is the CAD model - point at anything to see what it is. <b>Sections</b> &rarr; <i>CAD files</i>:
 the whole cell, the 1:10 prototype and the example parts as STEP files (Fusion 360, SolidWorks, FreeCAD, Onshape).
 The prototype's shopping list and build plan: <code>docs/PROTOTYPE.md</code>.</p>
 

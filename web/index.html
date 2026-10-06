@@ -11,23 +11,27 @@
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="logo">&#9638;</span> BEAM CELL <small>UK structural steel cutting</small></div>
-  <nav class="tabs">
-    <button data-tab="cell" class="on">Machine</button>
-    <button data-tab="parts">Parts &amp; NC1</button>
-    <button data-tab="library">Section library</button>
-    <button data-tab="proto">Prototype</button>
-    <button data-tab="safety">Safety</button>
-    <button data-tab="sensors">Sensors</button>
-    <button data-tab="camera">Camera</button>
-    <button data-tab="help">Help</button>
-  </nav>
-  <div class="pills">
-    <span id="pill-machine" class="pill">Idle</span>
-    <span id="pill-safety" class="pill">Safety: not reset</span>
-    <span id="pill-camera" class="pill dim">Camera off</span>
-    <span id="pill-memory" class="pill dim"></span>
+  <div class="statusrow" id="statebar" title="Machine state: red = stopped, amber = caution, green = running, blue = reset needed">
+    <div class="brand"><span class="logo">&#9638;</span><span class="brand-name">BEAM CELL</span></div>
+    <div class="pills">
+      <span id="pill-machine" class="pill">Idle</span>
+      <span id="pill-safety" class="pill">Safety: not reset</span>
+      <span id="pill-camera" class="pill dim">Camera off</span>
+      <span id="pill-memory" class="pill dim"></span>
+    </div>
+  <button id="btn-reports" class="icon-btn" title="Problem reports for the developer - one is saved every time the machine stops during a job"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V4M4 4h12l-2 4 2 4H4"/></svg><span>Reports</span><b id="rep-badge" class="badge" hidden></b></button>
   </div>
+  <nav class="tabs" aria-label="Main menu">
+    <button data-tab="cell" class="on" title="The machine: plan and run a job"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M5 20V9l7-5 7 5v11"/><path d="M9 20v-6h6v6"/></svg><span>Machine</span></button>
+    <button data-tab="parts" title="Parts and NC1 files"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span>Parts</span></button>
+    <button data-tab="plasma" title="Plasma settings: try, save and reuse the ones that cut well"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c1 3 4 4.5 4 8.5a4 4 0 0 1-8 0C8 9 10 8 10 5c1.2.8 2 2 2 3.5"/><path d="M12 21v-2"/></svg><span>Plasma</span></button>
+    <button data-tab="library" title="UK section library"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14M5 20h14M12 4v16"/></svg><span>Sections</span></button>
+    <button data-tab="proto" title="The 1:10 prototype"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg><span>Prototype</span></button>
+    <button data-tab="safety" title="Safety: reset, start, checklist, event log"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Safety</span></button>
+    <button data-tab="sensors" title="Sensors, bar check, stops"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 5a10 10 0 0 1 0 14M5 19A10 10 0 0 1 5 5"/></svg><span>Sensors</span></button>
+    <button data-tab="camera" title="Camera and safety zones"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Camera</span></button>
+    <button data-tab="help" title="Help"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"/></svg><span>Help</span></button>
+  </nav>
   <button id="btn-estop" class="estop" title="Emergency stop (Esc key)">E-STOP</button>
 </header>
 
@@ -47,6 +51,10 @@
       <div id="job-now" class="job-now muted small"></div>
       <button id="btn-jobs" class="wide" title="Every job that ran, and the saved jobs - delete any of them">&#128203; Job history &amp; saved jobs</button>
       <div id="manual-panel" hidden></div>
+      <div class="plasma-pick">
+        <label class="row">Plasma <select id="plasma-pick" title="Saved settings (Plasma tab) or the cut chart"></select></label>
+        <div id="plasma-pick-note" class="muted small"></div>
+      </div>
       <button id="btn-plan" class="primary big">Plan this bar</button>
       <div id="plan-info"></div>
       <div id="plan-warnings"></div>
@@ -111,6 +119,25 @@
       <div id="import-report" class="report"></div>
     </aside>
     <div class="editor" id="editor"></div>
+  </section>
+
+  <!-- ============================================================ PLASMA -->
+  <section id="tab-plasma" class="tab">
+    <aside class="side">
+      <div class="box new-pz">
+        <h3>Start new settings</h3>
+        <label class="row">Beam <input id="pz-section" list="pz-sections" size="16" placeholder="UB 305x165x40"></label>
+        <label class="row">Grade <select id="pz-grade"></select></label>
+        <label class="row">Plasma <select id="pz-process"></select></label>
+        <button id="pz-new" class="primary wide">Fill in from the cut chart</button>
+      </div>
+      <h3>Saved settings <span id="pz-count" class="muted"></span></h3>
+      <input id="pz-search" class="full" placeholder="Search: beam, grade, name">
+      <div id="pz-list" class="pz-list"></div>
+      <p class="muted small">Saved on this machine in <code>plasma_settings/</code>, one file each. Back the folder up - it holds what you learned.</p>
+      <datalist id="pz-sections"></datalist>
+    </aside>
+    <div class="editor" id="pz-editor"></div>
   </section>
 
   <!-- ============================================================ LIBRARY -->
@@ -296,6 +323,16 @@
   <h3>Saved jobs</h3>
   <div class="scroll"><table class="list"><tbody id="saved-body"></tbody></table></div>
   <div class="toolbar"><button id="jobs-close" class="primary">Close</button></div>
+</dialog>
+<dialog id="reports-dlg" class="job-done reports-dlg">
+  <h2>Problem reports <span id="rep-count" class="muted"></span></h2>
+  <p class="muted small">Every time the machine stops during a job, everything the developer needs to find out why is saved here:
+    the stops, what each hand was doing, the safety inputs, the camera and the last events. <span id="rep-auto"></span></p>
+  <div class="rep-grid">
+    <div id="rep-list" class="rep-list"></div>
+    <div id="rep-detail" class="rep-detail"></div>
+  </div>
+  <div class="toolbar"><button id="rep-close" class="primary">Close</button><button id="rep-clear" class="danger">Delete all reports</button></div>
 </dialog>
 <script type="module" src="js/app.js"></script>
 </body>

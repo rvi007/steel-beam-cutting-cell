@@ -24,6 +24,11 @@ API (all JSON):
     GET  /api/sensors               every sensor (camera 1 + 2, bar, torch, Handler, safety), and every stop's decisions
     POST /api/sensors/measure       {section, length[, measured]} -> the bar check (BS EN 10034 tolerances)
     GET  /api/plasma[?process=o2]   the plasma cut chart; POST /api/plasma/settings {feature, thickness[, d]}
+    GET  /api/plasma/presets        saved plasma settings (plasma_settings/ folder); GET /api/plasma/presets/<name> one;
+                                    POST /api/plasma/presets {settings} saves; POST /api/plasma/presets-delete/<name>
+    GET  /api/plasma/start?section=&process=&grade=   new settings for a beam, from the cut chart
+    GET  /api/reports               problem reports (reports/ folder, one per stop); GET /api/reports/<id> one;
+                                    POST /api/reports-sent/<id>, /api/reports-delete/<id>, /api/reports-clear
     GET  /api/history, POST /api/history-delete/<id>, POST /api/history-clear   jobs that ran (jobs/history.json)
     GET  /api/camera, POST /api/camera, GET /camera.mjpg   camera + person detection
     GET  /api/camera/devices        the cameras Linux can see
@@ -46,7 +51,8 @@ import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlparse
 
-from beamcell import assistant, collisions, history, machine, manual, nc1, plasma, sensors, sections as S, uk_codes as UK
+from beamcell import assistant, collisions, history, machine, manual, nc1, plasma, plasma_presets, reports, sensors, \
+    sections as S, uk_codes as UK
 from beamcell.config import CONFIG, problems as config_problems
 from beamcell.gpio_inputs import GpioInputs
 from beamcell.parts import Part, nest_all
@@ -63,6 +69,24 @@ VISION.configure({"zones": {"warning": CONFIG["camera"]["warning_zone"], "danger
                             "bed": CONFIG["camera"]["bed_zone"]}})
 SAFETY = SafetyController(vision=VISION)
 GPIO = GpioInputs(SAFETY, CONFIG["gpio"])
+
+
+def _report_stop(code, text):
+    """A stop during a job: save a problem report for the developer (beamcell/reports.py)."""
+    st = SAFETY.status()
+    cam = VISION.status()
+    reports.record(code, text, {
+        "job": st.get("job"), "playback": dict(SAFETY.playback),
+        "safety": {k: st.get(k) for k in ("state", "mode", "stop_category", "inputs", "input_source", "checklist_ok")} |
+                  {"latched": [x["code"] for x in st.get("latched", [])]},
+        "events": st.get("events", [])[:40],
+        "camera": {"state": "on" if cam["enabled"] else "off", "detector": cam["detector"], "fps": cam["fps"],
+                   "people": cam["people"], "in_danger": cam["in_danger"], "message": cam["message"]},
+    })
+
+
+SAFETY.on_stop = _report_stop
+SAFETY.on_reset = reports.close_incident
 
 
 def system_info():
@@ -183,7 +207,17 @@ def safety_decisions():
 
 def plan_output(bar, body, i, count):
     t0 = time.time()
-    plan = Plan(bar).build()
+    preset, preset_problem = None, None
+    if body.get("plasma"):
+        try:
+            preset = plasma_presets.load(body["plasma"])
+        except KeyError as e:
+            preset_problem = str(e).strip("'\"") + " - using the cut chart"
+    plan = Plan(bar, preset).build()
+    if preset_problem:
+        plan.warnings.insert(0, preset_problem)
+    elif preset and bar.parts and preset.get("section") and preset["section"] != bar.section_title:
+        plan.warnings.insert(0, f"plasma settings '{preset['name']}' were saved for {preset['section']}, not {bar.section_title}")
     planned = time.time() - t0
     hits = collisions.check_plan(plan, step=0.4) if body.get("check", True) else []
     out = plan.to_json()
@@ -299,6 +333,21 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/sensors":
                 return self._send(200, {"sensors": sensors.status(VISION.status()), "groups": sensors.GROUPS,
                                         "decisions": safety_decisions()})
+            if path == "/api/plasma/presets":
+                return self._send(200, {"presets": plasma_presets.entries(), "fields": plasma_presets.ROW,
+                                        "ratings": plasma_presets.RATINGS, "grades": plasma_presets.GRADES,
+                                        "processes": {k: v["label"] for k, v in plasma.CHARTS.items()},
+                                        "current": CONFIG["plasma"]["process"]})
+            if path.startswith("/api/plasma/presets/"):
+                return self._send(200, plasma_presets.load(path[len("/api/plasma/presets/"):]))
+            if path == "/api/plasma/start":
+                q = parse_qs(url.query)
+                return self._send(200, plasma_presets.start_values(q["section"][0], q.get("process", [CONFIG["plasma"]["process"]])[0],
+                                                                   q.get("grade", ["S355"])[0]))
+            if path == "/api/reports":
+                return self._send(200, {"reports": reports.entries(), "settings": reports.public_settings()})
+            if path.startswith("/api/reports/"):
+                return self._send(200, reports.load(path[len("/api/reports/"):]))
             if path == "/api/plasma":
                 proc = parse_qs(urlparse(self.path).query).get("process", [CONFIG["plasma"]["process"]])[0]
                 return self._send(200, dict(plasma.table(proc), processes={k: v["label"] for k, v in plasma.CHARTS.items()},
@@ -321,7 +370,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(500, {"error": str(e)})
 
     def do_POST(self):
-        path = urlparse(self.path).path
+        path = unquote(urlparse(self.path).path)
         try:
             body = self._body()
             if path == "/api/nc1":
@@ -337,6 +386,21 @@ class Handler(BaseHTTPRequestHandler):
                                         for b in bars])
             if path == "/api/sensors/measure":
                 return self._send(200, sensors.measure_bar(body["section"], float(body.get("length", 12000)), body.get("measured")))
+            if path == "/api/plasma/presets":
+                return self._send(200, plasma_presets.save(body))
+            if path.startswith("/api/plasma/presets-delete/"):
+                plasma_presets.delete(path[len("/api/plasma/presets-delete/"):])
+                return self._send(200, {"presets": plasma_presets.entries()})
+            if path.startswith("/api/reports-sent/"):
+                return self._send(200, reports.mark_sent(path[len("/api/reports-sent/"):]))
+            if path.startswith("/api/reports-delete/"):
+                reports.delete(path[len("/api/reports-delete/"):])
+                return self._send(200, {"reports": reports.entries()})
+            if path == "/api/reports-clear":
+                reports.clear()
+                return self._send(200, {"reports": []})
+            if path == "/api/reports/note":
+                return self._send(200, reports.add_note(body.get("id", ""), body.get("note", "")))
             if path == "/api/plasma/settings":
                 return self._send(200, plasma.settings(body.get("feature", "cut"), float(body["thickness"]),
                                                        body.get("process", CONFIG["plasma"]["process"]), body.get("d")))

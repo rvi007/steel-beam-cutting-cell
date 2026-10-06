@@ -260,10 +260,40 @@ for (let i = 0; i < 25; i++) {                       // the click's request may 
 if (!blocked.reset_blockers.some((b) => b.includes("Handler"))) fail("simulated load slip not seen: " + JSON.stringify(blocked.reset_blockers));
 await page.evaluate(() => fetch("/api/safety/input", { method: "POST", body: JSON.stringify({ name: "load_secure", value: true }) }));
 
+// plasma tab: new settings from the cut chart, change a number, save, use them on the Machine tab, plan with them, delete
+await page.click(".tabs button[data-tab=plasma]");
+await page.fill("#pz-section", "UB 305x165x40");
+await page.click("#pz-new");
+await until("plasma editor didn't open", () => document.querySelector("[data-part=web][data-key=speed_mm_min]"));
+await page.fill("#pz-name", "Smoke test UB 305");
+await page.fill("[data-part=web][data-key=speed_mm_min]", "2000");
+await page.click("[data-rate=good]");
+await page.click("#pz-save");
+await until("plasma settings not saved", () => [...document.querySelectorAll("[data-pz]")].some((b) => b.dataset.pz === "Smoke test UB 305"));
+await shot("9_plasma");
+await page.click("#pz-use");
+await until("Machine tab didn't take the saved plasma settings", () => app.plasma === "Smoke test UB 305" && document.getElementById("tab-cell").classList.contains("on"));
+await page.click("#mode-job");
+await page.click("#btn-plan");
+await until("plan didn't use the saved plasma settings", () => app.plan && app.plan.process.preset === "Smoke test UB 305", null, 120000);
+await page.click(".tabs button[data-tab=plasma]");
+await page.click('[data-pz="Smoke test UB 305"]');
+page.once("dialog", (d) => d.accept());
+await until("delete button missing", () => document.getElementById("pz-del"));
+await page.click("#pz-del");
+await until("plasma settings not deleted", () => ![...document.querySelectorAll("[data-pz]")].some((b) => b.dataset.pz === "Smoke test UB 305") && app.plasma === "");
+
+// problem reports: the E-stop during the job above saved one; it opens with the full text
+await page.click("#btn-reports");
+await until("no problem report after the E-stop", () => document.querySelector("#rep-list [data-rep]") && document.querySelector(".rep-text")
+  && document.querySelector(".rep-text").textContent.includes("Stops:"));
+await shot("10_reports");
+await page.click("#rep-close");
+
 for (const tab of ["camera", "help", "safety", "cell"]) {
   await page.click(`.tabs button[data-tab=${tab}]`);
   await page.waitForTimeout(500);
 }
 if (errors.length) fail("JavaScript errors:\n" + errors.join("\n"));
-console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; job finished -> bar leaves the job, history, delete one part; NC1 import; editor checks; manual cut (click, check, plan); CAD model + files; prototype assembly; sensors + bar check + load slip; STL ${fs.statSync(file).size} bytes`);
+console.log(`PASS - plan ${Math.round(plan.d)} s, 0 collisions; reset+checklist needed; E-stop, release, reset, restart; gate stop; Manual hold-to-run; job finished -> bar leaves the job, history, delete one part; NC1 import; editor checks; manual cut (click, check, plan); CAD model + files; prototype assembly; sensors + bar check + load slip; plasma settings saved, used, deleted; problem report; STL ${fs.statSync(file).size} bytes`);
 await browser.close();

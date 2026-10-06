@@ -8,7 +8,7 @@ reads it in `beamcell/nc1.py`.
 
 In Tekla Structures: **Manufacturing → NC files → DSTV** (older versions: *File → Export →
 NC files*). Pick the parts, choose the output folder, and Tekla writes one `.nc1` file per
-part. Then drag the files onto the **Parts & NC1** tab. The exact menu names change between
+part. Then drag the files onto the **Parts** tab. The exact menu names change between
 Tekla versions - search the Tekla help for "NC files".
 
 ## What is read
