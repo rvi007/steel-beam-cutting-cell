@@ -122,6 +122,8 @@ class SafetyController:
         self.last_beat = None
         self.playback = {}
         self.events = deque(maxlen=200)
+        self.on_stop = None                     # called (code, text) for every stop while a job is under way
+        self.on_reset = None                    # called after a Reset
         path = log_path if log_path is not None else self.cfg.get("log_file", "")
         self.log_path = os.path.join(ROOT, path) if path and not os.path.isabs(path) else path
         self._event("power on - press Reset to start")
@@ -255,6 +257,8 @@ class SafetyController:
             self.state = "READY"
             self.stop_category = None
             self._event(f"RESET by {who} (cleared: {cleared}) - press Start when ready")
+            if self.on_reset:
+                self.on_reset()
             return True, []
 
     def start(self, who="panel"):
@@ -371,6 +375,12 @@ class SafetyController:
         text, ref = FAULTS[code]
         self._event(f"STOP: {detail or text} [{ref}]" + (f" - category {self.stop_category} stop" if was_running else ""), "stop")
         self._problem(detail or text)
+        if self.on_stop and (was_running or (self.job and self.job["started"] and self.job["state"] != "finished")):
+            try:
+                self.on_stop(code, detail or text)
+            except Exception as e:                      # noqa: BLE001 - a report must never stop the safety code
+                self.events.appendleft({"t": time.time(), "time": time.strftime("%Y-%m-%d %H:%M:%S"), "kind": "warn",
+                                        "text": f"problem report not saved: {e}", "mode": self.mode, "state": self.state})
 
     def _problem(self, text):
         """Something went wrong while a job was under way: it goes into that job's history entry."""

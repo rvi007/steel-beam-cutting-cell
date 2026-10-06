@@ -2,6 +2,7 @@
 // 2D drawing of every face with the code checks.
 import { get, post, download } from "./api.js";
 import { app, jobChanged, toast, saveLocal, clearJob } from "./app.js";
+import { usePreset } from "./plasma.js";
 import { holeOutline } from "./geometry.js";
 
 const $ = (id) => document.getElementById(id);
@@ -388,7 +389,8 @@ export async function initParts() {
   };
   $("btn-save-job").onclick = async () => {
     const name = $("job-name").value.trim() || "job";
-    await post("/api/jobs/" + encodeURIComponent(name), { stock_length: app.job.stock_length, parts: app.job.parts.map(clean) });
+    await post("/api/jobs/" + encodeURIComponent(name), { stock_length: app.job.stock_length, parts: app.job.parts.map(clean),
+      plasma: app.plasma || "" });
     toast(`Saved job "${name}" (jobs/${name}.json)`);
     refreshJobs();
   };
@@ -412,6 +414,7 @@ export async function initParts() {
 
 export async function openSavedJob(name) {
   app.job = await get("/api/jobs/" + encodeURIComponent(name));
+  if (app.job.plasma !== undefined) usePreset(app.job.plasma);          // the plasma settings saved with the job
   $("job-name").value = name;
   $("stock-length").value = app.job.stock_length;
   selected = 0;

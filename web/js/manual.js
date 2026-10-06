@@ -188,7 +188,7 @@ async function runCheck() {
 
 export async function planManual() {
   if (!manual.job.cuts.length) return toast("Add a hole, cut or notch first", true);
-  const plan = await post("/api/manual/plan", manual.job);
+  const plan = await post("/api/manual/plan", { ...manual.job, plasma: app.plasma || "" });
   if (plan.error) return toast(plan.error, true);
   loadPlan(plan);
 }

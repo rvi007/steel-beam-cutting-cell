@@ -1,16 +1,22 @@
 """The web server and its API, started for real on a free port."""
 import json
+import shutil
+import tempfile
 import threading
 import unittest
 import urllib.request
 from http.server import ThreadingHTTPServer
 
+from beamcell import plasma_presets, reports
 from beamcell.server import Handler
 
 
 class Server(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.tmp = tempfile.mkdtemp()                        # saved plasma settings and reports go here, not into the app's folders
+        cls.folders = (plasma_presets.FOLDER, reports.FOLDER)
+        plasma_presets.FOLDER, reports.FOLDER = cls.tmp + "/plasma", cls.tmp + "/reports"
         cls.httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         cls.base = f"http://127.0.0.1:{cls.httpd.server_address[1]}"
         threading.Thread(target=cls.httpd.serve_forever, daemon=True).start()
@@ -18,6 +24,37 @@ class Server(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.httpd.shutdown()
+        plasma_presets.FOLDER, reports.FOLDER = cls.folders
+        shutil.rmtree(cls.tmp)
+
+    def test_plasma_settings_saved_opened_and_used(self):
+        start = self.get("/api/plasma/start?section=UB%20305x165x40&process=o2&grade=S275")
+        self.assertEqual(start["name"], "UB 305x165x40 S275")
+        start["web"]["speed_mm_min"] = 1200
+        saved = self.post("/api/plasma/presets", start)
+        names = [p["name"] for p in self.get("/api/plasma/presets")["presets"]]
+        self.assertIn("UB 305x165x40 S275", names)
+        self.assertEqual(self.get("/api/plasma/presets/UB%20305x165x40%20S275")["web"]["speed_mm_min"], 1200)
+        job = {"section": "UB 305x165x40", "length": 2000, "cuts": [{"type": "cut", "x": 1000}], "check": False}
+        plan = self.post("/api/manual/plan", dict(job, plasma=saved["name"]))
+        self.assertEqual(plan["process"]["preset"], saved["name"])
+        missing = self.post("/api/manual/plan", dict(job, plasma="no such settings"))
+        self.assertIsNone(missing["process"]["preset"])
+        self.assertIn("using the cut chart", missing["warnings"][0])
+        self.post("/api/plasma/presets-delete/UB%20305x165x40%20S275", {})
+        self.assertNotIn("UB 305x165x40 S275", [p["name"] for p in self.get("/api/plasma/presets")["presets"]])
+
+    def test_reports_api(self):
+        r = reports.record("ESTOP", "E-STOP pressed (test)", {"job": {"name": "t", "runs": 1}})
+        reports.close_incident()
+        listed = self.get("/api/reports")
+        self.assertEqual(listed["settings"]["github_repo"], "rvi007/steel-beam-cutting-cell")
+        self.assertIn(r["id"], [x["id"] for x in listed["reports"]])
+        self.assertIn("E-STOP pressed (test)", self.get("/api/reports/" + r["id"])["text"])
+        self.assertEqual(self.post("/api/reports/note", {"id": r["id"], "note": "hi"})["note"], "hi")
+        self.assertTrue(self.post("/api/reports-sent/" + r["id"], {})["sent"])
+        self.post("/api/reports-delete/" + r["id"], {})
+        self.assertNotIn(r["id"], [x["id"] for x in self.get("/api/reports")["reports"]])
 
     def get(self, path):
         with urllib.request.urlopen(self.base + path) as r:

@@ -7,3 +7,5 @@ models/*.onnx
 models/*.engine
 node_modules/
 logs/
+plasma_settings/
+reports/

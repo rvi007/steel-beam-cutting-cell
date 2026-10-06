@@ -13,6 +13,8 @@ import { initSafety, safety, connected, startMachine, stopMachine, jobFinished, 
 import { initJobs, openJobs } from "./jobs.js";
 import { initSensors, barCheckHtml } from "./sensors.js";
 import { initManual, manual, manualPreview, planManual, render as renderManual } from "./manual.js";
+import { initPlasma, refreshPlasmaPick } from "./plasma.js";
+import { initReports } from "./reports.js";
 
 export const app = {
   info: null, sections: null, job: { stock_length: 12000, parts: [] }, bars: [], barIndex: 0,
@@ -23,7 +25,8 @@ export const app = {
     const b = app.plan.bar, dur = app.plan.summary.duration_s;
     const what = b.manual ? `manual cuts on a ${b.section} bar` : `${b.section} bar ${app.plan.bar_index + 1} of ${app.plan.bar_count}`;
     return { t: Math.round(app.t), bar: what,
-      progress: (100 * app.t) / dur, cutter: stepAt(app.t, "Cutter"), handler: stepAt(app.t, "Handler") };
+      progress: (100 * app.t) / dur, cutter: stepAt(app.t, "Cutter"), handler: stepAt(app.t, "Handler"),
+      plasma: (app.plan.process && app.plan.process.preset) || "" };
   },
 };
 window.app = app;                         // handy in the browser console
@@ -126,6 +129,7 @@ export function clearPlan() {
   $("plan-warnings").innerHTML = "";
   if (app.scene) { clearSteel(); manualPreview(); if (!manual.on) showBarPreview(); }
   updateTransport();
+  refreshPlasmaPick();                          // the beam may have changed: its saved plasma settings
 }
 
 async function planBar() {
@@ -134,10 +138,11 @@ async function planBar() {
     try { await planManual(); } catch (e) { toast("Planning failed: " + e.message, true); } finally { $("loading").hidden = true; }
     return;
   }
-  if (!app.bars.length) return toast("Add some parts first (Parts & NC1 tab)", true);
+  if (!app.bars.length) return toast("Add some parts first (Parts tab)", true);
   $("loading").hidden = false;
   try {
-    const plan = await post("/api/plan", { parts: app.job.parts, stock_length: app.job.stock_length, bar: app.barIndex });
+    const plan = await post("/api/plan", { parts: app.job.parts, stock_length: app.job.stock_length, bar: app.barIndex,
+                                         plasma: app.plasma || "" });
     loadPlan(plan);
   } catch (e) {
     toast("Planning failed: " + e.message, true);
@@ -160,7 +165,8 @@ export function loadPlan(plan) {
     <tr><td>Torch on</td><td>${fmtTime(s.torch_on_s)} (${Math.round((100 * s.torch_on_s) / s.duration_s)}%)</td></tr>
     <tr><td>Bridges</td><td>never closer than ${s.min_bridge_gap_m.toFixed(2)} m</td></tr>
     <tr><td>Collision check</td><td class="${plan.collisions ? "bad" : "good"}">${plan.collisions ? plan.collisions + " problems" : "clear"}</td></tr>
-    <tr><td>Plasma</td><td>${plan.process ? plan.process.label : "-"}</td></tr>
+    <tr><td>Plasma</td><td>${plan.process ? plan.process.label : "-"}<br><span class="small ${plan.process && plan.process.preset ? "good" : "muted"}">${
+      plan.process && plan.process.preset ? "saved settings: " + plan.process.preset : "cut chart values"}</span></td></tr>
     </table><div class="muted small">Planned in ${plan.planning_s} s</div>
     ${plan.bar_check ? `<details class="bar-check"><summary class="${plan.bar_check.ok ? "good" : "bad"}">Bar check: ${plan.bar_check.ok ? "within tolerance" : "OUT of tolerance"}
       ${plan.bar_check.simulated ? "(simulated)" : ""}</summary>${barCheckHtml(plan.bar_check)}</details>` : ""}`;
@@ -521,6 +527,8 @@ async function start() {
   initSensors();
   initHelp();
   initManual();
+  await initPlasma();
+  initReports();
   await initSafety();
   await jobChanged();
   requestAnimationFrame(frame);

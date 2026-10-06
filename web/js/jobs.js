@@ -35,7 +35,7 @@ async function render() {
   $("saved-body").innerHTML = saved.length ? saved.map((n) => `<tr><td><b>${esc(n)}</b> <span class="muted small">jobs/${esc(n)}.json</span></td>
       <td class="nowrap"><button class="mini" data-open="${esc(n)}">Open</button>
       <button class="danger mini" data-del="${esc(n)}">Delete</button></td></tr>`).join("")
-    : '<tr><td colspan="2" class="muted">No saved jobs. Save one on the Parts &amp; NC1 tab.</td></tr>';
+    : '<tr><td colspan="2" class="muted">No saved jobs. Save one on the Parts tab.</td></tr>';
 
   for (const b of document.querySelectorAll("[data-hist]")) b.onclick = async () => {
     await post("/api/history-delete/" + encodeURIComponent(b.dataset.hist), {});

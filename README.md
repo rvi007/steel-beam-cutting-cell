@@ -66,7 +66,7 @@ use the address the terminal prints (for example `http://192.168.1.20:8080`).
 2. **Machine tab**: example parts are already loaded. Press **Plan this bar**, then **Run**.
    Press **Follow Cutter** to watch the holes and notches being cut, and **Follow Handler** to watch a finished beam carried away.
    Point at anything in 3D to see what it is.
-3. **Parts & NC1 tab**: drag in NC1 files from Tekla, or pick *Add an example*. Every face is drawn,
+3. **Parts tab**: drag in NC1 files from Tekla, or pick *Add an example*. Every face is drawn,
    with its UK code checks. Click a part to edit it, for example to add a bolt group or a notch.
 4. **Manual cut** (top left of the Machine tab): pick a section and a length, click on the beam to put a hole there,
    press **+ Cut** to cut it, then **Plan these cuts** and **Run**.
@@ -76,7 +76,10 @@ use the address the terminal prints (for example `http://192.168.1.20:8080`).
    (each E-stop, gate or camera stop with its time), each with a **Delete** button.
 7. **Prototype tab**: the 1:10 prototype in 3D. Every part is numbered, matching the shopping list. Click a part to see what it is and where to buy it.
 8. **Camera tab**: start the camera and walk towards the machine. It slows down when you get close and stops when you get too close.
-9. **Sensors tab**: every sensor (two cameras, bar finding, torch, magnet, safety), the **bar check**, the **plasma settings**,
+9. **Plasma tab**: plasma doesn't always cut the same, so try settings on a test piece, then save the ones that work, named after the beam.
+   Next time that beam is cut, the Machine tab uses them automatically.
+10. **Reports** (top right): every stop during a job saves a problem report. Add a note and press **Send to developer**.
+11. **Sensors tab**: every sensor (two cameras, bar finding, torch, magnet, safety), the **bar check**, the **plasma settings**,
    and what each hand does for every stop. Press **Simulate** on "load slipping" or "object on the bed" and watch it react.
 
 <details>
@@ -134,6 +137,8 @@ steel-beam-cutting-cell/
 │   ├── server.py         web server and the API the browser talks to
 │   ├── safety.py         safety controller: E-stop, interlocks, modes, reset/start, watchdogs
 │   ├── history.py        job history (jobs/history.json)
+│   ├── plasma_presets.py saved plasma settings that worked (plasma_settings/)
+│   ├── reports.py        problem reports for the developer after every stop (reports/)
 │   ├── gpio_inputs.py    real E-stop / gate / light curtain / reset buttons on the Jetson's pins
 │   ├── assistant.py      "what's happening" in plain English + the optional AI advisor
 │   ├── doctor.py         system check: python3 -m beamcell.doctor
@@ -155,7 +160,8 @@ steel-beam-cutting-cell/
 ├── deploy/               start-at-boot service for the Jetson
 ├── tests/                automatic tests (GitHub runs them on every push)
 ├── models/               put YOLO .onnx models here (see docs/JETSON_SETUP.md)
-└── jobs/, logs/          your saved jobs, job history and safety log (not in git)
+└── jobs/, logs/, plasma_settings/, reports/
+                          your saved jobs, job history, safety log, plasma settings and problem reports (not in git)
 ```
 
 ### Tests

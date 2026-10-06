@@ -28,7 +28,7 @@ import math
 
 import numpy as np
 
-from beamcell import plasma
+from beamcell import plasma, plasma_presets
 from beamcell import sections as S
 from beamcell.config import CONFIG
 from beamcell.machine import (BEAM_Y, BED_Z, MIN_GAP, OUTFEED_Y, SCRAP_TRAY_Z, X_LIMITS, Y_LIMITS, Z_LIMITS, Z_SAFE,
@@ -319,8 +319,10 @@ def bar_operations(bar):
 
 # ------------------------------------------------------------------ the plan
 class Plan:
-    def __init__(self, bar):
+    def __init__(self, bar, preset=None):
         self.bar = bar
+        self.preset = preset    # saved plasma settings (plasma_presets) to use instead of the cut chart
+        self.process = preset["process"] if preset else process()
         self.cutter, self.handler = make_hands()
         rest_c = self.cutter.preference(DOWN, column_side(DOWN))[1]
         rest_h = self.handler.preference(DOWN, [-1, 0, 0])[1]
@@ -446,7 +448,9 @@ class Plan:
         self._commit(self.tc, s)
         t_on = self.tc.end
         feature = op_feature(op)
-        proc = plasma.settings(feature, thick, process(), op.get("d"))
+        proc = plasma.settings(feature, thick, self.process, op.get("d"))
+        if self.preset:
+            proc = plasma_presets.apply(proc, self.preset, feature, thick)
         speed = proc["speed_mm_min"] / 60000.0
         self.tc.hold(t_on + proc["pierce_delay_s"])
         if np.linalg.norm(pts.max(axis=0) - pts.min(axis=0)) > TRACK_OVER:
@@ -668,7 +672,8 @@ class Plan:
                       "points": np.round(c["points"], 4).tolist(), "times": np.round(c["times"], 2).tolist(),
                       "process": {k: v for k, v in c["process"].items() if k != "warnings"}}
                      for c in self.cuts],
-            "process": {"name": process(), "label": plasma.chart(process())["label"]},
+            "process": {"name": self.process, "label": plasma.chart(self.process)["label"],
+                        "preset": self.preset["name"] if self.preset else None},
             "ops": [{k: op[k] for k in ("id", "placement", "kind", "label", "hole", "opening", "t_done", "d", "coped") if k in op}
                     for op in self.ops],
             "carries": self.carries, "drops": self.drops,

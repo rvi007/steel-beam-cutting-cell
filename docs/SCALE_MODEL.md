@@ -5,7 +5,7 @@ You can build the cell yourself at any scale. All the sizes below come from the 
 
 ## 1. Get the 3D files
 
-Open the app, go to **Section library**:
+Open the app, go to the **Sections** tab:
 
 - **Download section STL**: any UK section (UB, UC, PFC, angles, hollow sections) at any
   length and scale. The STL is in millimetres, already scaled, ready for a slicer.
