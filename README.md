@@ -2,7 +2,7 @@
 
 ### Robotic cutting of UK structural steel
 
-**Two robot arms on an overhead gantry that cut beams to size: bolt holes, slots, notches,
+**Two robot arms on an overhead gantry (12 m or 20 m long) that cut beams to size: bolt holes, slots, notches,
 mitres and cut-to-length. Drawings in, finished beams out.**
 
 By **Ravi Mahadeva** · UK codes · runs on an NVIDIA Jetson Orin Nano · opens in any web browser
@@ -79,10 +79,12 @@ use the address the terminal prints (for example `http://192.168.1.20:8080`).
 9. **Plasma tab**: plasma doesn't always cut the same, so try settings on a test piece, then save the ones that work, named after the beam.
    Next time that beam is cut, the Machine tab uses them automatically.
 10. **Reports** (top right): every stop during a job saves a problem report. Add a note and press **Send to developer**.
-11. **Bar check at Start**: after the safety checks, the Cutter measures the bar and checks it against the job (section, thicknesses,
+11. **Machine size** (Machine tab): 12 m or 20 m long, 3 m wide. Stock bars up to 20 m; the 3D model, planning and checks follow.
+12. **Bar check at Start**: after the safety checks, the Cutter measures the bar and checks it against the job (section, thicknesses,
    length, every hole, holes already in the bar). If it doesn't match, the job doesn't start and a window says why.
-   Try it: Sensors tab, *Bar on the bed*, pick "a bar too short", then press Run.
-12. **Sensors tab**: every sensor (two cameras, bar finding, torch, magnet, safety), the **bar check**, the **plasma settings**,
+   Try it: Sensors tab, *Bar on the bed*, pick "a bar too short", then press Run. When the bar matches, a window shows the
+   program next to what was measured on the cutting area (web and flange), then cutting starts.
+13. **Sensors tab**: every sensor (two cameras, bar finding, torch, magnet, safety), the **bar check**, the **plasma settings**,
    and what each hand does for every stop. Press **Simulate** on "load slipping" or "object on the bed" and watch it react.
 
 <details>
