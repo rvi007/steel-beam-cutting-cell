@@ -327,6 +327,11 @@
   <div class="scroll"><table class="list"><tbody id="saved-body"></tbody></table></div>
   <div class="toolbar"><button id="jobs-close" class="primary">Close</button></div>
 </dialog>
+<dialog id="scan-dlg" class="job-done scan-dlg">
+  <h2>Bar measured: web and flange</h2>
+  <div id="scan-dlg-body"></div>
+  <div class="toolbar"><button id="scan-dlg-ok" class="primary" onclick="this.closest('dialog').close()">OK</button></div>
+</dialog>
 <dialog id="bar-dlg" class="job-done bar-dlg">
   <h2>&#9888; This bar doesn't match the job</h2>
   <div id="bar-dlg-body"></div>

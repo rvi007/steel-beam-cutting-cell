@@ -283,7 +283,7 @@ def job_check(bar, measured=None):
     # enough steel?
     have = m["length"]
     r["needed_mm"] = round(needed, 1)
-    r["checks"].append({"what": "length for this job", "measured": round(have, 1), "nominal": round(needed, 1),
+    r["checks"].append({"what": "length for this job", "measured": round(have), "nominal": round(needed),
                         "deviation": round(have - needed, 1), "allowed": "at least what the job needs", "ok": have >= needed - 0.5})
     if have < needed - 0.5:
         problems.append({"what": "Bar too short", "text": f"The job needs {needed:,.0f} mm of steel; this bar is {have:,.0f} mm "

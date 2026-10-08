@@ -454,6 +454,43 @@ def build_cell():
         z = 2600 - i * 120
         m.cyl(f"lamp_{lamp}", f"Stack light - {lamp}", colour, (gx + 3350, -fy - 1000, z - 55), (gx + 3350, -fy - 1000, z + 55), 60)
 
+    # power and signals: control cabinet, plasma power source, trunking, risers and the energy-chain trays
+    # (the chains themselves move with the bridges: web/js/cables.js)
+    rz = M.RAIL_Z * mm
+    x_fix = (xa + xb) / 2 * mm                                   # each runway chain is fixed at the middle of the travel
+    m.box("control_cabinet", "Control cabinet - servo drives, safety PLC, contactors, the Jetson's I/O", (0.80, 0.81, 0.82),
+          gx + 3700, gx + 4900, -fy - 1500, -fy - 900, 0, 2000)
+    m.box("control_cabinet_door", "Control cabinet door (isolator handle: lock it off for maintenance)", (0.70, 0.71, 0.73),
+          gx + 3720, gx + 4880, -fy - 1520, -fy - 1500, 60, 1980)
+    m.box("isolator", "Main isolator - lockable (PUWER reg 19, BS EN 60204-1)", RED, gx + 4700, gx + 4820, -fy - 1560, -fy - 1520, 1300, 1450)
+    px = min(fx1 - 2200, gx + 6200)
+    m.box("plasma_power_source", "Plasma power source (Hypertherm XPR300 class) - 400 V 3-phase, its own cooling", RED,
+          px, px + 900, -fy - 1500, -fy - 700, 0, 1150)
+    m.box("plasma_gas_console", "Plasma gas console - O2 / air / N2 for the torch", (0.85, 0.86, 0.87),
+          px + 100, px + 800, -fy - 1400, -fy - 800, 1150, 1450)
+    m.box("gas_cylinders", "Gas supply (bulk or a chained cylinder pack) - O2 and N2", (0.25, 0.45, 0.30),
+          px + 1050, px + 1450, -fy - 1400, -fy - 800, 0, 1600)
+    cols = [(xa + i * (xb - xa) / math.ceil((xb - xa) / 4.0)) * mm for i in range(math.ceil((xb - xa) / 4.0) + 1)]
+    xc = min(cols, key=lambda x: abs(x - x_fix))                 # the column nearest the chains' fixed point
+    m.box("floor_trunking", "Floor trunking (steel, walk-over) - power, signals, torch lead, gas hoses", DARK,
+          min(gx + 3700, xc) - 50, max(px + 900, xc + 50), -fy - 680, -fy - 520, 0, 80)
+    m.box("floor_trunking", "Floor trunking under the bed to the back runway (Handler)", DARK,
+          xc + 250, xc + 400, -fy - 680, W / 2 + 200, 0, 60)
+    for side in (-1, 1):
+        y_tray = side * (W / 2 + 350)
+        m.box("riser", "Cable riser up the column to the energy-chain tray", DARK,
+              xc + 250, xc + 400, side * (W / 2 + 60) - 70, side * (W / 2 + 60) + 70, 0, rz - 80)
+        m.box("riser", "Cable riser up the column to the energy-chain tray", DARK,
+              xc + 250, xc + 400, min(side * (W / 2 + 60), y_tray) - 70, max(side * (W / 2 + 60), y_tray) + 70, rz - 130, rz - 80)
+        who = "Cutter (torch lead, gas hoses, servo cables)" if side < 0 else "Handler (magnet power, servo cables)"
+        m.box("chain_tray", f"Energy-chain tray along the runway - the {who} chain lies in it", STEEL,
+              x0, x_fix + 400, y_tray - 85, y_tray + 85, rz - 110, rz - 100)
+        for wall in (-1, 1):
+            m.box("chain_tray", "Energy-chain tray side", STEEL, x0, x_fix + 400, y_tray + wall * 85 - 4, y_tray + wall * 85 + 4, rz - 110, rz - 20)
+        for xb_ in np.arange(x0 + 500, x_fix + 400, 2000):
+            m.box("tray_bracket", "Tray bracket bolted to the runway", DARK, xb_ - 30, xb_ + 30,
+                  min(side * W / 2, y_tray) - 90, max(side * W / 2, y_tray) + 90, rz - 140, rz - 110)
+
     # the two hands: each body in its own frame, posed by the 3D view
     for hand in M.make_hands():
         _hand_bodies(m, hand)

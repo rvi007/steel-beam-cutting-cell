@@ -322,13 +322,32 @@ function jobName(plan) {
 }
 
 let lastT = 0;
+// After the two measuring passes: what the program needs, what is on the bed, and the verdict
 function barMeasured(st) {
-  const r = st && st.job && st.job.bar_check;
-  if (!r) return;
-  const m = r.measured || {};
-  toast(r.ok ? `\u2714 Bar measured - it is ${r.identified || r.section}, as the job needs. Web: ${(m.depth || 0).toFixed(1)} deep x ${(m.web || 0).toFixed(1)} thick. `
-    + `Flange: ${(m.width || 0).toFixed(1)} wide x ${(m.flange || 0).toFixed(1)} thick. ${Math.round(m.length || 0).toLocaleString()} mm long (needs ${Math.round(r.needed_mm).toLocaleString()})`
-    + `${(m.holes || []).length ? "" : ", no holes already in it"}` : "The bar doesn't match the job", !r.ok, 7000);
+  const r = st && st.job && st.job.bar_check, plan = app.plan;
+  if (!r || !plan) return;
+  const m = r.measured || {}, esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const marks = [...new Set(plan.placements.map((p) => p.part.mark))];
+  const program = plan.manual ? `Manual cut on a ${plan.bar.length.toLocaleString()} mm bar`
+    : `NC1 job: ${marks.join(", ")} (bar ${plan.bar_index + 1} of ${plan.bar_count})`;
+  const row = (what, c) => c ? `<tr><td>${what}</td><td>${c.nominal}</td><td><b>${c.measured}</b></td><td class="muted small">${esc(c.allowed)}</td>
+    <td>${c.ok ? '<span class="good">&#10004;</span>' : '<span class="bad">&#10008;</span>'}</td></tr>` : "";
+  const find = (w) => r.checks.find((c) => c.what.startsWith(w));
+  $("scan-dlg-body").innerHTML = `
+    <div class="scan-sum">
+      <div><span class="muted small">Program</span><b>${esc(program)}</b><span>needs <b>${esc(r.section)}</b>, ${Math.round(r.needed_mm).toLocaleString()} mm of steel</span></div>
+      <div><span class="muted small">On the cutting area</span><b>${esc(r.identified || "?")}</b><span>${Math.round(m.length || 0).toLocaleString()} mm long${(m.holes || []).length ? "" : ", no holes in it"}</span></div>
+    </div>
+    <table class="list pl"><thead><tr><th></th><th>Program</th><th>Measured</th><th>Allowed</th><th></th></tr></thead><tbody>
+      ${row("Web - depth", find("depth"))}${row("Web - thickness", find("web thickness"))}
+      ${row("Flange - width", find("flange width"))}${row("Flange - thickness", find("flange thickness"))}
+      ${row("Straight (bow)", find("bow"))}${row("Length", find("length for this job"))}</tbody></table>
+    <div class="scan-verdict ${r.ok ? "ok" : "bad"}">${r.ok ? "&#10004; The bar matches the program - cutting starts now"
+      : "&#10008; The bar doesn't match the program"}</div>`;
+  const dlg = $("scan-dlg");
+  if (!dlg.open) dlg.show();                                        // not modal: the machine keeps cutting
+  clearTimeout(barMeasured.timer);
+  barMeasured.timer = setTimeout(() => dlg.close(), 12000);
 }
 
 function showJobNow() {

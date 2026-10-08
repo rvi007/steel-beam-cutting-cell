@@ -3,6 +3,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "orbit";
 import { RoomEnvironment } from "room";
+import { Cables } from "./cables.js";
 import { handFrames } from "./kinematics.js";
 
 const C = { floor: 0xb9bcb8 };
@@ -188,6 +189,7 @@ export class CellScene {
     this.gate.position.set(hx, hy, 0);
     if (gate) { gate.position.set(0, 0, 0); gate.quaternion.identity(); this.gate.add(gate); }
     this.scene.add(this.gate);
+    this.cables = new Cables(this.scene, this.m);       // energy chains and dress packs follow the hands
     this.loaded = true;
     for (const key of ["cutter", "handler"]) if (this.hands[key].last) this.pose(key, ...this.hands[key].last);
   }
@@ -252,6 +254,7 @@ export class CellScene {
     H.mast.matrix.makeTranslation(g[0], g[1], g[2]);
     for (let k = 0; k < 7; k++) H.links[k].matrix.copy(F[k]);
     for (const b of [H.bridge, H.carriage, H.mast, ...H.links]) b.matrixWorldNeedsUpdate = true;
+    this.cables.update(key, H.cfg, g, q);
   }
 
   // ---------------------------------------------------------------- effects
