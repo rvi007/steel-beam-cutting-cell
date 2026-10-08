@@ -24,7 +24,10 @@ export const app = {
     if (!app.plan) return { cutter: "", handler: "", bar: "" };
     const b = app.plan.bar, dur = app.plan.summary.duration_s;
     const what = b.manual ? `manual cuts on a ${b.section} bar` : `${b.section} bar ${app.plan.bar_index + 1} of ${app.plan.bar_count}`;
-    return { t: Math.round(app.t), bar: what,
+    const ops = app.plan.ops || [], cur = ops.find((o) => o.t_done > app.t + 1e-6);
+    const mark = (o) => (app.plan.placements[o.placement] ? app.plan.placements[o.placement].part.mark + ": " : "") + o.label;
+    return { t: Math.round(app.t), t_exact: app.t, bar: what, op: cur ? mark(cur) : "", done: ops.filter((o) => o.t_done <= app.t + 1e-6).length,
+      total: ops.length,
       progress: (100 * app.t) / dur, cutter: stepAt(app.t, "Cutter"), handler: stepAt(app.t, "Handler"),
       plasma: (app.plan.process && app.plan.process.preset) || "" };
   },
@@ -156,7 +159,7 @@ export function loadPlan(plan) {
   app.plan = plan;
   app.t = 0;
   plan.jobName = jobName(plan);
-  loadJob(plan.jobName, plan.plan_id).then(showJobNow);
+  loadJob(plan.jobName, plan.plan_id, plan.request, app.resume || null).then(showJobNow);
   const s = plan.summary;
   $("plan-info").innerHTML = `<table>
     <tr><td>Cycle time</td><td><b>${fmtTime(s.duration_s)}</b></td></tr>
@@ -322,6 +325,64 @@ function jobName(plan) {
 }
 
 let lastT = 0;
+
+// ---------------------------------------------------------------- carrying on after a stop or a power cut
+async function offerRecovery() {
+  let r;
+  try { r = (await get("/api/recovery")).recovery; } catch (e) { return; }
+  if (!r || !r.job || !r.job.request) return;
+  const esc = (x) => String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  $("rec-body").innerHTML = `
+    <p><b>${esc(r.job.name)}</b> didn't finish.</p>
+    <table class="rec-table">
+      <tr><td>Stopped</td><td><b>${esc(r.saved)}</b></td></tr>
+      <tr><td>Why</td><td>${esc(r.why)}</td></tr>
+      <tr><td>Where</td><td><b>${esc(r.op || "before the first cut")}</b><br><span class="muted small">Cutter: ${esc(r.cutter)} &middot; Handler: ${esc(r.handler)}</span></td></tr>
+      <tr><td>Done</td><td>${r.done} of ${r.total} operations (${r.total ? Math.round((100 * r.done) / r.total) : 0}%)</td></tr>
+    </table>
+    <p class="small">Carrying on: the job is planned again exactly as before; everything already done is skipped and the
+      operation that was interrupted is <b>done again from its start</b>. Before anything moves, the bar is measured again and
+      the torch camera checks the cuts already made are where the program put them. You'll see the restart point in 3D.</p>`;
+  $("rec-dlg").showModal();
+  $("rec-resume").onclick = () => resumeJob(r, true);
+  $("rec-again").onclick = () => resumeJob(r, false);
+  $("rec-discard").onclick = async () => {
+    if (!confirm("Forget this job? Its progress is deleted.")) return;
+    await post("/api/recovery-discard", {}); $("rec-dlg").close();
+  };
+}
+
+async function resumeJob(r, carryOn) {
+  $("rec-dlg").close();
+  $("loading").hidden = false;
+  try {
+    const req = r.job.request;
+    const plan = await post(req.endpoint, req.body);
+    const ops = [...(plan.ops || [])].sort((a, b) => a.t_done - b.t_done);
+    const done = ops.filter((o) => o.t_done <= r.t + 1e-6), cur = ops[done.length];
+    if (carryOn && cur) {
+      const prevEnd = done.length ? done[done.length - 1].t_done : (plan.scan ? plan.scan.t1 : 0);
+      const mark = (o) => (plan.placements[o.placement] ? plan.placements[o.placement].part.mark + ": " : "") + o.label;
+      app.resume = { t: prevEnd, t_done: cur.t_done, op: mark(cur), done: done.length, total: ops.length, stopped: r.saved, why: r.why };
+    } else app.resume = null;
+    loadPlan(plan);
+    if (app.resume) {
+      app.t = app.resume.t;
+      const cut = plan.cuts.find((c) => c.op === cur.id);
+      if (cut) app.scene.marker(cut.points[0]);
+      $("resume-chip").innerHTML = `&#9654; Carrying on: restarts at <b>${app.resume.op}</b> &middot; stopped ${app.resume.stopped}
+        &middot; ${app.resume.done} of ${app.resume.total} done`;
+      $("resume-chip").hidden = false;
+      app.scene.view("cutter");
+      toast("Job planned again - Reset, confirm the checklist, then Run: the bar is checked, then it carries on", false, 7000);
+    } else {
+      await post("/api/recovery-discard", {});
+      toast("Job planned again from the beginning - Reset, checklist, then Run", false, 6000);
+    }
+    updateTransport();
+  } catch (e) { toast("Couldn't plan the job again: " + e.message, true); }
+  finally { $("loading").hidden = true; }
+}
 // After the two measuring passes: what the program needs, what is on the bed, and the verdict
 function barMeasured(st) {
   const r = st && st.job && st.job.bar_check, plan = app.plan;
@@ -341,8 +402,11 @@ function barMeasured(st) {
     <table class="list pl"><thead><tr><th></th><th>Program</th><th>Measured</th><th>Allowed</th><th></th></tr></thead><tbody>
       ${row("Web - depth", find("depth"))}${row("Web - thickness", find("web thickness"))}
       ${row("Flange - width", find("flange width"))}${row("Flange - thickness", find("flange thickness"))}
-      ${row("Straight (bow)", find("bow"))}${row("Length", find("length for this job"))}</tbody></table>
-    <div class="scan-verdict ${r.ok ? "ok" : "bad"}">${r.ok ? "&#10004; The bar matches the program - cutting starts now"
+      ${row("Straight (bow)", find("bow"))}${row("Length", find("length for this job"))}
+      ${row("Already cut (scan back)", find("already cut"))}</tbody></table>
+    ${app.resume ? `<div class="scan-resume">Carrying on from <b>${esc(app.resume.op)}</b> - ${app.resume.done} of ${app.resume.total}
+      operations were already done and are skipped. The torch camera found the cuts already made where the program put them.</div>` : ""}
+    <div class="scan-verdict ${r.ok ? "ok" : "bad"}">${r.ok ? (app.resume ? `&#10004; The bar matches - carrying on from ${esc(app.resume.op)}` : "&#10004; The bar matches the program - cutting starts now")
       : "&#10008; The bar doesn't match the program"}</div>`;
   const dlg = $("scan-dlg");
   if (!dlg.open) dlg.show();                                        // not modal: the machine keeps cutting
@@ -488,7 +552,8 @@ function frame(now) {
     // the Cutter measuring the bar before it cuts; at the end, say what it found
     const scan = plan.scan;
     scene.scanLaser(!!scan && (scan.passes || [scan]).some((p) => app.t >= p.t0 && app.t < p.t1));
-    if (scan && app.playing && lastT < scan.t1 && app.t >= scan.t1) barMeasured(st);
+    if (scan && app.playing && !app.resume && lastT < scan.t1 && app.t >= scan.t1) barMeasured(st);
+    if (app.resume && app.t > app.resume.t_done) { app.resume = null; $("resume-chip").hidden = true; scene.marker(null); }
     lastT = app.t;
   } else {
     for (const key of ["cutter", "handler"]) {
@@ -542,6 +607,7 @@ async function start() {
     if (!app.plan) return;
     if (app.t >= app.plan.summary.duration_s - 1e-6) app.t = 0;
     const r = await startMachine();
+    if (r && r.ok !== false && app.resume && !app.resume.shown) { app.resume.shown = true; barMeasured(safety.status); }
     if (r && r.ok === false && !(r.job && r.job.bar_check && !r.job.bar_check.ok))   // a bar that doesn't match has its own window
       toast("Can't start: " + r.why.join("; ") + " (see the Safety tab)", true);
   };
@@ -583,6 +649,7 @@ async function start() {
   await initSafety();
   await jobChanged();
   requestAnimationFrame(frame);
+  offerRecovery();                              // a job interrupted by a stop or a power cut: offer to carry on
   memoryPill();
   setInterval(memoryPill, 15000);
 }

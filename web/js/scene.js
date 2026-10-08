@@ -287,6 +287,21 @@ export class CellScene {
   }
 
   // Plasma arc, glow and sparks at the Cutter's tip. `emit`: throw new sparks (machine running).
+  // where a job carries on after a stop: a green arrow pointing at the first cut still to do
+  marker(p) {
+    if (!this._marker) {
+      this._marker = new THREE.Group();
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.2, 24), new THREE.MeshBasicMaterial({ color: 0x16a34a }));
+      cone.rotation.x = -Math.PI / 2;                        // pointing down (Z up)
+      cone.position.z = 0.14;
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.008, 8, 32), new THREE.MeshBasicMaterial({ color: 0x16a34a }));
+      this._marker.add(cone, ring);
+      this.scene.add(this._marker);
+    }
+    this._marker.visible = !!p;
+    if (p) this._marker.position.set(p[0], p[1], p[2] + 0.02);
+  }
+
   scanLaser(on) {
     this.laser.visible = on;
     if (on) {

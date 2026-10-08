@@ -143,7 +143,8 @@ def _sim(seed, lo, hi):
 SIM_MODES = {"ok": "the right bar", "short": "a bar too short for the job", "wrong_section": "the wrong section (bigger)",
              "narrow_flange": "a bar with a narrow flange",
              "wrong_web": "a bar with the wrong web (flange right)", "thin_flange": "a bar with a thin flange",
-             "existing_hole": "a bar that already has a hole", "bent": "a bent bar", "no_bar": "no bar on the bed"}
+             "existing_hole": "a bar that already has a hole",
+             "bar_moved": "after a stop: the bar was moved (cuts already made aren't where they were)", "bent": "a bent bar", "no_bar": "no bar on the bed"}
 SIM_BAR = {"mode": "ok"}
 
 
@@ -246,7 +247,7 @@ def _needed_length(bar):
     return max(cut) if cut else 0.0
 
 
-def job_check(bar, measured=None):
+def job_check(bar, measured=None, resume=None):
     """The check before Start: measure the bar on the bed, then check it against THIS job -
     the right section, enough length, and every hole still meeting the UK rules on the real steel.
     Returns {ok, problems: [{what, text, fix}], checks, ...}; Start is refused unless ok."""
@@ -317,6 +318,20 @@ def job_check(bar, measured=None):
                              "text": f"The torch camera found a {h['d']} mm hole at x = {h['x']:,} mm that isn't in this job - "
                                      f"it would end up in part {inside}.",
                              "fix": "This looks like a used bar or an offcut. Use a new bar, or put this one aside."})
+    # carrying on after a stop: the torch camera looks at what is already cut - it must be where the program put it,
+    # or the bar has been moved and every cut still to come would be in the wrong place
+    if resume:
+        done = int(resume.get("done", 0))
+        shift = m.get("moved_mm", 25.0 if SIM_BAR["mode"] == "bar_moved" else _sim(r["section"] + "back", 0.0, 0.8))
+        r["scan_back"] = {"features": done, "shift_mm": round(shift, 1), "ok": abs(shift) <= 2.0}
+        r["checks"].append({"what": "already cut (torch camera)", "measured": f"{done} found, {shift:+.1f} mm",
+                            "nominal": f"{done} at the program's place", "deviation": round(shift, 1),
+                            "allowed": "within 2 mm", "ok": abs(shift) <= 2.0})
+        if abs(shift) > 2.0:
+            problems.append({"what": "Bar moved since the stop",
+                             "text": f"The cuts already made are {shift:.0f} mm from where the program put them - the bar has moved.",
+                             "fix": "Push the bar back against the end stop (or re-datum it), then press Start again. "
+                                    "Don't carry on: every cut still to come would be out by the same amount."})
     r["ok"] = not problems
     r["problems"] = problems
     r["time"] = _now()
