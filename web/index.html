@@ -84,6 +84,7 @@
         <button id="btn-safety-reset">Reset</button>
       </div>
       <div id="hover-label" class="hover-label" hidden></div>
+      <div id="resume-chip" class="resume-chip" hidden></div>
       <div id="loading" class="loading" hidden>Planning both hands&hellip;</div>
     </div>
     <footer class="transport">
@@ -326,6 +327,15 @@
   <h3>Saved jobs</h3>
   <div class="scroll"><table class="list"><tbody id="saved-body"></tbody></table></div>
   <div class="toolbar"><button id="jobs-close" class="primary">Close</button></div>
+</dialog>
+<dialog id="rec-dlg" class="job-done rec-dlg">
+  <h2>&#9888; A job was interrupted</h2>
+  <div id="rec-body"></div>
+  <div class="toolbar">
+    <button id="rec-resume" class="primary">Carry on from where it stopped</button>
+    <button id="rec-again">Start it again from the beginning</button>
+    <button id="rec-discard" class="danger">Forget it</button>
+  </div>
 </dialog>
 <dialog id="scan-dlg" class="job-done scan-dlg">
   <h2>Bar measured: web and flange</h2>

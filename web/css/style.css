@@ -324,3 +324,10 @@ dialog.scan-dlg h2 { color: var(--ink); }
 .scan-sum > div { display: flex; flex-direction: column; gap: 2px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
 .scan-verdict { margin-top: 10px; padding: 10px 12px; border-radius: 10px; font-weight: 700; }
 .scan-verdict.ok { background: #dff3e4; color: #1e7d3a; } .scan-verdict.bad { background: #fee4e2; color: #b42318; }
+
+/* carrying on after a stop */
+dialog.rec-dlg { max-width: 640px; } dialog.rec-dlg h2 { color: #b54708; }
+.rec-table td { padding: 4px 12px 4px 0; vertical-align: top; } .rec-table td:first-child { color: var(--muted); }
+.resume-chip { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); background: #16a34a; color: #fff;
+  padding: 8px 16px; border-radius: 999px; font-size: 14px; box-shadow: var(--shadow-lg); white-space: nowrap; z-index: 4; }
+.scan-resume { margin-top: 8px; padding: 8px 10px; background: #e8f5ec; border-radius: 8px; font-size: 13px; }

@@ -54,7 +54,7 @@ export const startMachine = () => act("start");
 export const stopMachine = (reason) => act("stop", { reason });
 export const jobFinished = (details) => act("finished", { details });
 // every planned job is registered with the safety controller: each one needs its own checklist
-export const loadJob = (name, planId) => act("job", { name, plan_id: planId });
+export const loadJob = (name, planId, request, resume) => act("job", { name, plan_id: planId, request, resume });
 export const clearSafetyJob = (details) => act("clear-job", { details });
 
 function accept(st) {

@@ -188,7 +188,7 @@ class SafetyController:
             self._event(f"pre-start checklist confirmed by {who}" + (f" for job '{self.job['name']}'" if self.job else ""))
 
     # ---------------------------------------------------------------- jobs: every job gets its own checklist
-    def load_job(self, name, who="screen", plan_id=None):
+    def load_job(self, name, who="screen", plan_id=None, request=None, resume=None):
         """A job (a planned bar, or manual cuts) is loaded. The checklist done for an earlier job that
         ran doesn't count: the cell has changed (parts on the table, scrap in the tray)."""
         with self.lock:
@@ -199,15 +199,21 @@ class SafetyController:
             same = prev is not None and prev["name"] == name and prev["state"] != "finished"
             if same and plan_id and prev.get("plan_id") != plan_id:   # planned again: the bar is checked again
                 prev.update(plan_id=plan_id, bar_check=None)
+            if same and (request or resume):
+                prev.update(request=request or prev.get("request"), resume=resume)
             if not same:
                 if self.checklist_ok and prev and prev["started"]:     # the last job ran: walk round again
                     self.checklist_ok = False
                     self.checklist_for = None
                 self.job = {"name": name, "state": "loaded", "started": False, "runs": 0, "loaded_at": time.time(),
-                            "problems": [], "plan_id": plan_id, "bar_check": None}
+                            "problems": [], "plan_id": plan_id, "bar_check": None,
+                            "request": request, "resume": resume}
                 if self.checklist_ok:                       # nothing has run since it was confirmed: it carries over
                     self.checklist_for = name
                 self._event(f"job loaded: '{name}'" + ("" if self.checklist_ok else " - confirm the pre-start checklist for it"))
+                if resume:
+                    self._event(f"job '{name}' loaded to CARRY ON from: {resume.get('op', '?')} "
+                                f"({resume.get('done', 0)} of {resume.get('total', 0)} operations already done)")
             return True, []
 
     def recheck_bar(self):

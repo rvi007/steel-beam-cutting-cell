@@ -14,6 +14,7 @@ API (all JSON):
     POST /api/nc1/export            {part} -> NC1 text
     POST /api/part                  {part} -> checks, face outlines, weight
     POST /api/nest                  {parts, stock_length} -> bars
+    GET  /api/recovery              a job that was interrupted (stop, power cut): where it was; POST /api/recovery-discard
     POST /api/machine-size          {length_m: 12 | 20} -> change the machine's length (remembered in config/machine.json)
     POST /api/plan                  {parts, stock_length, bar} -> motion plan for one bar
     POST /api/manual/check          {section, length, cuts} -> pieces + UK checks for a manual cut
@@ -53,7 +54,7 @@ import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote, urlparse
 
-from beamcell import assistant, collisions, history, machine, manual, nc1, plasma, plasma_presets, reports, sensors, \
+from beamcell import assistant, collisions, history, machine, manual, nc1, plasma, plasma_presets, recovery, reports, sensors, \
     sections as S, uk_codes as UK
 from beamcell.config import CONFIG, problems as config_problems
 from beamcell.gpio_inputs import GpioInputs
@@ -74,7 +75,8 @@ GPIO = GpioInputs(SAFETY, CONFIG["gpio"])
 
 
 def _report_stop(code, text):
-    """A stop during a job: save a problem report for the developer (beamcell/reports.py)."""
+    """A stop during a job: save where it is (to carry on later) and a problem report for the developer."""
+    recovery.save(SAFETY.job, SAFETY.playback, "STOPPED", last_stop=f"{time.strftime('%H:%M:%S')} {text}", force=True)
     st = SAFETY.status()
     cam = VISION.status()
     reports.record(code, text, {
@@ -95,7 +97,7 @@ def _bar_check(job):
     if bar is None:
         return {"ok": False, "checks": [], "problems": [{"what": "Plan", "text": "this job's plan is no longer on the machine (the app was restarted)",
                                                         "fix": "Press Plan again, then Start."}]}
-    return sensors.job_check(bar)
+    return sensors.job_check(bar, resume=job.get("resume"))
 
 
 SAFETY.bar_checker = _bar_check
@@ -186,7 +188,7 @@ def plan_bar(body):
     if not bars:
         return {"error": "nothing to cut - add parts (that fit the bar and have no errors)"}
     i = max(0, min(int(body.get("bar", 0)), len(bars) - 1))
-    return plan_output(bars[i], body, i, len(bars))
+    return dict(plan_output(bars[i], body, i, len(bars)), request={"endpoint": "/api/plan", "body": body})
 
 
 def _stock(body):
@@ -213,6 +215,7 @@ def manual_plan(body):
     if not body.get("cuts"):
         return {"error": "add at least one cut", "problems": problems}
     out = plan_output(bar, body, 0, 1)
+    out["request"] = {"endpoint": "/api/manual/plan", "body": body}
     out["manual"] = True
     out["problems"] = problems
     return out
@@ -370,6 +373,8 @@ class Handler(BaseHTTPRequestHandler):
                 q = parse_qs(url.query)
                 return self._send(200, plasma_presets.start_values(q["section"][0], q.get("process", [CONFIG["plasma"]["process"]])[0],
                                                                    q.get("grade", ["S355"])[0]))
+            if path == "/api/recovery":
+                return self._send(200, {"recovery": recovery.summary()})
             if path == "/api/reports":
                 return self._send(200, {"reports": reports.entries(), "settings": reports.public_settings()})
             if path.startswith("/api/reports/"):
@@ -418,6 +423,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, {"mode": body["mode"]})
             if path == "/api/sensors/measure":
                 return self._send(200, sensors.measure_bar(body["section"], float(body.get("length", 12000)), body.get("measured")))
+            if path == "/api/recovery-discard":
+                recovery.clear()
+                return self._send(200, {"recovery": None})
             if path == "/api/machine-size":
                 if SAFETY.state == "RUNNING":
                     raise ValueError("stop the machine before changing its size")
@@ -486,7 +494,9 @@ class Handler(BaseHTTPRequestHandler):
     def _safety(self, action, body):
         who = body.get("who", "screen")
         if action == "tick":
-            return self._send(200, SAFETY.tick(body.get("client", "screen"), bool(body.get("enable")), body.get("playback")))
+            st = SAFETY.tick(body.get("client", "screen"), bool(body.get("enable")), body.get("playback"))
+            recovery.save(SAFETY.job, SAFETY.playback, st["state"])          # where the job is, in case the power goes
+            return self._send(200, st)
         if action == "estop":
             SAFETY.press_estop(body.get("source", "screen"))
         elif action == "release":
@@ -501,9 +511,13 @@ class Handler(BaseHTTPRequestHandler):
             SAFETY.finished()
             if job and job["state"] != "finished":                # once per job, not on every repeat
                 history.add(job, "finished", body.get("details"))
+            recovery.clear()
         elif action in ("job", "clear-job"):
             job = SAFETY.job and dict(SAFETY.job)
-            ok, why = SAFETY.load_job(body.get("name", "job"), who, body.get("plan_id")) if action == "job" else SAFETY.clear_job(who)
+            ok, why = (SAFETY.load_job(body.get("name", "job"), who, body.get("plan_id"), body.get("request"), body.get("resume"))
+                       if action == "job" else SAFETY.clear_job(who))
+            if ok and action == "clear-job":
+                recovery.clear()
             if ok and action == "clear-job" and job and job["started"] and job["state"] != "finished":
                 history.add(job, "cleared before the end", body.get("details"))
             return self._send(200, dict(SAFETY.status(), ok=ok, why=why))
