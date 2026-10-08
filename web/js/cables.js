@@ -148,6 +148,10 @@ export class Cables {
     C.riser.scale.set(1, 1, h);
     C.riser.position.set(g[0] + 0.24, g[1], rz - 0.12 + h / 2);
     // dress pack: carriage -> top of the mast -> down the mast -> along the arm -> the tool
+    // (rebuilt at most 10 times a second: a tube is costly to make, and the eye can't tell)
+    const now = performance.now();
+    if (C.packAt && now - C.packAt < 100) { C.last = null; return; }
+    C.packAt = now;
     const F = handFrames(cfg, g, q);
     for (const t of C.tubes) {
       const p = [new THREE.Vector3(g[0] + 0.24, g[1], rz - 0.1), new THREE.Vector3(g[0] + t.off, g[1], g[2] + 2.05),
@@ -173,7 +177,7 @@ export class Cables {
       }
       const curve = new THREE.CatmullRomCurve3(p, false, "centripetal");
       t.mesh.geometry.dispose();
-      t.mesh.geometry = new THREE.TubeGeometry(curve, 90, t.r, 7, false);
+      t.mesh.geometry = new THREE.TubeGeometry(curve, 48, t.r, 6, false);
     }
   }
 }
