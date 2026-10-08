@@ -425,26 +425,32 @@ class Plan:
 
     # ---------------------------------------------------------------- the bar check
     def _scan(self):
-        """Before any cut: the Cutter drives along the bar, torch down, with the torch camera and the
-        profile laser - the bar check (beamcell/sensors.py job_check). From the far end back to the start,
-        so it ends where the first cut is."""
+        """Before any cut the Cutter measures the bar (beamcell/sensors.py job_check) in two passes:
+          1. over the TOP FLANGE, torch down, far end -> start: depth, flange width and thickness, bow, length;
+          2. along the WEB from the side: web thickness and height, holes already in it.
+        Both are needed to know the bar is really the section the job needs."""
         s = self.bar.parts[0].sec
-        z = BED_Z + s["h"] / 1000 + SCAN_HEIGHT
-        far = np.array([min(self.bar.length / 1000 - 0.05, X_LIMITS[1] - 0.5), BEAM_Y, z])
-        near = np.array([0.3, BEAM_Y, z])
-        g0, q = self._gantry_for(far, DOWN)
-        q, _, _ = self.cutter.solve(g0, far, DOWN, q)
-        t0 = self.tc.end
-        self._say(t0, "Cutter", "measuring the bar: torch camera + profile laser")
-        self._go(self.tc, g0, q)
-        g1 = g0 + (near - far)
-        g1[0] = max(g1[0], X_LIMITS[0])
-        T = max(np.linalg.norm(g1 - g0) / SCAN_SPEED, DT)
-        n = max(3, int(np.ceil(T / DT)) + 1)
-        sm = smooth(n)
-        t_scan = self._commit(self.tc, [(T * i / (n - 1), g0 + sm[i] * (g1 - g0), q) for i in range(n)])
-        self.scan = {"t0": round(float(t_scan), 2), "t1": round(float(self.tc.end), 2)}
-        self._say(self.tc.end, "Cutter", "bar measured - it matches the job")
+        x_far = min(self.bar.length / 1000 - 0.05, X_LIMITS[1] - 0.5)
+        top = np.array([0, BEAM_Y, BED_Z + s["h"] / 1000 + SCAN_HEIGHT])
+        side_d = DIRS["S"]
+        web = np.array([0, BEAM_Y + s.get("tw", s.get("t", 0)) / 2000 - side_d[1] * SCAN_HEIGHT, BED_Z + s["h"] / 2000])
+        passes = []
+        self._say(self.tc.end, "Cutter", "measuring the bar: top flange (torch camera + profile laser)")
+        for what, d, base, x0, x1 in (("flange", DOWN, top, x_far, 0.3), ("web", side_d, web, 0.3, x_far)):
+            p0, p1 = base + [x0, 0, 0], base + [x1, 0, 0]
+            g0, q = self._gantry_for(p0, d)
+            q, _, _ = self.cutter.solve(g0, p0, d, q)
+            if what == "web":
+                self._say(self.tc.end, "Cutter", "measuring the bar: web, from the side")
+            self._go(self.tc, g0, q)
+            g1 = np.clip(g0 + (p1 - p0), [X_LIMITS[0], Y_LIMITS[0], Z_LIMITS[0]], [X_LIMITS[1], Y_LIMITS[1], Z_LIMITS[1]])
+            T = max(np.linalg.norm(g1 - g0) / SCAN_SPEED, DT)
+            n = max(3, int(np.ceil(T / DT)) + 1)
+            sm = smooth(n)
+            t0 = self._commit(self.tc, [(T * i / (n - 1), g0 + sm[i] * (g1 - g0), q) for i in range(n)])
+            passes.append({"what": what, "t0": round(float(t0), 2), "t1": round(float(self.tc.end), 2)})
+        self.scan = {"t0": passes[0]["t0"], "t1": passes[-1]["t1"], "passes": passes}
+        self._say(self.tc.end, "Cutter", "bar measured: web and flange checked against the job")
 
     # ---------------------------------------------------------------- cutter
     def _gantry_for(self, p, d):

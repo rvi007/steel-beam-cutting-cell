@@ -137,8 +137,13 @@ class MeasuringPass(unittest.TestCase):
         scan = plan.to_json()["scan"]
         self.assertLess(scan["t0"], scan["t1"])
         self.assertLessEqual(scan["t1"], min(c["t_on"] for c in plan.cuts))       # measured before the torch lights
+        self.assertEqual([p["what"] for p in scan["passes"]], ["flange", "web"])    # both: the web too
+        web = scan["passes"][1]
+        tip, d = plan.cutter.tip(*plan.tc.at((web["t0"] + web["t1"]) / 2))
+        self.assertAlmostEqual(d[2], 0.0, places=3)                                  # looking at the web from the side
+        flange = scan["passes"][0]
         xs = []
-        for t in np.linspace(scan["t0"], scan["t1"], 5):
+        for t in np.linspace(flange["t0"], flange["t1"], 5):
             tip = plan.cutter.tip(*plan.tc.at(t))[0]
             self.assertAlmostEqual(tip[1], BEAM_Y, places=2)                         # straight above the bar
             xs.append(tip[0])

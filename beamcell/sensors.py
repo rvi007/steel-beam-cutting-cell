@@ -141,7 +141,8 @@ def _sim(seed, lo, hi):
 
 # What the simulated sensors "see" on the bed - the Sensors tab can put a wrong bar there to try the check.
 SIM_MODES = {"ok": "the right bar", "short": "a bar too short for the job", "wrong_section": "the wrong section (bigger)",
-             "narrow_flange": "a bar with a narrow flange", "thin_flange": "a bar with a thin flange",
+             "narrow_flange": "a bar with a narrow flange",
+             "wrong_web": "a bar with the wrong web (flange right)", "thin_flange": "a bar with a thin flange",
              "existing_hole": "a bar that already has a hole", "bent": "a bent bar", "no_bar": "no bar on the bed"}
 SIM_BAR = {"mode": "ok"}
 
@@ -162,6 +163,8 @@ def simulated_reading(s, length_mm, needed_mm=None, x_hole=None):
         m["length"] = round((needed_mm or length_mm) - 120, 1)
     elif mode == "wrong_section":
         m.update(depth=s["h"] + 8.2, width=m["width"] + 1.6, web=tw + 1.2, flange=tf + 3.0)
+    elif mode == "wrong_web":
+        m["web"] = tw + 1.6
     elif mode == "narrow_flange":
         m["width"] = s.get("b", s["h"]) - 4.5
     elif mode == "thin_flange":
@@ -221,6 +224,22 @@ def measure_bar(section, length_mm, measured=None, needed_mm=None, x_hole=None):
                        "Bar is OUT of tolerance - check it before cutting (wrong section, bent bar, or not seated on the rollers)")}
 
 
+def identify(m, kind=None):
+    """Which library section the measured bar is: the nearest on depth, flange width, web and flange
+    thickness (all four - a flange alone can't tell a UB 305x165x40 from a 305x165x46)."""
+    best, err = None, 1e9
+    for rows in S.library().values():
+        for s in rows:
+            if kind and s["kind"] != kind:
+                continue
+            tw, tf = s.get("tw", s.get("t", 0)), s.get("tf", s.get("t", 0))
+            e = (abs(m["depth"] - s["h"]) / 4 + abs(m["width"] - s.get("b", s["h"])) / 4
+                 + abs(m.get("web", tw) - tw) + abs(m.get("flange", tf) - tf))
+            if e < err:
+                best, err = s, e
+    return best["title"] if best else None
+
+
 def _needed_length(bar):
     """How much steel the job needs: up to its last cut (a piece left on the bed doesn't count)."""
     cut = [pl["x1"] for pl in bar.placements if not pl.get("keep")]
@@ -246,6 +265,7 @@ def job_check(bar, measured=None):
         r.update(ok=False, problems=problems, needed_mm=round(needed, 1), time=_now())
         return r
     m = r["measured"]
+    r["identified"] = identify(m, s["kind"])
     names = {"depth (h)": "Depth", "flange width (b)": "Flange width", "web thickness": "Web thickness",
              "flange thickness": "Flange thickness", "out of square": "Out of square"}
     for c in r["checks"]:
@@ -254,9 +274,11 @@ def job_check(bar, measured=None):
                 problems.append({"what": "Bent bar", "text": f"The bar is bowed {c['measured']} mm; up to {c['allowed'].split('/')[1].strip().lstrip('+')} is allowed.",
                                  "fix": "Straighten the bar, or seat it properly on the rollers, then press Start again."})
             else:
+                looks = (f" The measured web and flange look like {r['identified']}."
+                         if r["identified"] and r["identified"] != r["section"] else "")
                 problems.append({"what": names.get(c["what"], c["what"]),
                                  "text": f"{names.get(c['what'], c['what'])} is {c['measured']} mm; {r['section']} should be {c['nominal']} mm "
-                                         f"({c['allowed']}).",
+                                         f"({c['allowed']}).{looks}",
                                  "fix": "Check the bar is the section the job needs (look at the label / mill cert)."})
     # enough steel?
     have = m["length"]

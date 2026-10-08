@@ -87,7 +87,7 @@ class JobCheck(unittest.TestCase):
         self.assertTrue({"web thickness", "flange thickness", "length for this job"} <= {c["what"] for c in r["checks"]})
 
     def test_every_wrong_bar_is_refused_with_a_reason(self):
-        expect = {"short": "short", "wrong_section": "Depth", "narrow_flange": "Flange width", "thin_flange": "Flange thickness",
+        expect = {"short": "short", "wrong_section": "Depth", "narrow_flange": "Flange width", "thin_flange": "Flange thickness", "wrong_web": "Web thickness",
                   "existing_hole": "hole", "bent": "bowed", "no_bar": "No bar"}
         for mode, word in expect.items():
             sensors.SIM_BAR["mode"] = mode
@@ -102,6 +102,13 @@ class JobCheck(unittest.TestCase):
         r = sensors.job_check(self.bar, m)
         self.assertFalse(r["ok"])
         self.assertIn("edge distance", r["problems"][0]["text"])
+
+    def test_the_section_is_identified_from_web_and_flange(self):
+        self.assertEqual(sensors.job_check(self.bar)["identified"], "UB 305x165x40")
+        sensors.SIM_BAR["mode"] = "wrong_section"
+        r = sensors.job_check(self.bar)
+        self.assertNotEqual(r["identified"], "UB 305x165x40")
+        self.assertIn("look like", r["problems"][0]["text"])
 
     def test_thickness_tolerances(self):
         self.assertEqual(sensors.thickness_tolerance(10.2, True), (-1.5, 2.5))
