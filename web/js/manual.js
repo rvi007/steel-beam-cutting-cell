@@ -99,7 +99,7 @@ export async function render() {
     <p class="muted small">Cut what you want, now: add holes, cuts and notches (or click on the steel), check them, then plan and Run.
       The same UK checks and safety rules apply. x is measured from the bar's start (the infeed end).</p>
     <label class="row">Section ${sectionPicker()}</label>
-    <label class="row">Bar length mm <input id="mc-len" type="number" value="${j.length}" min="300" max="12000" step="10"></label>
+    <label class="row">Bar length mm <input id="mc-len" type="number" value="${j.length}" min="300" max="${app.info.machine.work_length * 1000}" step="10"></label>
     <div class="toolbar">
       <button id="mc-add-hole">+ Hole</button><button id="mc-add-cut">+ Cut</button><button id="mc-add-notch">+ Notch</button>
       <button id="mc-clear" class="ghost">Clear</button>
@@ -122,7 +122,7 @@ function wire() {
   const changed = (rerender = false) => { save(); clearPlan(); if (rerender) render(); else { markers(); checkSoon(); } };
   $("mc-fam").onchange = (e) => { j.section = app.sections[e.target.value].find((s) => s.cuttable).title; changed(true); };
   $("mc-sec").onchange = (e) => { j.section = e.target.value; changed(true); };
-  $("mc-len").onchange = (e) => { j.length = Math.max(300, Math.min(12000, +e.target.value)); changed(true); };
+  $("mc-len").onchange = (e) => { j.length = Math.max(300, Math.min(app.info.machine.work_length * 1000, +e.target.value)); changed(true); };
   $("mc-add-hole").onclick = () => { j.cuts.push(newHole("v", freeX(0.25))); changed(true); };
   $("mc-add-cut").onclick = () => { j.cuts.push({ type: "cut", x: freeX(0.5), angle: 0 }); changed(true); };
   $("mc-add-notch").onclick = () => {

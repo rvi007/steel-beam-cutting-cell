@@ -10,6 +10,7 @@ const C = { floor: 0xb9bcb8 };
 export class CellScene {
   constructor(canvas, machine) {
     this.m = machine;
+    this.suffix = machine.work_length === 12 ? "" : `_${machine.work_length}m`;    // which machine size's model
     this.canvas = canvas;
     this.quality = localStorage.getItem("quality") || "high";
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: this.quality === "high", powerPreference: "high-performance" });
@@ -134,8 +135,8 @@ export class CellScene {
     const { GLTFLoader } = await import("gltf");
     const loader = new GLTFLoader();
     const [cell, moving, info] = await Promise.all([
-      loader.loadAsync("models/cell.glb"), loader.loadAsync("models/moving.glb"),
-      fetch("models/labels.json").then((r) => r.json())]);
+      loader.loadAsync(`models/cell${this.suffix}.glb`), loader.loadAsync("models/moving.glb"),
+      fetch(`models/labels${this.suffix}.json`).then((r) => r.json())]);
     this.labels = info.labels;
     const prep = (root) => {
       for (const c of root.children) c.quaternion.identity();   // the GLB's root node turns Z-up into Y-up: undo it

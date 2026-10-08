@@ -131,3 +131,28 @@ class Gravity(unittest.TestCase):
         self.assertTrue(supported_on_rollers(4.4, 5.6))      # rollers at 4.5 and 5.5
         self.assertFalse(supported_on_rollers(4.6, 5.4))     # no roller under it
         self.assertFalse(supported_on_rollers(4.4, 4.9))     # one roller only: it tips off
+
+
+class TwentyMetreMachine(unittest.TestCase):
+    """The same software drives the 12 m and the 20 m cell."""
+
+    def tearDown(self):
+        from beamcell import machine
+        machine.set_length(12)
+
+    def test_a_20_m_bar_plans_without_collisions(self):
+        from beamcell import collisions, machine, manual
+        machine.set_length(20)
+        self.assertEqual(machine.X_LIMITS[1], 21.3)
+        self.assertEqual(len(machine.ROLLER_X), 20)
+        bar, _ = manual.build("UB 305x165x40", 20000, [{"type": "hole", "face": "v", "x": 18500, "d": 22}, {"type": "cut", "x": 19000}])
+        plan = Plan(bar).build()
+        self.assertGreater(plan.scan["passes"][0]["t1"], plan.scan["passes"][0]["t0"] + 25)   # it measures all 20 m
+        self.assertEqual(collisions.check_plan(plan, step=0.4), [])
+        self.assertGreaterEqual(plan.min_gap(), 1.0)
+
+    def test_the_12_m_machine_refuses_a_20_m_bar(self):
+        from beamcell import manual
+        bar, problems = manual.build("UB 305x165x40", 20000, [{"type": "cut", "x": 1000}])
+        self.assertIsNone(bar)
+        self.assertIn("12 m machine", problems[0]["text"])

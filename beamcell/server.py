@@ -14,6 +14,7 @@ API (all JSON):
     POST /api/nc1/export            {part} -> NC1 text
     POST /api/part                  {part} -> checks, face outlines, weight
     POST /api/nest                  {parts, stock_length} -> bars
+    POST /api/machine-size          {length_m: 12 | 20} -> change the machine's length (remembered in config/machine.json)
     POST /api/plan                  {parts, stock_length, bar} -> motion plan for one bar
     POST /api/manual/check          {section, length, cuts} -> pieces + UK checks for a manual cut
     POST /api/manual/plan           {section, length, cuts} -> motion plan for the manual cuts
@@ -180,12 +181,19 @@ def parts_from(body):
 
 def plan_bar(body):
     parts = parts_from(body)
-    stock = float(body.get("stock_length", UK.DEFAULT_STOCK_M * 1000))
+    stock = _stock(body)
     bars = nest_all(parts, stock)
     if not bars:
         return {"error": "nothing to cut - add parts (that fit the bar and have no errors)"}
     i = max(0, min(int(body.get("bar", 0)), len(bars) - 1))
     return plan_output(bars[i], body, i, len(bars))
+
+
+def _stock(body):
+    stock = float(body.get("stock_length", UK.DEFAULT_STOCK_M * 1000))
+    if stock > machine.WORK_LENGTH * 1000 + 0.5:
+        raise ValueError(f"a {stock / 1000:g} m bar doesn't fit the {machine.WORK_LENGTH:g} m machine - pick a shorter stock length")
+    return stock
 
 
 def manual_check(body):
@@ -305,7 +313,7 @@ class Handler(BaseHTTPRequestHandler):
                     "codes": {"bolts": UK.BOLTS, "standard_bolt": UK.STANDARD_BOLT, "hole_types": UK.HOLE_TYPES,
                               "hole_sizes": {b: {k: UK.hole_size(b, k) for k in UK.HOLE_TYPES} for b in UK.BOLTS},
                               "grades": UK.GRADES, "default_grade": UK.DEFAULT_GRADE,
-                              "stock_lengths_m": UK.STOCK_LENGTHS_M, "default_stock_m": UK.DEFAULT_STOCK_M,
+                              "stock_lengths_m": [x for x in UK.STOCK_LENGTHS_M if x <= machine.WORK_LENGTH], "default_stock_m": UK.DEFAULT_STOCK_M,
                               "cope_radius": UK.DEFAULT_COPE_RADIUS, "min_corner_radius": UK.MIN_CORNER_RADIUS},
                     "system": system_info()})
             if path == "/api/sections":
@@ -399,7 +407,7 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/part":
                 return self._send(200, part_view(Part.from_dict(body["part"])))
             if path == "/api/nest":
-                bars = nest_all(parts_from(body), float(body.get("stock_length", 12000)))
+                bars = nest_all(parts_from(body), _stock(body))
                 return self._send(200, [dict(b.to_dict(), marks=[b.parts[pl["part"]].mark for pl in b.placements])
                                         for b in bars])
             if path == "/api/sensors/simulate-bar":
@@ -410,6 +418,13 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, {"mode": body["mode"]})
             if path == "/api/sensors/measure":
                 return self._send(200, sensors.measure_bar(body["section"], float(body.get("length", 12000)), body.get("measured")))
+            if path == "/api/machine-size":
+                if SAFETY.state == "RUNNING":
+                    raise ValueError("stop the machine before changing its size")
+                machine.choose_length(body["length_m"])
+                SAFETY.clear_job("screen")
+                PLANS.clear()
+                return self._send(200, {"work_length": machine.WORK_LENGTH})
             if path == "/api/plasma/presets":
                 return self._send(200, plasma_presets.save(body))
             if path.startswith("/api/plasma/presets-delete/"):

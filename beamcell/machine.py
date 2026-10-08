@@ -1,5 +1,5 @@
 """
-The gantry cell: a 12 m long, 3 m wide work area with two overhead hands.
+The gantry cell: a 12 m or 20 m long (LENGTHS, set_length), 3 m wide work area with two overhead hands.
 
             Y (width, 3 m)
             ^
@@ -18,9 +18,16 @@ Both bridges share the same rails, so they can never pass each other:
 the Handler always stays on the low-X side, the Cutter on the high-X side,
 and their bridges must stay at least MIN_GAP apart.
 """
+import json
+import os
+
 import numpy as np
 
 from beamcell.arm import Arm, wrap
+from beamcell.config import CONFIG, ROOT
+
+LENGTHS = (12.0, 20.0)         # the machine sizes the software knows (work length along X, m)
+CHOICE_FILE = os.path.join(ROOT, "config", "machine.json")   # the size picked on the screen (kept on this machine)
 
 # ---- cell layout (metres) ----
 WORK_LENGTH = 12.0             # usable length along X
@@ -41,6 +48,38 @@ ROLLER_R = 0.05                # bed rollers, top of each roller = BED_Z
 ROLLER_X = [0.5 + i for i in range(12)]          # every 1 m; the bar ends overhang, so the trim falls clear
 OUTFEED_DECK = (-0.3, WORK_LENGTH + 0.3, OUTFEED_Y - 0.45, OUTFEED_Y + 0.45)   # x0, x1, y0, y1; top = BED_Z
 SCRAP_TRAY_Z = 0.10            # floor of the scrap tray under the bed (offcuts fall onto it)
+
+
+def set_length(length_m):
+    """Make the cell 12 m or 20 m long. Everything that depends on the length follows: the rails, the
+    parking places, the rollers, the outfeed table (the planner, the bar check and the 3D view read them)."""
+    global WORK_LENGTH, X_LIMITS, ROLLER_X, OUTFEED_DECK
+    length_m = float(length_m)
+    if length_m not in LENGTHS:
+        raise ValueError(f"machine length must be one of {', '.join(f'{x:g} m' for x in LENGTHS)}")
+    WORK_LENGTH = length_m
+    X_LIMITS = (-1.3, WORK_LENGTH + 1.3)
+    ROLLER_X = [0.5 + i for i in range(int(round(WORK_LENGTH)))]
+    OUTFEED_DECK = (-0.3, WORK_LENGTH + 0.3, OUTFEED_Y - 0.45, OUTFEED_Y + 0.45)
+    return WORK_LENGTH
+
+
+def saved_length():
+    """The size chosen on the screen (config/machine.json), else config/cell.toml [machine] length_m."""
+    try:
+        with open(CHOICE_FILE) as fh:
+            return float(json.load(fh)["length_m"])
+    except (OSError, ValueError, KeyError):
+        return float(CONFIG.get("machine", {}).get("length_m", 12))
+
+
+def choose_length(length_m):
+    """Change the size and remember it for the next start."""
+    set_length(length_m)
+    os.makedirs(os.path.dirname(CHOICE_FILE), exist_ok=True)
+    with open(CHOICE_FILE, "w") as fh:
+        json.dump({"length_m": WORK_LENGTH}, fh)
+    return WORK_LENGTH
 
 
 def supported_on_rollers(x0, x1):
@@ -170,7 +209,7 @@ def move_time(g0, g1, q0, q1, joint_speed):
 
 def describe():
     """Everything the 3D view needs to draw and move the machine (sent to the browser)."""
-    out = {"work_length": WORK_LENGTH, "width": WIDTH, "rail_z": RAIL_Z, "bed_z": BED_Z, "beam_y": BEAM_Y,
+    out = {"work_length": WORK_LENGTH, "lengths": LENGTHS, "width": WIDTH, "rail_z": RAIL_Z, "bed_z": BED_Z, "beam_y": BEAM_Y,
            "outfeed_y": OUTFEED_Y, "x_limits": X_LIMITS, "z_safe": Z_SAFE, "min_gap": MIN_GAP, "hands": {},
            "roller_x": ROLLER_X, "roller_r": ROLLER_R, "outfeed_deck": OUTFEED_DECK, "scrap_tray_z": SCRAP_TRAY_Z, "g": G}
     for hand in make_hands():
@@ -182,3 +221,9 @@ def describe():
                                             "rest_q": hand.preference([0, 0, -1], [1, 0, 0] if hand.tool == "torch"
                                                                       else [-1, 0, 0])[1].tolist()}
     return out
+
+
+try:
+    set_length(saved_length())
+except ValueError:
+    set_length(12)

@@ -345,8 +345,9 @@ def build_cell():
                   "UB 457x191x67", L, at=(x0, y, run_z))
         m.box(f"crane_rail_{side}", "Crane rail 60x50 flat bar - both bridges' wheels run on it", STEEL,
               x0, x0 + L, y - 30, y + 30, CRANE_RAIL_TOP - 50, CRANE_RAIL_TOP)
-        for i in range(5):
-            x = (xa + i * (xb - xa) / 4) * mm
+        bays = math.ceil((xb - xa) / 4.0)                   # a column at least every 4 m: 5 a side at 12 m, 7 at 20 m
+        for i in range(bays + 1):
+            x = (xa + i * (xb - xa) / bays) * mm
             # standing up, the section's depth runs along -X from 'at': centre it on its base plate
             uc = S.get("UC 254x254x73")
             m.section(f"column_{side}", "Column UC 254x254x73 holding up the runway", STRUCTURE,
@@ -525,17 +526,30 @@ def _hand_bodies(m, hand):
 
 
 def export_cell():
-    """cad/beam_cell.step (everything, posed at park) and the 3D view's GLB files."""
+    """Both machine sizes: 12 m -> cad/beam_cell.step, web/models/cell.glb + labels.json;
+    20 m -> beam_cell_20m.step, cell_20m.glb + labels_20m.json. moving.glb is the same for both."""
+    was = M.WORK_LENGTH
+    out = []
+    try:
+        for length in M.LENGTHS:
+            M.set_length(length)
+            out += _export_cell("" if length == 12 else f"_{length:g}m")
+    finally:
+        M.set_length(was)
+    return out
+
+
+def _export_cell(suffix):
     m = build_cell()
     os.makedirs(CAD_DIR, exist_ok=True)
     os.makedirs(WEB_MODELS, exist_ok=True)
     # GLB for the 3D view (metres): the static cell, and one file with every moving body in its own frame
-    exportGLTF(m.assembly(scale=0.001), os.path.join(WEB_MODELS, "cell.glb"), binary=True, tolerance=0.002, angularTolerance=0.35)
+    exportGLTF(m.assembly(scale=0.001), os.path.join(WEB_MODELS, f"cell{suffix}.glb"), binary=True, tolerance=0.002, angularTolerance=0.35)
     moving = sorted({it[0] for it in m.items if it[0]})
     exportGLTF(m.assembly(scale=0.001, groups=moving), os.path.join(WEB_MODELS, "moving.glb"), binary=True,
                tolerance=0.001, angularTolerance=0.3)
     import json
-    with open(os.path.join(WEB_MODELS, "labels.json"), "w") as fh:
+    with open(os.path.join(WEB_MODELS, f"labels{suffix}.json"), "w") as fh:
         json.dump({"labels": m.labels(), "gate_hinge_m": [v / 1000 for v in m.gate_hinge]}, fh, indent=0, sort_keys=True)
     # STEP (mm): the whole cell with both hands posed at park, as one assembly
     step = m.assembly()
@@ -554,9 +568,9 @@ def export_cell():
             step.add(sub, name=grp.replace(".", "_"), loc=loc)
     gate = m.assembly(groups=["gate"])
     step.add(gate, name="gate", loc=_loc(np.eye(3), (m.gate_hinge[0], m.gate_hinge[1], 0)))
-    path = os.path.join(CAD_DIR, "beam_cell.step")
+    path = os.path.join(CAD_DIR, f"beam_cell{suffix}.step")
     step.export(path)
-    return [path, os.path.join(WEB_MODELS, "cell.glb"), os.path.join(WEB_MODELS, "moving.glb")]
+    return [path, os.path.join(WEB_MODELS, f"cell{suffix}.glb"), os.path.join(WEB_MODELS, "moving.glb")]
 
 
 def _loc(R, t):

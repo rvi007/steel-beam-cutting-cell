@@ -9,3 +9,4 @@ node_modules/
 logs/
 plasma_settings/
 reports/
+config/machine.json

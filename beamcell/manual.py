@@ -19,6 +19,7 @@ The same UK checks, planner, collision check and safety rules are used as for a 
 """
 import math
 
+from beamcell import machine as M
 from beamcell import sections as S
 from beamcell import uk_codes as UK
 from beamcell.parts import Part
@@ -65,8 +66,9 @@ def build(section, length, cuts):
     if s["kind"] not in S.CUTTABLE:
         return None, [{"level": "error", "item": "section", "text": "this cell cuts I, channel and angle sections", "ref": "MACHINE"}]
     length = float(length)
-    if not 300 <= length <= 12000:
-        bad("bar", "bar length must be 300 to 12000 mm")
+    longest = M.WORK_LENGTH * 1000
+    if not 300 <= length <= longest:
+        bad("bar", f"bar length must be 300 to {longest:.0f} mm (the {M.WORK_LENGTH:g} m machine)")
         return None, problems
     tan_web_max = math.tan(math.radians(60))
 
