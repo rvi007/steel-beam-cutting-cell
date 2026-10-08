@@ -109,6 +109,7 @@ use the address the terminal prints (for example `http://192.168.1.20:8080`).
 | [How the machine works](docs/MACHINE.md) | the layout, how a bar is cut, and a map of the code |
 | [UK codes](docs/UK_CODES.md) | every UK rule it checks, and where each one comes from |
 | [NC1 files](docs/NC1_FILES.md) | getting parts out of Tekla: what is read, faces and coordinates |
+| [Steel frame in Tekla](docs/TEKLA.md) | the cell's structural steelwork as IFC for Tekla: import, marks, cut list, what the engineer must design |
 | [The 1:10 prototype](docs/PROTOTYPE.md) | **what to buy (about £1,150), how to build it, safety wiring** |
 | [Shopping list (PDF)](docs/Prototype_Shopping_List.pdf) | every part with its price and a link to buy it, to print out |
 | [Assembly drawing (PDF)](docs/Prototype_Assembly.pdf) | every part numbered and shown where it goes |

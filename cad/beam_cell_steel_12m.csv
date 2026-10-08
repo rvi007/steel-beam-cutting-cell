@@ -1,0 +1,100 @@
+mark,assembly,profile,grade,qty,length_mm,unit_kg,total_kg,note
+RB1,RUNWAY-FRONT,UB457*191*67,S355,1,15200,1019.9,1019.9,
+R1,RUNWAY-FRONT,FL60*50,S355,1,15200,358.0,358.0,"crane rail, continuously welded or clipped to the runway top flange"
+C1,COLUMNS-FRONT,UC254*254*73,S355,1,2805,205.0,205.0,
+BP1,COLUMNS-FRONT,PL25*500,S355,1,500,49.1,49.1,4 holes 26 dia for M24 holding-down bolts at 380 x 380 centres; grout 25-40 mm under
+CP1,COLUMNS-FRONT,PL20*300,S355,1,300,14.1,14.1,"cap plate, runway bottom flange bolted to it (4 M20)"
+C2,COLUMNS-FRONT,UC254*254*73,S355,1,2805,205.0,205.0,
+BP2,COLUMNS-FRONT,PL25*500,S355,1,500,49.1,49.1,4 holes 26 dia for M24 holding-down bolts at 380 x 380 centres; grout 25-40 mm under
+CP2,COLUMNS-FRONT,PL20*300,S355,1,300,14.1,14.1,"cap plate, runway bottom flange bolted to it (4 M20)"
+C3,COLUMNS-FRONT,UC254*254*73,S355,1,2805,205.0,205.0,
+BP3,COLUMNS-FRONT,PL25*500,S355,1,500,49.1,49.1,4 holes 26 dia for M24 holding-down bolts at 380 x 380 centres; grout 25-40 mm under
+CP3,COLUMNS-FRONT,PL20*300,S355,1,300,14.1,14.1,"cap plate, runway bottom flange bolted to it (4 M20)"
+C4,COLUMNS-FRONT,UC254*254*73,S355,1,2805,205.0,205.0,
+BP4,COLUMNS-FRONT,PL25*500,S355,1,500,49.1,49.1,4 holes 26 dia for M24 holding-down bolts at 380 x 380 centres; grout 25-40 mm under
+CP4,COLUMNS-FRONT,PL20*300,S355,1,300,14.1,14.1,"cap plate, runway bottom flange bolted to it (4 M20)"
+C5,COLUMNS-FRONT,UC254*254*73,S355,1,2805,205.0,205.0,
+BP5,COLUMNS-FRONT,PL25*500,S355,1,500,49.1,49.1,4 holes 26 dia for M24 holding-down bolts at 380 x 380 centres; grout 25-40 mm under
+CP5,COLUMNS-FRONT,PL20*300,S355,1,300,14.1,14.1,"cap plate, runway bottom flange bolted to it (4 M20)"
+BX1,BRACING-FRONT,L70*70*7,S355,1,4130,30.5,30.5,"X-bracing, gusset plates to the column flanges by the detailer"
+BX2,BRACING-FRONT,L70*70*7,S355,1,4130,30.5,30.5,"X-bracing, gusset plates to the column flanges by the detailer"
+TB1,TRAY-FRONT,FL60*30,S355,1,530,7.5,7.5,"energy-chain tray bracket, bolted to the runway"
+TB2,TRAY-FRONT,FL60*30,S355,1,530,7.5,7.5,"energy-chain tray bracket, bolted to the runway"
+TB3,TRAY-FRONT,FL60*30,S355,1,530,7.5,7.5,"energy-chain tray bracket, bolted to the runway"
+TB4,TRAY-FRONT,FL60*30,S355,1,530,7.5,7.5,"energy-chain tray bracket, bolted to the runway"
+RB2,RUNWAY-BACK,UB457*191*67,S355,1,15200,1019.9,1019.9,
+R2,RUNWAY-BACK,FL60*50,S355,1,15200,358.0,358.0,"crane rail, continuously welded or clipped to the runway top flange"
+C6,COLUMNS-BACK,UC254*254*73,S355,1,2805,205.0,205.0,
+BP6,COLUMNS-BACK,PL25*500,S355,1,500,49.1,49.1,4 holes 26 dia for M24 holding-down bolts at 380 x 380 centres; grout 25-40 mm under
+CP6,COLUMNS-BACK,PL20*300,S355,1,300,14.1,14.1,"cap plate, runway bottom flange bolted to it (4 M20)"
+C7,COLUMNS-BACK,UC254*254*73,S355,1,2805,205.0,205.0,
+BP7,COLUMNS-BACK,PL25*500,S355,1,500,49.1,49.1,4 holes 26 dia for M24 holding-down bolts at 380 x 380 centres; grout 25-40 mm under
+CP7,COLUMNS-BACK,PL20*300,S355,1,300,14.1,14.1,"cap plate, runway bottom flange bolted to it (4 M20)"
+C8,COLUMNS-BACK,UC254*254*73,S355,1,2805,205.0,205.0,
+BP8,COLUMNS-BACK,PL25*500,S355,1,500,49.1,49.1,4 holes 26 dia for M24 holding-down bolts at 380 x 380 centres; grout 25-40 mm under
+CP8,COLUMNS-BACK,PL20*300,S355,1,300,14.1,14.1,"cap plate, runway bottom flange bolted to it (4 M20)"
+C9,COLUMNS-BACK,UC254*254*73,S355,1,2805,205.0,205.0,
+BP9,COLUMNS-BACK,PL25*500,S355,1,500,49.1,49.1,4 holes 26 dia for M24 holding-down bolts at 380 x 380 centres; grout 25-40 mm under
+CP9,COLUMNS-BACK,PL20*300,S355,1,300,14.1,14.1,"cap plate, runway bottom flange bolted to it (4 M20)"
+C10,COLUMNS-BACK,UC254*254*73,S355,1,2805,205.0,205.0,
+BP10,COLUMNS-BACK,PL25*500,S355,1,500,49.1,49.1,4 holes 26 dia for M24 holding-down bolts at 380 x 380 centres; grout 25-40 mm under
+CP10,COLUMNS-BACK,PL20*300,S355,1,300,14.1,14.1,"cap plate, runway bottom flange bolted to it (4 M20)"
+BX3,BRACING-BACK,L70*70*7,S355,1,4130,30.5,30.5,"X-bracing, gusset plates to the column flanges by the detailer"
+BX4,BRACING-BACK,L70*70*7,S355,1,4130,30.5,30.5,"X-bracing, gusset plates to the column flanges by the detailer"
+TB5,TRAY-BACK,FL60*30,S355,1,530,7.5,7.5,"energy-chain tray bracket, bolted to the runway"
+TB6,TRAY-BACK,FL60*30,S355,1,530,7.5,7.5,"energy-chain tray bracket, bolted to the runway"
+TB7,TRAY-BACK,FL60*30,S355,1,530,7.5,7.5,"energy-chain tray bracket, bolted to the runway"
+TB8,TRAY-BACK,FL60*30,S355,1,530,7.5,7.5,"energy-chain tray bracket, bolted to the runway"
+BR1,BED,RHS120*80*5,S355,1,6300,92.6,92.6,"joined over a leg (welded, full penetration, or a bolted sleeve)"
+BR2,BED,RHS120*80*5,S355,1,6300,92.6,92.6,"joined over a leg (welded, full penetration, or a bolted sleeve)"
+BL1,BED,SHS80*80*5,S355,1,690,8.0,8.0,150x150x10 foot plate with 2 M12 anchors (fixings by others)
+BL2,BED,SHS80*80*5,S355,1,690,8.0,8.0,150x150x10 foot plate with 2 M12 anchors (fixings by others)
+BL3,BED,SHS80*80*5,S355,1,690,8.0,8.0,150x150x10 foot plate with 2 M12 anchors (fixings by others)
+BL4,BED,SHS80*80*5,S355,1,690,8.0,8.0,150x150x10 foot plate with 2 M12 anchors (fixings by others)
+BL5,BED,SHS80*80*5,S355,1,690,8.0,8.0,150x150x10 foot plate with 2 M12 anchors (fixings by others)
+BL6,BED,SHS80*80*5,S355,1,690,8.0,8.0,150x150x10 foot plate with 2 M12 anchors (fixings by others)
+BL7,BED,SHS80*80*5,S355,1,690,8.0,8.0,150x150x10 foot plate with 2 M12 anchors (fixings by others)
+BR3,BED,RHS120*80*5,S355,1,6300,92.6,92.6,"joined over a leg (welded, full penetration, or a bolted sleeve)"
+BR4,BED,RHS120*80*5,S355,1,6300,92.6,92.6,"joined over a leg (welded, full penetration, or a bolted sleeve)"
+BL8,BED,SHS80*80*5,S355,1,690,8.0,8.0,150x150x10 foot plate with 2 M12 anchors (fixings by others)
+BL9,BED,SHS80*80*5,S355,1,690,8.0,8.0,150x150x10 foot plate with 2 M12 anchors (fixings by others)
+BL10,BED,SHS80*80*5,S355,1,690,8.0,8.0,150x150x10 foot plate with 2 M12 anchors (fixings by others)
+BL11,BED,SHS80*80*5,S355,1,690,8.0,8.0,150x150x10 foot plate with 2 M12 anchors (fixings by others)
+BL12,BED,SHS80*80*5,S355,1,690,8.0,8.0,150x150x10 foot plate with 2 M12 anchors (fixings by others)
+BL13,BED,SHS80*80*5,S355,1,690,8.0,8.0,150x150x10 foot plate with 2 M12 anchors (fixings by others)
+BL14,BED,SHS80*80*5,S355,1,690,8.0,8.0,150x150x10 foot plate with 2 M12 anchors (fixings by others)
+OF1,OUTFEED,RHS100*80*5,S355,1,6300,80.6,80.6,carries the 30 mm grating deck (bought in)
+OF2,OUTFEED,RHS100*80*5,S355,1,6300,80.6,80.6,carries the 30 mm grating deck (bought in)
+OL1,OUTFEED,SHS80*80*5,S355,1,770,8.9,8.9,
+OL2,OUTFEED,SHS80*80*5,S355,1,770,8.9,8.9,
+OL3,OUTFEED,SHS80*80*5,S355,1,770,8.9,8.9,
+OL4,OUTFEED,SHS80*80*5,S355,1,770,8.9,8.9,
+OL5,OUTFEED,SHS80*80*5,S355,1,770,8.9,8.9,
+OL6,OUTFEED,SHS80*80*5,S355,1,770,8.9,8.9,
+OL7,OUTFEED,SHS80*80*5,S355,1,770,8.9,8.9,
+OF3,OUTFEED,RHS100*80*5,S355,1,6300,80.6,80.6,carries the 30 mm grating deck (bought in)
+OF4,OUTFEED,RHS100*80*5,S355,1,6300,80.6,80.6,carries the 30 mm grating deck (bought in)
+OL8,OUTFEED,SHS80*80*5,S355,1,770,8.9,8.9,
+OL9,OUTFEED,SHS80*80*5,S355,1,770,8.9,8.9,
+OL10,OUTFEED,SHS80*80*5,S355,1,770,8.9,8.9,
+OL11,OUTFEED,SHS80*80*5,S355,1,770,8.9,8.9,
+OL12,OUTFEED,SHS80*80*5,S355,1,770,8.9,8.9,
+OL13,OUTFEED,SHS80*80*5,S355,1,770,8.9,8.9,
+OL14,OUTFEED,SHS80*80*5,S355,1,770,8.9,8.9,
+ESP1,END-STOP,PL20*300,S355,1,300,14.1,14.1,4 holes 18 dia for M16 anchors
+ES1,END-STOP,SHS100*100*6.3,S355,1,860,15.7,15.7,"the datum block and laser bracket bolt to its top (machined parts, not in this model)"
+
+TOTALS BY PROFILE,,profile,grade,qty,total_length_mm,,total_kg,
+,,FL60*30,S355,8,4240,,60.0,
+,,FL60*50,S355,2,30400,,716.0,
+,,L70*70*7,S355,4,16520,,122.0,
+,,PL20*300,S355,11,3300,,155.1,
+,,PL25*500,S355,10,5000,,491.0,
+,,RHS100*80*5,S355,4,25200,,322.4,
+,,RHS120*80*5,S355,4,25200,,370.4,
+,,SHS100*100*6.3,S355,1,860,,15.7,
+,,SHS80*80*5,S355,28,20440,,236.6,
+,,UB457*191*67,S355,2,30400,,2039.8,
+,,UC254*254*73,S355,10,28050,,2050.0,
+
+TOTAL,,,S355,84,,,6579.0,"excludes bolts, welds, gussets and connection plates (add about 5-10 %)"

@@ -255,6 +255,32 @@ class Model:
             solid = cq.Solid.makeCone(r, r1, L, cq.Vector(*p0), cq.Vector(*(d / L)))
         return self.add(name, label, cq.Workplane().add(solid), colour, group)
 
+    def hollow(self, name, label, colour, w, h, t, p0, p1, group=None):
+        """A real RHS / SHS (w x h x t, outer corner radius 2t, inner t) between two points on one axis.
+        w is across in the first other axis (Y for X members, X for Z members), h in the second."""
+        p0, p1 = np.asarray(p0, float), np.asarray(p1, float)
+        axis = int(np.argmax(np.abs(p1 - p0)))
+        L = float(abs(p1[axis] - p0[axis]))
+        outer = cq.Workplane("XY").rect(w, h).extrude(L).edges("|Z").fillet(min(2 * t, w / 2 - 0.1, h / 2 - 0.1))
+        inner = cq.Workplane("XY").rect(w - 2 * t, h - 2 * t).extrude(L).edges("|Z").fillet(max(t, 0.5))
+        shape = outer.cut(inner)
+        if axis == 0:
+            shape = shape.rotate((0, 0, 0), (0, 1, 0), 90).rotate((0, 0, 0), (1, 0, 0), 90)   # Z -> X; w along Y, h along Z
+        elif axis == 1:
+            shape = shape.rotate((0, 0, 0), (1, 0, 0), -90)
+        start = np.minimum(p0, p1)
+        shape = shape.translate(tuple(start if axis == 2 else start))
+        return self.add(name, label, shape, colour, group)
+
+    def tube(self, name, label, colour, p0, p1, r, t, group=None):
+        """A round tube (CHS / roller tube) of outside radius r and wall t."""
+        p0, p1 = np.asarray(p0, float), np.asarray(p1, float)
+        d = p1 - p0
+        L = float(np.linalg.norm(d))
+        u = cq.Vector(*(d / L))
+        solid = cq.Solid.makeCylinder(r, L, cq.Vector(*p0), u).cut(cq.Solid.makeCylinder(r - t, L, cq.Vector(*p0), u))
+        return self.add(name, label, cq.Workplane().add(solid), colour, group)
+
     def section(self, name, label, colour, title, length, at=(0, 0, 0), axis="x", group=None):
         """A length of a UK section: along X (lying like on the bed) or standing up (axis='z')."""
         solid = section_solid(S.get(title), length)
@@ -355,35 +381,53 @@ def build_cell():
             m.box(f"base_plate_{side}", "Column base plate 500x500x25, anchored to the floor", DARK,
                   x - 250, x + 250, y - 250, y + 250, 0, 25)
 
-    # roller bed
+    # roller bed: two RHS 120x80x5 rails on SHS 80x80x5 legs with foot plates; each roller is a 101.6x3.6 tube
+    # on a 25 mm shaft in two pillow-block bearings (UCP205 class) bolted to the rails
     rr = M.ROLLER_R * mm
     bx0, bx1 = -300, M.WORK_LENGTH * mm + 300
+    rail_top = bz - rr - 40
     for dy in (-400, 400):
-        m.box("bed_rail", "Bed side rail RHS 120x80 - holds the roller bearings", BED,
-              bx0, bx1, by + dy - 40, by + dy + 40, bz - rr - 160, bz - rr - 40)
-        for x in np.arange(bx0 + 100, bx1, 2000):
-            m.box("bed_leg", "Bed leg SHS 80x80", BED, x - 40, x + 40, by + dy - 40, by + dy + 40, 0, bz - rr - 160)
+        y = by + dy
+        m.hollow("bed_rail", "Bed side rail RHS 120x80x5 S355 - carries the roller bearings", BED, 80, 120, 5,
+                 (bx0, y, rail_top - 60), (bx1, y, rail_top - 60))
+        for x in np.arange(bx0 + 150, bx1, 2000):
+            m.hollow("bed_leg", "Bed leg SHS 80x80x5 S355", BED, 80, 80, 5, (x, y, 15), (x, y, rail_top - 120))
+            m.box("bed_foot", "Leg foot plate 200x200x15, 4 x M12 anchors into the floor", DARK, x - 100, x + 100, y - 100, y + 100, 0, 15)
+            for ax in (-70, 70):
+                for ay in (-70, 70):
+                    m.cyl("anchor", "Floor anchor M12 (resin or wedge)", STEEL, (x + ax, y + ay, 15), (x + ax, y + ay, 30), 9)
+    for x in np.arange(bx0 + 150, bx1, 2000):
+        m.hollow("bed_cross", "Bed cross member RHS 80x40x4 S355 - ties the two rails", BED, 80, 40, 4,
+                 (x, by - 360, 300), (x, by + 360, 300))
     for x in M.ROLLER_X:
         X = x * mm
-        m.cyl("bed_roller", "Bed roller 100 mm dia - the bar rests on these (top = bed height 900 mm)", ALU,
-              (X, by - 360, bz - rr), (X, by + 360, bz - rr), rr)
+        m.tube("bed_roller", "Bed roller - tube 101.6x3.6, 720 long (top = bed height 900 mm)", ALU,
+               (X, by - 360, bz - rr), (X, by + 360, bz - rr), rr, 3.6)
+        for e in (-360, 357):
+            m.cyl("roller_end", "Roller end cap with bearing seat", STEEL, (X, by + e, bz - rr), (X, by + e + 3, bz - rr), rr - 3.6)
+        m.cyl("roller_shaft", "Roller shaft 25 mm, bright steel", STEEL, (X, by - 440, bz - rr), (X, by + 440, bz - rr), 12.5)
         for dy in (-400, 400):
-            m.box("roller_bearing", "Roller bearing block", DARK, X - 50, X + 50, by + dy - 40, by + dy + 40,
-                  bz - rr - 70, bz - rr + 30)
+            y = by + dy
+            m.box("bearing_base", "Pillow-block bearing UCP205 - base", DARK, X - 70, X + 70, y - 19, y + 19, rail_top, rail_top + 15)
+            m.cyl("bearing_housing", "Pillow-block bearing UCP205 - housing", DARK, (X, y - 17, bz - rr), (X, y + 17, bz - rr), 33)
+            for bxo in (-52, 52):
+                m.cyl("bearing_bolt", "M12 bolt - bearing to rail", STEEL, (X + bxo, y, rail_top + 15), (X + bxo, y, rail_top + 25), 9)
     # scrap tray under the bed
     tz = M.SCRAP_TRAY_Z * mm
     m.box("scrap_tray_floor", "Scrap tray - offcuts fall between the rollers into it", BLUE_TRAY,
           bx0, bx1, by - 300, by + 300, tz - 40, tz)
     for dy in (-300, 300):
         m.box("scrap_tray_side", "Scrap tray side", BLUE_TRAY, bx0, bx1, by + dy - 15, by + dy + 15, tz - 40, tz + 200)
-    # outfeed table
+    # outfeed table: RHS 100x50x4 frame on SHS 80x80x5 legs, decked with 60x10 flats on edge-spaced bearers
     ox0, ox1, oy0, oy1 = (v * mm for v in M.OUTFEED_DECK)
-    m.box("outfeed_deck", "Outfeed table - steel grating deck at bed height; finished parts are put down here",
-          GREEN, ox0, ox1, oy0, oy1, bz - 30, bz)
-    for y in (oy0 + 40, oy1 - 40):
-        m.box("outfeed_frame", "Outfeed table frame", BED, ox0, ox1, y - 40, y + 40, bz - 130, bz - 30)
+    for y in (oy0 + 50, oy1 - 50):
+        m.hollow("outfeed_frame", "Outfeed table frame RHS 100x50x4 S355", BED, 50, 100, 4, (ox0, y, bz - 70), (ox1, y, bz - 70))
         for x in np.arange(ox0 + 100, ox1, 2000):
-            m.box("outfeed_leg", "Outfeed table leg", BED, x - 40, x + 40, y - 40, y + 40, 0, bz - 130)
+            m.hollow("outfeed_leg", "Outfeed table leg SHS 80x80x5 S355", BED, 80, 80, 5, (x, y, 15), (x, y, bz - 120))
+            m.box("outfeed_foot", "Leg foot plate 200x200x15", DARK, x - 100, x + 100, y - 100, y + 100, 0, 15)
+    for y in np.linspace(oy0 + 40, oy1 - 40, 6):
+        m.box("outfeed_deck", "Outfeed table deck - 60x10 flat on edge-spaced runners; finished parts are put down here",
+              GREEN, ox0, ox1, y - 30, y + 30, bz - 20, bz)
 
     # guarding: fence with an interlocked gate, light curtain at the infeed, desk, E-stop, stack light
     fx0, fx1, fy = (xa - 0.6) * mm, (xb + 0.6) * mm, W / 2 + 600
@@ -444,8 +488,11 @@ def build_cell():
     for dy, what in ((-460, "sender"), (460, "receiver")):
         m.box("bar_eye", f"Bar-present photo-eye ({what}) - a bar is on the bed", DARK,
               150, 210, by + dy - 30, by + dy + 30, bz + 20, bz + 120)
-    m.box("fire_detector", "Flame / smoke detector over the bed and scrap tray", RED,
-          xa * mm + 4000, xa * mm + 4160, -W / 2 + 280, -W / 2 + 440, run_z - 120, run_z)
+    fdx, fdy = xa * mm + 4000, -W / 2 * mm - 250
+    m.box("fire_detector_bracket", "Detector bracket (angle) bolted to the column", DARK, fdx - 20, fdx + 20, fdy - 20, fdy + 260, run_z - 60, run_z - 40)
+    m.cyl("fire_detector", "Flame detector (UV/IR, e.g. Honeywell FS24X class) - watches the bed and scrap tray", (0.9, 0.9, 0.88),
+          (fdx, fdy + 260, run_z - 60), (fdx, fdy + 260, run_z - 160), 55)
+    m.cyl("fire_detector_window", "Flame detector window", RUBBER, (fdx, fdy + 260, run_z - 160), (fdx, fdy + 260, run_z - 175), 35)
     for fx in (fx0 + 250, fx1 - 250):
         m.box("area_scanner", "Safety laser scanner (SICK microScan3 class, PL d) - watches the cell floor", YELLOW,
               fx - 80, fx + 80, -fy + 120, -fy + 280, 0, 180)
@@ -458,24 +505,64 @@ def build_cell():
     # (the chains themselves move with the bridges: web/js/cables.js)
     rz = M.RAIL_Z * mm
     x_fix = (xa + xb) / 2 * mm                                   # each runway chain is fixed at the middle of the travel
-    m.box("control_cabinet", "Control cabinet - servo drives, safety PLC, contactors, the Jetson's I/O", (0.80, 0.81, 0.82),
-          gx + 3700, gx + 4900, -fy - 1500, -fy - 900, 0, 2000)
-    m.box("control_cabinet_door", "Control cabinet door (isolator handle: lock it off for maintenance)", (0.70, 0.71, 0.73),
-          gx + 3720, gx + 4880, -fy - 1520, -fy - 1500, 60, 1980)
-    m.box("isolator", "Main isolator - lockable (PUWER reg 19, BS EN 60204-1)", RED, gx + 4700, gx + 4820, -fy - 1560, -fy - 1520, 1300, 1450)
-    px = min(fx1 - 2200, gx + 6200)
-    m.box("plasma_power_source", "Plasma power source (Hypertherm XPR300 class) - 400 V 3-phase, its own cooling", RED,
-          px, px + 900, -fy - 1500, -fy - 700, 0, 1150)
-    m.box("plasma_gas_console", "Plasma gas console - O2 / air / N2 for the torch", (0.85, 0.86, 0.87),
-          px + 100, px + 800, -fy - 1400, -fy - 800, 1150, 1450)
-    m.box("gas_cylinders", "Gas supply (bulk or a chained cylinder pack) - O2 and N2", (0.25, 0.45, 0.30),
-          px + 1050, px + 1450, -fy - 1400, -fy - 800, 0, 1600)
+    # control cabinet (floor-standing enclosure, 1200 x 600 x 2000 on a 100 plinth)
+    cx0, cy0 = gx + 3700, -fy - 1500
+    GREY = (0.80, 0.81, 0.82)
+    m.box("cabinet_plinth", "Cabinet plinth 100 mm", DARK, cx0, cx0 + 1200, cy0 + 20, cy0 + 580, 0, 100)
+    m.box("control_cabinet", "Control cabinet - servo drives, safety PLC, contactors, the Jetson's I/O (1200x600x2000)", GREY,
+          cx0, cx0 + 1200, cy0, cy0 + 600, 100, 2100)
+    for k, (d0, d1) in enumerate(((cx0 + 5, cx0 + 597), (cx0 + 603, cx0 + 1195))):
+        m.box("cabinet_door", "Cabinet door", (0.74, 0.75, 0.77), d0, d1, cy0 - 18, cy0, 110, 2090)
+        hx = d1 - 60 if k == 0 else d0 + 60
+        m.box("cabinet_handle", "Door handle (lockable)", DARK, hx - 15, hx + 15, cy0 - 45, cy0 - 18, 1000, 1160)
+        for z in (300, 360, 420):
+            m.box("cabinet_vent", "Filter fan grille", DARK, (d0 + d1) / 2 - 120, (d0 + d1) / 2 + 120, cy0 - 22, cy0 - 18, z, z + 30)
+    m.box("isolator", "Main isolator - lockable rotary handle (PUWER reg 19, BS EN 60204-1)", RED,
+          cx0 + 1060, cx0 + 1160, cy0 - 50, cy0 - 18, 1500, 1600)
+    m.box("isolator_plate", "Isolator mounting plate", YELLOW, cx0 + 1040, cx0 + 1180, cy0 - 20, cy0 - 18, 1480, 1620)
+    # plasma power source + gas console (Hypertherm XPR class proportions) and the gas supply
+    px = cx0 + 1200 + 700                                         # 700 mm clear beside the cabinet
+    py0 = -fy - 1500
+    m.box("plasma_power_source", "Plasma power source (Hypertherm XPR300 class) - 400 V 3-phase, own coolant", GREY,
+          px, px + 600, py0, py0 + 1100, 120, 1250)
+    m.box("plasma_front", "Plasma power source front panel", RED, px + 20, px + 580, py0 - 8, py0, 600, 1230)
+    m.box("plasma_display", "Status display", RUBBER, px + 200, px + 400, py0 - 12, py0 - 8, 1050, 1150)
+    for cxw in (px + 60, px + 540):
+        for cyw in (py0 + 80, py0 + 1020):
+            m.cyl("castor", "Castor", RUBBER, (cxw, cyw - 30, 60), (cxw, cyw + 30, 60), 60)
+    for hy in (py0 + 150, py0 + 950):
+        m.cyl("lifting_eye", "Lifting eye", STEEL, (px + 300, hy, 1250), (px + 300, hy, 1290), 18)
+    m.box("plasma_gas_console", "Plasma gas console - O2 / air / N2 metering to the torch", (0.86, 0.87, 0.88),
+          px + 50, px + 550, py0 + 200, py0 + 800, 1250, 1600)
+    for rx in (px + 1000, px + 1720):                              # cylinder rack: two posts, two chains, base
+        m.hollow("gas_rack", "Cylinder rack post SHS 50x50x3, bolted to the floor", YELLOW, 50, 50, 3,
+                 (rx, py0 + 440, 0), (rx, py0 + 440, 1300))
+    for z in (700, 1150):
+        m.box("gas_rack_chain", "Cylinder restraint chain", STEEL, px + 1000, px + 1720, py0 + 425, py0 + 435, z, z + 25)
+    for i, (col, gas) in enumerate((((0.95, 0.95, 0.95), "oxygen (white shoulder)"), ((0.15, 0.15, 0.15), "nitrogen (black)"),
+                                     ((0.95, 0.95, 0.95), "oxygen (white shoulder)"))):
+        cxg = px + 1120 + i * 240
+        m.cyl("gas_cylinder", f"Gas cylinder 50 l - {gas}", (0.35, 0.35, 0.38) if i != 1 else (0.15, 0.15, 0.15),
+              (cxg, py0 + 280, 0), (cxg, py0 + 280, 1450), 115)
+        m.cyl("gas_cylinder_shoulder", f"Cylinder shoulder - {gas}", col, (cxg, py0 + 280, 1450), (cxg, py0 + 280, 1560), 115, r1=40)
+        m.cyl("gas_valve", "Cylinder valve and regulator", (0.75, 0.6, 0.2), (cxg, py0 + 280, 1560), (cxg, py0 + 280, 1660), 22)
     cols = [(xa + i * (xb - xa) / math.ceil((xb - xa) / 4.0)) * mm for i in range(math.ceil((xb - xa) / 4.0) + 1)]
     xc = min(cols, key=lambda x: abs(x - x_fix))                 # the column nearest the chains' fixed point
-    m.box("floor_trunking", "Floor trunking (steel, walk-over) - power, signals, torch lead, gas hoses", DARK,
-          min(gx + 3700, xc) - 50, max(px + 900, xc + 50), -fy - 680, -fy - 520, 0, 80)
-    m.box("floor_trunking", "Floor trunking under the bed to the back runway (Handler)", DARK,
-          xc + 250, xc + 400, -fy - 680, W / 2 + 200, 0, 60)
+    def floor_trunk(x0_, x1_, y0_, y1_, label):
+        """Walk-over floor trunking: a steel base, two sides and a chequer-plate lid."""
+        m.box("floor_trunking", label, DARK, x0_, x1_, y0_, y1_, 0, 5)
+        m.box("floor_trunking_lid", "Trunking lid - chequer plate, walk-over", STEEL, x0_, x1_, y0_, y1_, 70, 76)
+        along_x = (x1_ - x0_) > (y1_ - y0_)
+        for k in (0, 1):
+            if along_x:
+                yy = y0_ if k == 0 else y1_ - 4
+                m.box("floor_trunking", label, DARK, x0_, x1_, yy, yy + 4, 0, 70)
+            else:
+                xx = x0_ if k == 0 else x1_ - 4
+                m.box("floor_trunking", label, DARK, xx, xx + 4, y0_, y1_, 0, 70)
+    floor_trunk(min(gx + 3700, xc) - 50, max(px + 600, xc + 50), -fy - 680, -fy - 520,
+                "Floor trunking - power, signals, torch lead, gas hoses")
+    floor_trunk(xc + 250, xc + 400, -fy - 680, W / 2 + 200, "Floor trunking under the bed to the back runway (Handler)")
     for side in (-1, 1):
         y_tray = side * (W / 2 + 350)
         m.box("riser", "Cable riser up the column to the energy-chain tray", DARK,
