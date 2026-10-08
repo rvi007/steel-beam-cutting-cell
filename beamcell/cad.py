@@ -439,19 +439,97 @@ def build_cell():
         for x in np.arange(ox0 + 100, ox1, 2000):
             m.hollow("outfeed_leg", "Outfeed table leg SHS 80x80x5 S355", BED, 80, 80, 5, (x, y, 15), (x, y, bz - 120))
             m.box("outfeed_foot", "Leg foot plate 200x200x15", DARK, x - 100, x + 100, y - 100, y + 100, 0, 15)
-    for y in np.linspace(oy0 + 40, oy1 - 40, 6):
-        m.box("outfeed_deck", "Outfeed table deck - 60x10 flat on edge-spaced runners; finished parts are put down here",
-              GREEN, ox0, ox1, y - 30, y + 30, bz - 20, bz)
+    # outfeed CROSS-TRANSFER: chain transfer arms every 2 m carry finished parts sideways, out through the back
+    # fence (light grid with muting) onto a buffer rack outside, where a forklift / side loader takes them away
+    fy_ = W / 2 + 600
+    y_out = fy_ + 1700                                             # outer end of the buffer rack
+    arms_x = list(np.arange(ox0 + 100, ox1, 1000))                # every 1 m, so a short part always sits on two
+    for k_arm, x in enumerate(arms_x):
+        m.hollow("transfer_arm", "Cross-transfer arm RHS 100x50x4 - inside to the buffer rack outside", BED, 50, 100, 4,
+                 (x, oy0, bz - 70), (x, y_out, bz - 70))
+        m.box("transfer_chain", "Transfer chain strand (BS 16B-1 roller chain on a wear strip) - parts ride on it", DARK,
+              x - 14, x + 14, oy0, y_out, bz - 20, bz)
+        for yy in (oy0 + 30, y_out - 30):
+            m.cyl("transfer_sprocket", "Chain sprocket", STEEL, (x - 22, yy, bz - 45), (x + 22, yy, bz - 45), 45)
+        for yy in ((fy_ + 450, fy_ + 1550) if k_arm % 2 == 0 else ()):
+            m.hollow("buffer_leg", "Buffer rack leg SHS 80x80x5", BED, 80, 80, 5, (x, yy, 15), (x, yy, bz - 120))
+            m.box("buffer_foot", "Leg foot plate 200x200x15", DARK, x - 100, x + 100, yy - 100, yy + 100, 0, 15)
+        m.box("buffer_stop", "Buffer end stop - parts stop here for the forklift", YELLOW, x - 40, x + 40, y_out - 15, y_out + 5, bz - 20, bz + 140)
+    m.tube("transfer_shaft", "Line shaft - drives every transfer chain together", STEEL,
+           (ox0 - 300, oy0 + 30, bz - 45), (arms_x[-1] + 60, oy0 + 30, bz - 45), 25, 5)
+    m.box("transfer_motor", "Transfer gearmotor 1.5 kW with brake (on the safety PLC: runs only when the cell is clear)", (0.25, 0.4, 0.6),
+          ox0 - 650, ox0 - 300, oy0 - 120, oy0 + 180, bz - 200, bz + 60)
+
+    # INFEED: cross-transfer rack (forklift / side loader / beam dollies drop bars here, outside the guard) and a
+    # driven infeed roller conveyor that takes the bar into the cell through the light-curtain opening
+    L_in = M.WORK_LENGTH * mm
+    ix1 = (xa - 0.6) * mm - 300                                    # conveyor end, just outside the infeed opening
+    ix0 = ix1 - L_in
+    for dy in (-400, 400):
+        m.hollow("infeed_rail", "Infeed conveyor rail RHS 120x80x5", BED, 80, 120, 5, (ix0, by + dy, rail_top - 60), (ix1, by + dy, rail_top - 60))
+        for x in np.arange(ix0 + 150, ix1, 2000):
+            m.hollow("infeed_leg", "Infeed conveyor leg SHS 80x80x5", BED, 80, 80, 5, (x, by + dy, 15), (x, by + dy, rail_top - 120))
+            m.box("infeed_foot", "Leg foot plate 200x200x15", DARK, x - 100, x + 100, by + dy - 100, by + dy + 100, 0, 15)
+    for x in np.arange(ix0 + 500, ix1, 1000):
+        m.tube("infeed_roller", "Driven infeed roller 101.6x3.6 (chain-driven, powered: brings the bar in)", ALU,
+               (x, by - 360, bz - rr), (x, by + 360, bz - rr), rr, 3.6)
+        m.cyl("infeed_sprocket", "Roller drive sprocket", DARK, (x, by + 400, bz - rr), (x, by + 440, bz - rr), 40)
+    for x in (ix1 + 450, (xa - 0.6) * mm + 900):                   # through the opening: rollers bridge to the bed
+        m.tube("infeed_roller", "Bridging roller through the infeed opening", ALU, (x, by - 360, bz - rr), (x, by + 360, bz - rr), rr, 3.6)
+        for dy in (-400, 400):
+            m.hollow("infeed_leg", "Roller stand SHS 80x80x5", BED, 80, 80, 5, (x, by + dy, 15), (x, by + dy, bz - rr - 40))
+    m.box("infeed_motor", "Infeed conveyor gearmotor with inverter", (0.25, 0.4, 0.6), ix1 - 700, ix1 - 300, by + 450, by + 750, 300, 700)
+    m.box("infeed_chain_guard", "Roller chain guard (fixed guard, BS EN ISO 14120)", YELLOW, ix0, ix1, by + 440, by + 480, bz - rr - 60, bz - rr + 60)
+    rack_y0, rack_y1 = by - 450, by - 2650                         # loading rack on the front side of the conveyor
+    for x in np.arange(ix0 + 1000, ix1, 2500):
+        m.hollow("infeed_rack_arm", "Infeed cross-transfer arm RHS 100x50x4 - bars are put down here", BED, 50, 100, 4,
+                 (x, rack_y1, bz - 70), (x, rack_y0, bz - 70))
+        m.box("infeed_rack_chain", "Infeed transfer chain - carries a bar onto the conveyor", DARK, x - 14, x + 14, rack_y1, rack_y0, bz - 20, bz)
+        for yy in (rack_y0 - 300, rack_y1 + 200):
+            m.hollow("infeed_rack_leg", "Rack leg SHS 80x80x5", BED, 80, 80, 5, (x, yy, 15), (x, yy, bz - 120))
+        m.box("infeed_rack_stop", "Rack stop - lifts to let one bar at a time onto the conveyor", YELLOW,
+              x - 40, x + 40, rack_y0 - 10, rack_y0 + 10, bz - 20, bz + 100)
+
+    # floor markings: forklift / side-loader aisles and the pallet-truck bay (yellow lines, BS 5499 / HSG136 traffic routes)
+    def floor_line(x0_, x1_, y0_, y1_, label="Floor marking - forklift and pallet-truck aisle (keep clear)"):
+        m.box("floor_marking", label, YELLOW, x0_, x1_, y0_, y1_, 0, 3)
+    for yl in (y_out + 400, y_out + 4000):                         # unloading aisle behind the buffer rack
+        floor_line(ox0 - 1500, ox1 + 4000, yl - 50, yl + 50)
+    for yl in (rack_y1 - 400, rack_y1 - 4000):                     # loading aisle in front of the infeed rack
+        floor_line(ix0 - 1000, ix1 + 300, yl - 50, yl + 50)
+    # pallet-truck bay for short parts: a stillage on a Euro pallet, and a hand pallet truck under the next one
+    sx, sy = ox1 + 1200, fy_ + 600
+    floor_line(sx - 200, sx + 2900, sy - 250, sy - 200, "Floor marking - pallet-truck bay (short parts in stillages)")
+    floor_line(sx - 200, sx + 2900, sy + 1450, sy + 1500, "Floor marking - pallet-truck bay")
+    for k, x in enumerate((sx, sx + 1500)):
+        for j in range(3):                                         # Euro pallet 1200 x 800 x 144
+            m.box("pallet", "Euro pallet 1200x800", (0.72, 0.58, 0.38), x, x + 1200, sy + j * 350, sy + j * 350 + 100, 0, 78)
+        for j in range(5):
+            m.box("pallet_board", "Pallet top board", (0.78, 0.64, 0.42), x + j * 262, x + j * 262 + 100, sy, sy + 800, 78, 144)
+        if k == 0:
+            m.box("stillage_base", "Mesh stillage 1200x800x800 for short parts and offcuts", (0.35, 0.38, 0.42), x, x + 1200, sy, sy + 800, 144, 160)
+            for (a0, a1, b0, b1) in ((x, x + 1200, sy, sy + 4), (x, x + 1200, sy + 796, sy + 800), (x, x + 4, sy, sy + 800), (x + 1196, x + 1200, sy, sy + 800)):
+                m.box("stillage_mesh", "Stillage mesh side", (0.45, 0.48, 0.52), a0, a1, b0, b1, 160, 940)
+        else:                                                      # hand pallet truck, forks in the pallet
+            for fyk in (sy + 170, sy + 510):
+                m.box("pallet_truck_fork", "Hand pallet truck fork (2.5 t, 1150 long)", RED, x - 100, x + 1150, fyk, fyk + 160, 30, 85)
+            m.box("pallet_truck_pump", "Pallet truck pump unit", RED, x - 420, x - 100, sy + 150, sy + 690, 30, 420)
+            m.cyl("pallet_truck_wheel", "Steer wheel", RUBBER, (x - 260, sy + 330, 90), (x - 260, sy + 510, 90), 90)
+            m.cyl("pallet_truck_handle", "Tiller handle", RED, (x - 300, sy + 420, 400), (x - 900, sy + 420, 1150), 18)
+            m.cyl("pallet_truck_grip", "Handle grip", RUBBER, (x - 900, sy + 280, 1150), (x - 900, sy + 560, 1150), 20)
 
     # guarding: fence with an interlocked gate, light curtain at the infeed, desk, E-stop, stack light
     fx0, fx1, fy = (xa - 0.6) * mm, (xb + 0.6) * mm, W / 2 + 600
-    runs = [(fx0, -fy, fx1, -fy, "gate"), (fx0, fy, fx1, fy, None), (fx0, -fy, fx0, fy, "curtain"), (fx1, -fy, fx1, fy, None)]
+    runs = [(fx0, -fy, fx1, -fy, "gate"), (fx0, fy, fx1, fy, "outfeed"), (fx0, -fy, fx0, fy, "curtain"), (fx1, -fy, fx1, fy, None)]
+    op0, op1 = ox0 - 250, arms_x[-1] + 250                        # the outfeed opening in the back fence
     gate_at = None
     for ax, ay, bx, byy, gap in runs:
         length = math.hypot(bx - ax, byy - ay)
         n = round(length / 2000)
         for i in range(n + 1):
             px, py = ax + (bx - ax) * i / n, ay + (byy - ay) * i / n
+            if gap == "outfeed" and op0 < px < op1:
+                continue
             m.box("fence_post", "Fence post 60x60 (BS EN ISO 14120 guard)", YELLOW, px - 30, px + 30, py - 30, py + 30, 0, 2100)
         for i in range(n):
             if gap == "gate" and i == n // 2:
@@ -459,6 +537,16 @@ def build_cell():
                 continue
             if gap == "curtain" and i == 0:
                 continue
+            if gap == "outfeed":
+                a_, b_ = ax + (bx - ax) * i / n, ax + (bx - ax) * (i + 1) / n
+                if a_ >= op0 and b_ <= op1:
+                    continue
+                if a_ < op0 < b_:
+                    m.box("fence_mesh", "Weld-mesh fence panel", DARK, a_ + 40, op0 - 40, fy - 2, fy + 2, 150, 2050)
+                    continue
+                if a_ < op1 < b_:
+                    m.box("fence_mesh", "Weld-mesh fence panel", DARK, op1 + 40, b_ - 40, fy - 2, fy + 2, 150, 2050)
+                    continue
             p0 = (ax + (bx - ax) * i / n, ay + (byy - ay) * i / n)
             p1 = (ax + (bx - ax) * (i + 1) / n, ay + (byy - ay) * (i + 1) / n)
             if abs(p1[1] - p0[1]) < 1:
@@ -467,6 +555,12 @@ def build_cell():
             else:
                 m.box("fence_mesh", "Weld-mesh fence panel 1900 high (BS EN ISO 13857 reach distances)", DARK,
                       p0[0] - 2, p0[0] + 2, min(p0[1], p1[1]) + 40, max(p0[1], p1[1]) - 40, 150, 2050)
+    for xg, what in ((op0, "sender"), (op1, "receiver")):
+        m.box("light_grid", f"Perimeter light grid, 4 beams ({what}, SICK deTem4 class, Type 4) across the outfeed opening",
+              RUBBER, xg - 40, xg + 40, fy - 40, fy + 40, 0, 1500)
+        m.box("muting_sensor", "Muting sensor - lets steel on the transfer through, never a person (BS EN IEC 62046)", DARK,
+              xg - 30, xg + 30, fy - 300, fy - 240, bz + 40, bz + 100)
+        m.cyl("muting_lamp", "Muting lamp - lit while steel passes", (1, 0.85, 0.2), (xg, fy, 1500), (xg, fy, 1620), 35)
     if gate_at:
         g0, g1 = gate_at
         w = g1 - g0 - 60
@@ -495,7 +589,7 @@ def build_cell():
           gx - 1630, gx - 1570, -fy - 430, -fy - 370, 0, 3000)
     m.box("camera", "Safety-zone camera (USB / CSI) on the Jetson", RUBBER, gx - 1680, gx - 1520, -fy - 370, -fy - 270, 2900, 3000)
     # sensors that find the bar, and watch for fire and people (see beamcell/sensors.py)
-    m.box("end_stop", "Bar end stop at the infeed end - the datum the bar is put against", DARK,
+    m.box("end_stop", "Pop-up end stop - drops below the rollers while a bar comes in, rises to datum it", DARK,
           -470, -400, by - 120, by + 120, 0, bz + 120)
     m.box("datum_laser", "Datum laser (SICK DT50 class) on the end stop - measures where the bar really starts", RED,
           -400, -330, by - 35, by + 35, bz + 40, bz + 110)

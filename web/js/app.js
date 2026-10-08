@@ -128,6 +128,7 @@ export function clearPlan() {
   if (app.playing) stopMachine("job changed");
   app.plan = null;
   app.t = 0;
+  app.transfer = null;
   $("plan-info").innerHTML = "";
   $("plan-warnings").innerHTML = "";
   if (app.scene) { clearSteel(); manualPreview(); if (!manual.on) showBarPreview(); }
@@ -280,7 +281,11 @@ function updateSteel(t) {
       app.scene.steel.add(p.group);
       p.key = key;
     }
-    const off = partOffset(p.k, t);
+    const off = [...partOffset(p.k, t)];              // a copy: the plan's offsets must not change
+    if (app.transfer && free) {                       // job done: the cross-transfer carries the part out to the buffer rack
+      const u = Math.min((performance.now() - app.transfer) / 9000, 1);
+      off[1] += (app.info.machine.width / 2 + 1.6 - app.info.machine.outfeed_y) * (u * u * (3 - 2 * u));
+    }
     p.group.position.set(...off);
     p.kerfGroup.position.set(...off);
   }
@@ -438,6 +443,7 @@ let finishing = false;
 async function finishJob() {
   if (finishing) return;
   finishing = true;
+  app.transfer = performance.now();                 // parts ride out through the back fence to the buffer rack
   await jobFinished(jobDetails());                 // goes into the job history
   const plan = app.plan, dlg = $("job-done");
   // the bar is done: its parts come off the Machine tab (they're in the job history); the rest re-nest
