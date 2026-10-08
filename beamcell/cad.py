@@ -335,12 +335,27 @@ class Model:
         return self.add(name, label, shape, colour, group)
 
     # ------------------------------------------------------------ output
-    def assembly(self, scale=1.0, groups=None):
+    def assembly(self, scale=1.0, groups=None, merge=False):
         """cq.Assembly of the static solids (groups=None) or of the given moving bodies, each moving
         body a sub-assembly named after it ('cutter.link3' -> 'cutter_link3')."""
         assy = cq.Assembly(name=self.name)
         subs = {}
-        for group, name, label, shape, colour in self.items:
+        items = self.items
+        if merge and groups is None:
+            # for the 3D view: every static solid with the same label and colour becomes one mesh (one draw call),
+            # so hundreds of bolts, anchors and bearings don't slow the screen down. STEP keeps them separate.
+            merged, order = {}, []
+            for group, name, label, shape, colour in items:
+                if group is not None:
+                    continue
+                key = (label, colour)
+                if key not in merged:
+                    merged[key] = [name, []]
+                    order.append(key)
+                vals = shape.vals() if hasattr(shape, "vals") else [shape]
+                merged[key][1] += [v for v in vals if isinstance(v, cq.Shape)]
+            items = [(None, merged[k][0], k[0], cq.Compound.makeCompound(merged[k][1]), k[1]) for k in order]
+        for group, name, label, shape, colour in items:
             if (groups is None) != (group is None) or (groups is not None and group not in groups):
                 continue
             obj = shape.val() if hasattr(shape, "val") else shape
@@ -832,7 +847,8 @@ def _export_cell(suffix):
     os.makedirs(CAD_DIR, exist_ok=True)
     os.makedirs(WEB_MODELS, exist_ok=True)
     # GLB for the 3D view (metres): the static cell, and one file with every moving body in its own frame
-    exportGLTF(m.assembly(scale=0.001), os.path.join(WEB_MODELS, f"cell{suffix}.glb"), binary=True, tolerance=0.002, angularTolerance=0.35)
+    exportGLTF(m.assembly(scale=0.001, merge=True), os.path.join(WEB_MODELS, f"cell{suffix}.glb"), binary=True,
+               tolerance=0.003, angularTolerance=0.45)
     moving = sorted({it[0] for it in m.items if it[0]})
     exportGLTF(m.assembly(scale=0.001, groups=moving), os.path.join(WEB_MODELS, "moving.glb"), binary=True,
                tolerance=0.001, angularTolerance=0.3)
