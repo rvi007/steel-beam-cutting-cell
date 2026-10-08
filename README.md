@@ -88,7 +88,11 @@ use the address the terminal prints (for example `http://192.168.1.20:8080`).
     says when, why and where it stopped and what is done. *Carry on* skips what is done, redoes the interrupted operation from
     its start, re-measures the bar and checks the cuts already made (scan back) before anything moves; a green arrow and a
     banner show where it restarts.
-14. **Sensors tab**: every sensor (two cameras, bar finding, torch, magnet, safety), the **bar check**, the **plasma settings**,
+14. **Loading and unloading without entering the cell**: bars are put down by forklift / side loader (or beam dollies) on the
+    infeed cross-transfer rack outside, and a driven infeed conveyor takes them in through the light-curtain opening. After a
+    job the outfeed cross-transfer carries the finished parts out through the back fence (perimeter light grid with muting)
+    onto a buffer rack beside a marked forklift aisle; short parts go in a stillage for the pallet truck.
+15. **Sensors tab**: every sensor (two cameras, bar finding, torch, magnet, safety), the **bar check**, the **plasma settings**,
    and what each hand does for every stop. Press **Simulate** on "load slipping" or "object on the bed" and watch it react.
 
 <details>

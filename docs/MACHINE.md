@@ -133,3 +133,20 @@ Plasma speeds follow typical 130 A values: 50 mm/s up to 6 mm thick down to 10 m
 3. Bevel cuts for weld preparation (the torch is already 6-axis).
 4. Drive a 1:10 model's motors from the plan (see `SCALE_MODEL.md`).
 5. Two-hand lifting for parts over 500 kg.
+
+
+## Loading and unloading (material flow)
+
+Nobody walks into the cell to load or unload it. Steel moves in and out on conveyors, and people and forklifts work outside the guard:
+
+| Where | What | Who / what moves it |
+|---|---|---|
+| **Infeed rack** (outside, infeed end) | chain cross-transfer arms every 2.5 m at bed height; a stop lets one bar at a time onto the conveyor | forklift with a side loader, an overhead crane, or a pallet truck with beam dollies, in the marked loading aisle |
+| **Infeed conveyor** (outside, in line with the bed) | driven 101.6 mm rollers every 1 m, chain guard, gearmotor; bridging rollers through the light-curtain opening | the machine: drives the bar in; the pop-up end stop drops while it comes in, then rises and the bar is datumed against it |
+| **Outfeed cross-transfer** (inside to outside, back) | chain arms every 1 m (a short part always sits on two), line shaft and gearmotor | the machine, after each job, only when the cell is clear (safety PLC) |
+| **Back opening** | perimeter light grid, 4 beams (SICK deTem4 class, Type 4), muting sensors and lamp | lets steel on the transfer through, stops the machine for a person (BS EN IEC 62046, BS EN ISO 13855) |
+| **Buffer rack** (outside, back) | the arms continue 1.7 m outside the fence onto legs, with end stops | forklift / side loader picks the parts from the marked unloading aisle |
+| **Pallet-truck bay** | stillage on a Euro pallet for short parts and offcuts | hand pallet truck |
+
+A hand pallet truck is right for stillages, not for long beams: a 6-12 m beam needs a side loader, a crane, or two beam
+dollies. Aisles are 3.5 m wide and marked (HSG136 workplace transport).
