@@ -326,8 +326,8 @@ function barMeasured(st) {
   const r = st && st.job && st.job.bar_check;
   if (!r) return;
   const m = r.measured || {};
-  toast(r.ok ? `\u2714 Bar measured - it matches the job: ${Math.round(m.length || 0).toLocaleString()} mm long (needs ${Math.round(r.needed_mm).toLocaleString()}), `
-    + `depth ${(m.depth || 0).toFixed(1)}, flange ${(m.width || 0).toFixed(1)} x ${(m.flange || 0).toFixed(1)}, web ${(m.web || 0).toFixed(1)} mm`
+  toast(r.ok ? `\u2714 Bar measured - it is ${r.identified || r.section}, as the job needs. Web: ${(m.depth || 0).toFixed(1)} deep x ${(m.web || 0).toFixed(1)} thick. `
+    + `Flange: ${(m.width || 0).toFixed(1)} wide x ${(m.flange || 0).toFixed(1)} thick. ${Math.round(m.length || 0).toLocaleString()} mm long (needs ${Math.round(r.needed_mm).toLocaleString()})`
     + `${(m.holes || []).length ? "" : ", no holes already in it"}` : "The bar doesn't match the job", !r.ok, 7000);
 }
 
@@ -468,7 +468,7 @@ function frame(now) {
     scene.torch(on && app.motion > 0 && st && st.torch_allowed, dt, app.motion > 0);
     // the Cutter measuring the bar before it cuts; at the end, say what it found
     const scan = plan.scan;
-    scene.scanLaser(!!scan && app.t >= scan.t0 && app.t < scan.t1);
+    scene.scanLaser(!!scan && (scan.passes || [scan]).some((p) => app.t >= p.t0 && app.t < p.t1));
     if (scan && app.playing && lastT < scan.t1 && app.t >= scan.t1) barMeasured(st);
     lastT = app.t;
   } else {

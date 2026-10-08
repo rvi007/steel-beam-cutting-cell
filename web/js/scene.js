@@ -285,7 +285,11 @@ export class CellScene {
   // Plasma arc, glow and sparks at the Cutter's tip. `emit`: throw new sparks (machine running).
   scanLaser(on) {
     this.laser.visible = on;
-    if (on) this.laser.position.copy(this.hands.cutter.tip);
+    if (on) {
+      const H = this.hands.cutter;
+      this.laser.position.copy(H.tip);
+      this.laser.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), H.dir);   // down on the flange, sideways on the web
+    }
   }
 
   torch(on, dt, emit) {

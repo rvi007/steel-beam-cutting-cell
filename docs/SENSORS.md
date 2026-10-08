@@ -30,8 +30,10 @@ on the Sensors tab. Today its readings are simulated: small, realistic and repea
 
 When you press **Start**, and only once the safety checks have passed (Reset, checklist, gate,
 extraction), the Cutter measures the bar and checks it against the job before it cuts anything.
-In the 3D view it drives along the whole bar, torch down, with a red fan of laser light (the profile
-scanner) - that is the first thing every job does. When it gets to the start, a message gives what
+In the 3D view it measures in two passes, each with a red fan of laser light (the profile scanner):
+first along the **top flange**, torch down (depth, flange width and thickness, bow, length), then along
+the **web** from the side (web thickness and height, holes already in it). Web and flange together tell
+which section the bar really is - the message names it. When it gets to the start, a message gives what
 it measured (length, depth, flange, web, holes found):
 
 | Check | Fails when |
