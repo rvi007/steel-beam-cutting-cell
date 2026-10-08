@@ -492,6 +492,15 @@ async function start() {
   $("version").title = "Software version " + app.info.version;
   const sel = $("stock-length");
   for (const m of app.info.codes.stock_lengths_m) sel.add(new Option(`${m} m`, m * 1000));
+  // machine size: 12 m or 20 m (the server remembers it; the page reloads with that machine's 3D model)
+  const size = $("machine-size");
+  for (const L of app.info.machine.lengths) size.add(new Option(`${L} m long x 3 m wide`, L));
+  size.value = app.info.machine.work_length;
+  size.onchange = async () => {
+    if (!confirm(`Change the machine to ${size.value} m? The loaded job is cleared and the page reloads.`)) { size.value = app.info.machine.work_length; return; }
+    try { await post("/api/machine-size", { length_m: +size.value }); location.reload(); }
+    catch (e) { toast(e.message, true); size.value = app.info.machine.work_length; }
+  };
   // tabs
   document.querySelectorAll(".tabs button").forEach((b) => (b.onclick = () => {
     document.querySelectorAll(".tabs button").forEach((x) => x.classList.toggle("on", x === b));
@@ -540,6 +549,7 @@ async function start() {
       app.job.parts.push(Object.assign(v.part, { _weight: v.weight / v.part.qty }));
     }
   }
+  if (app.job.stock_length > app.info.machine.work_length * 1000) app.job.stock_length = app.info.machine.work_length * 1000;
   sel.value = app.job.stock_length;
   initParts();
   initJobs();

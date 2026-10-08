@@ -32,6 +32,7 @@ DEFAULTS = {
     "plasma": {"process": "o2"},
     "sensors": {"torch_camera": "", "simulate": True},
     "server": {"port": 8080},
+    "machine": {"length_m": 12},
     "reports": {"github_repo": "rvi007/steel-beam-cutting-cell", "webhook_url": "", "keep": 200},
 }
 

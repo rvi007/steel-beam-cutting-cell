@@ -26,7 +26,7 @@ HOLE_TYPES = ["normal", "oversize", "short slot", "long slot"]
 
 GRADES = ["S275JR", "S275J0", "S275J2", "S355JR", "S355J0", "S355J2", "S355K2"]   # BS EN 10025-2
 DEFAULT_GRADE = "S355J2"
-STOCK_LENGTHS_M = [6, 8, 10, 12]     # common UK stockholder lengths that fit the 12 m cell
+STOCK_LENGTHS_M = [6, 8, 10, 12, 15, 18, 20]     # common UK stockholder / mill lengths (the cell takes those that fit it)
 DEFAULT_STOCK_M = 12
 
 MIN_CORNER_RADIUS = 5.0               # BS EN 1090-2: re-entrant corners rounded off

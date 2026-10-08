@@ -74,6 +74,9 @@ torch_camera = ""               # the second camera, close up on the torch: "0"/
 [server]
 port = 8080
 
+[machine]
+length_m = 12                   # 12 or 20 (m of bar the cell takes). The Machine tab can switch it too (kept in config/machine.json)
+
 [reports]
 # Every stop during a job saves a problem report in reports/ (the Reports button, top right).
 # "Send to developer" opens it as a new issue on this GitHub repository, ready to submit:

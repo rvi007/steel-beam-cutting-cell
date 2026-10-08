@@ -31,7 +31,8 @@ import numpy as np
 from beamcell import plasma, plasma_presets
 from beamcell import sections as S
 from beamcell.config import CONFIG
-from beamcell.machine import (BEAM_Y, BED_Z, MIN_GAP, OUTFEED_Y, SCRAP_TRAY_Z, X_LIMITS, Y_LIMITS, Z_LIMITS, Z_SAFE,
+from beamcell import machine as M
+from beamcell.machine import (BEAM_Y, BED_Z, MIN_GAP, OUTFEED_Y, SCRAP_TRAY_Z, Y_LIMITS, Z_LIMITS, Z_SAFE,
                               fall_time, make_hands, move_time, supported_on_rollers)
 from beamcell.parts import inside
 
@@ -430,7 +431,7 @@ class Plan:
           2. along the WEB from the side: web thickness and height, holes already in it.
         Both are needed to know the bar is really the section the job needs."""
         s = self.bar.parts[0].sec
-        x_far = min(self.bar.length / 1000 - 0.05, X_LIMITS[1] - 0.5)
+        x_far = min(self.bar.length / 1000 - 0.05, M.X_LIMITS[1] - 0.5)
         top = np.array([0, BEAM_Y, BED_Z + s["h"] / 1000 + SCAN_HEIGHT])
         side_d = DIRS["S"]
         web = np.array([0, BEAM_Y + s.get("tw", s.get("t", 0)) / 2000 - side_d[1] * SCAN_HEIGHT, BED_Z + s["h"] / 2000])
@@ -443,7 +444,7 @@ class Plan:
             if what == "web":
                 self._say(self.tc.end, "Cutter", "measuring the bar: web, from the side")
             self._go(self.tc, g0, q)
-            g1 = np.clip(g0 + (p1 - p0), [X_LIMITS[0], Y_LIMITS[0], Z_LIMITS[0]], [X_LIMITS[1], Y_LIMITS[1], Z_LIMITS[1]])
+            g1 = np.clip(g0 + (p1 - p0), [M.X_LIMITS[0], Y_LIMITS[0], Z_LIMITS[0]], [M.X_LIMITS[1], Y_LIMITS[1], Z_LIMITS[1]])
             T = max(np.linalg.norm(g1 - g0) / SCAN_SPEED, DT)
             n = max(3, int(np.ceil(T / DT)) + 1)
             sm = smooth(n)
@@ -457,7 +458,7 @@ class Plan:
         """Gantry position that keeps the arm in its comfortable pose with the tip at p."""
         offset, q = self.cutter.preference(d, column_side(d))
         g = np.asarray(p) - offset
-        return np.clip(g, [X_LIMITS[0], Y_LIMITS[0], Z_LIMITS[0]], [X_LIMITS[1], Y_LIMITS[1], Z_LIMITS[1]]), q
+        return np.clip(g, [M.X_LIMITS[0], Y_LIMITS[0], Z_LIMITS[0]], [M.X_LIMITS[1], Y_LIMITS[1], Z_LIMITS[1]]), q
 
     def _cutter_to(self, pts, d):
         """Torch to the approach point of a cut. Long cuts start with the gantry at the start of
