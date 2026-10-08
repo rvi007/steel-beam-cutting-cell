@@ -84,7 +84,11 @@ use the address the terminal prints (for example `http://192.168.1.20:8080`).
    length, every hole, holes already in the bar). If it doesn't match, the job doesn't start and a window says why.
    Try it: Sensors tab, *Bar on the bed*, pick "a bar too short", then press Run. When the bar matches, a window shows the
    program next to what was measured on the cutting area (web and flange), then cutting starts.
-13. **Sensors tab**: every sensor (two cameras, bar finding, torch, magnet, safety), the **bar check**, the **plasma settings**,
+13. **Power cut or stop in the middle of a job**: progress is saved to disk every second. When the app starts again a window
+    says when, why and where it stopped and what is done. *Carry on* skips what is done, redoes the interrupted operation from
+    its start, re-measures the bar and checks the cuts already made (scan back) before anything moves; a green arrow and a
+    banner show where it restarts.
+14. **Sensors tab**: every sensor (two cameras, bar finding, torch, magnet, safety), the **bar check**, the **plasma settings**,
    and what each hand does for every stop. Press **Simulate** on "load slipping" or "object on the bed" and watch it react.
 
 <details>

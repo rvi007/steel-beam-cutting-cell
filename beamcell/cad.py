@@ -281,6 +281,20 @@ class Model:
         solid = cq.Solid.makeCylinder(r, L, cq.Vector(*p0), u).cut(cq.Solid.makeCylinder(r - t, L, cq.Vector(*p0), u))
         return self.add(name, label, cq.Workplane().add(solid), colour, group)
 
+    def cable(self, name, label, colour, points, r, group=None):
+        """A cable or hose along a route: straight runs with a rounded bend at every corner."""
+        pts = [np.asarray(p, float) for p in points]
+        shape = None
+        for a, b in zip(pts, pts[1:]):
+            L = float(np.linalg.norm(b - a))
+            if L < 1e-6:
+                continue
+            seg = cq.Solid.makeCylinder(r, L, cq.Vector(*a), cq.Vector(*((b - a) / L)))
+            shape = seg if shape is None else shape.fuse(seg)
+        for p in pts[1:-1]:
+            shape = shape.fuse(cq.Solid.makeSphere(r, cq.Vector(*p), angleDegrees1=-90, angleDegrees2=90))
+        return self.add(name, label, cq.Workplane().add(shape), colour, group)
+
     def section(self, name, label, colour, title, length, at=(0, 0, 0), axis="x", group=None):
         """A length of a UK section: along X (lying like on the bed) or standing up (axis='z')."""
         solid = section_solid(S.get(title), length)
@@ -488,7 +502,7 @@ def build_cell():
     for dy, what in ((-460, "sender"), (460, "receiver")):
         m.box("bar_eye", f"Bar-present photo-eye ({what}) - a bar is on the bed", DARK,
               150, 210, by + dy - 30, by + dy + 30, bz + 20, bz + 120)
-    fdx, fdy = xa * mm + 4000, -W / 2 * mm - 250
+    fdx, fdy = xa * mm + 4000, -W / 2 - 250
     m.box("fire_detector_bracket", "Detector bracket (angle) bolted to the column", DARK, fdx - 20, fdx + 20, fdy - 20, fdy + 260, run_z - 60, run_z - 40)
     m.cyl("fire_detector", "Flame detector (UV/IR, e.g. Honeywell FS24X class) - watches the bed and scrap tray", (0.9, 0.9, 0.88),
           (fdx, fdy + 260, run_z - 60), (fdx, fdy + 260, run_z - 160), 55)
@@ -577,6 +591,62 @@ def build_cell():
         for xb_ in np.arange(x0 + 500, x_fix + 400, 2000):
             m.box("tray_bracket", "Tray bracket bolted to the runway", DARK, xb_ - 30, xb_ + 30,
                   min(side * W / 2, y_tray) - 90, max(side * W / 2, y_tray) + 90, rz - 140, rz - 110)
+
+    # ---------------------------------------------------------------- wiring: every device is cabled
+    BLACK, GREY_C, SAFETY_C, O2, N2 = (0.07, 0.07, 0.08), (0.42, 0.44, 0.46), (0.93, 0.78, 0.12), (0.12, 0.35, 0.80), (0.10, 0.10, 0.10)
+    ty = -fy - 60                                                 # field cable tray on the outside of the front fence
+    m.box("field_tray", "Field cable tray (perforated, 100 wide) on the fence posts - sensor and safety cables", STEEL,
+          fx0, cx0 + 400, ty - 50, ty + 50, 250, 254)
+    for wall in (-1, 1):
+        m.box("field_tray", "Field cable tray side", STEEL, fx0, cx0 + 400, ty + wall * 50 - 2, ty + wall * 50 + 2, 250, 300)
+    cz = 40                                                       # cables on the floor run in protected covers
+    m.cable("cable_stack_light", "Stack light cable 5-core (24 V)", GREY_C,
+            [(gx + 3350, -fy - 980, 900), (gx + 3350, -fy - 980, cz), (cx0 + 120, -fy - 980, cz), (cx0 + 120, -fy - 950, 100)], 8)
+    m.cable("cable_estop", "Desk E-stop cable - safety circuit, 2 channels (BS EN ISO 13850)", SAFETY_C,
+            [(gx + 2150, -fy - 1050, 900), (gx + 2150, -fy - 1050, cz), (cx0 + 180, -fy - 1050, cz), (cx0 + 180, -fy - 1050, 100)], 8)
+    m.cable("cable_screen", "Screen and network cable from the desk", GREY_C,
+            [(gx + 2600, -fy - 1020, 900), (gx + 2600, -fy - 1120, cz), (cx0 + 240, -fy - 1120, cz), (cx0 + 240, -fy - 1120, 100)], 6)
+    m.cable("cable_camera", "Camera cable (USB / CSI extender) down the mast", GREY_C,
+            [(gx - 1600, -fy - 330, 2900), (gx - 1600, -fy - 330, cz), (gx - 1600, -fy - 880, cz), (cx0 + 300, -fy - 880, cz),
+             (cx0 + 300, -fy - 950, 100)], 6)
+    m.cable("cable_field", "Field cables from the tray to the cabinet (sensors and safety devices)", SAFETY_C,
+            [(cx0 + 350, ty, 260), (cx0 + 350, ty, cz), (cx0 + 350, -fy - 950, cz), (cx0 + 350, -fy - 950, 100)], 14)
+    for y in (-fy + 50, cy1 - 50):                                # light curtain sender and receiver
+        m.cable("cable_light_curtain", "Light curtain cable (OSSD outputs to the safety relay)", SAFETY_C,
+                [(fx0 - 120, y, 300), (fx0 - 120, y, cz), (fx0 - 120, ty, cz), (fx0 + 20, ty, 260)], 6)
+    for fxs in (fx0 + 250, fx1 - 250):                            # area scanners
+        m.cable("cable_area_scanner", "Safety laser scanner cable", SAFETY_C,
+                [(fxs, -fy + 200, 90), (fxs, -fy + 200, cz), (fxs, ty, cz), (fxs, ty, 260)], 6)
+    m.cable("cable_datum_laser", "Datum laser cable (analogue + IO-Link) down the end stop", GREY_C,
+            [(-365, by, bz + 40), (-480, by, bz + 40), (-480, by, cz), (-480, ty, cz), (-480, ty, 260)], 5)
+    for dy in (-460, 460):
+        m.cable("cable_bar_eye", "Bar-present photo-eye cable", GREY_C,
+                [(180, by + dy, bz + 20), (180, by + dy, cz), (180, ty, cz), (180, ty, 260)], 5)
+    gx1 = m.gate_hinge[0] + (gx - m.gate_hinge[0]) * 2           # the latch side of the gate opening
+    m.cable("cable_gate", "Gate interlock cable (coded switch, guard locking)", SAFETY_C,
+            [(gx1, -fy - 40, 1100), (gx1, -fy - 60, 1100), (gx1, ty, 260)], 6)
+    m.cable("cable_fire_detector", "Flame detector cable down the column", GREY_C,
+            [(fdx, fdy, run_z - 50), (fdx - 140, -W / 2 - 140, run_z - 50), (fdx - 140, -W / 2 - 140, cz),
+             (fdx - 140, ty, cz), (fdx - 140, ty, 260)], 6)
+    # gas: cylinders -> regulators -> hoses to the gas console; console and power source -> floor trunking
+    for i, hose in enumerate((O2, N2, O2)):
+        cxg = px + 1120 + i * 240
+        m.cable("gas_hose", "Gas hose (BS EN ISO 3821: oxygen blue, inert black) cylinder regulator to the gas console", hose,
+                [(cxg, py0 + 280, 1660), (cxg, py0 + 280, 1760), (px + 620, py0 + 450 + 40 * i, 1700), (px + 552, py0 + 450 + 40 * i, 1500)], 9)
+    m.cable("torch_lead", "Plasma torch lead and coolant hoses - power source to the Cutter (via trunking, riser, chains)", BLACK,
+            [(px + 300, py0 + 1100, 500), (px + 300, py0 + 1180, 500), (px + 300, py0 + 1180, cz), (px + 300, -fy - 600, cz)], 22)
+    m.cable("gas_line", "Process gas lines - gas console to the torch (via trunking, riser, chains)", O2,
+            [(px + 450, py0 + 800, 1500), (px + 450, py0 + 1180, 1500), (px + 450, py0 + 1180, cz), (px + 450, -fy - 600, cz)], 8)
+    m.cable("cable_plasma_control", "Plasma control cable - cabinet to the power source", GREY_C,
+            [(cx0 + 1200, -fy - 1200, 800), (px, -fy - 1200, 800)], 7)
+    m.cable("cable_cabinet_trunk", "Servo and power cables - cabinet to the floor trunking", BLACK,
+            [(cx0 + 600, -fy - 950, 100), (cx0 + 600, -fy - 950, cz), (cx0 + 600, -fy - 600, cz)], 20)
+    m.cable("mains_supply", "Mains supply to the cabinet (SWA cable from the distribution board)", BLACK,
+            [(cx0 + 1000, cy0 + 300, 2100), (cx0 + 1000, cy0 + 300, 2700), (cx0 + 1000, cy0 - 600, 2700)], 16)
+    for side in (-1, 1):                                          # riser top -> along the tray -> the chain's fixed end
+        y_tray = side * (W / 2 + 350)
+        m.cable("cable_to_chain", "Cable bundle from the riser along the tray to the energy chain's fixed end", BLACK,
+                [(xc + 325, y_tray, rz - 95), (x_fix, y_tray, rz - 95)], 18)
 
     # the two hands: each body in its own frame, posed by the 3D view
     for hand in M.make_hands():
