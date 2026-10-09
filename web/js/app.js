@@ -575,7 +575,20 @@ function frame(now) {
 }
 
 // ---------------------------------------------------------------- start up
+// the welcome screen: once per browser session, while the machine loads
+function welcome() {
+  let seen = false;
+  try { seen = sessionStorage.getItem("welcomed") === "1"; } catch (e) { /* blocked: show it */ }
+  if (seen) return () => {};
+  const dlg = $("welcome");
+  dlg.showModal();
+  $("wl-enter").onclick = () => { try { sessionStorage.setItem("welcomed", "1"); } catch (e) { /* fine */ } dlg.close(); };
+  dlg.addEventListener("cancel", (e) => { if ($("wl-enter").disabled) e.preventDefault(); });
+  return (text) => { $("wl-info").textContent = text; $("wl-enter").disabled = false; $("wl-enter").focus(); };
+}
+
 async function start() {
+  const ready = welcome();
   app.info = await get("/api/info");
   app.sections = await get("/api/sections");
   $("version").textContent = "v " + (app.info.version || "").split(" ")[0];       // the git commit: shows a git pull + restart worked
@@ -655,6 +668,7 @@ async function start() {
   await initSafety();
   await jobChanged();
   requestAnimationFrame(frame);
+  ready(`${app.info.machine.work_length} m machine ready \u00b7 version ${(app.info.version || "").split(" ")[0]}`);
   offerRecovery();                              // a job interrupted by a stop or a power cut: offer to carry on
   memoryPill();
   setInterval(memoryPill, 15000);

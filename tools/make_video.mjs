@@ -61,6 +61,7 @@ page.on("pageerror", (e) => console.error("page error:", e.message));
 await page.addInitScript((job) => {
   localStorage.setItem("manual", JSON.stringify(job));
   localStorage.setItem("quality", "high");
+  sessionStorage.setItem("welcomed", "1");
   const realRaf = window.requestAnimationFrame.bind(window), realNow = performance.now.bind(performance);
   const v = (window.__video = { on: false, now: 0, queue: [] });
   window.requestAnimationFrame = (cb) => (v.on ? v.queue.push(cb) : realRaf(cb));
