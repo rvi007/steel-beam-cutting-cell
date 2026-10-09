@@ -147,25 +147,28 @@ export class Cables {
     const h = top + 2 * r - (rz - 0.12);
     C.riser.scale.set(1, 1, h);
     C.riser.position.set(g[0] + 0.24, g[1], rz - 0.12 + h / 2);
-    // dress pack: carriage -> top of the mast -> down the mast -> along the arm -> the tool
-    // (rebuilt at most 10 times a second: a tube is costly to make, and the eye can't tell)
-    const now = performance.now();
-    if (C.packAt && now - C.packAt < 100) { C.last = null; return; }
-    C.packAt = now;
+    // dress pack: clamped to the side of the carriage and straight down the mast (the mast slides past the
+    // carriage's cable guide), then along the arm in clamps to the tool. Updated every frame, smoothly: the new
+    // tube is written into the same buffers, so nothing jumps and no memory is churned.
     const F = handFrames(cfg, g, q);
+    const joints = [];
+    for (let k = 1; k <= 6; k++) joints.push(new THREE.Vector3().setFromMatrixPosition(F[k]));
+    joints.push(new THREE.Vector3().setFromMatrixPosition(F[7]).add(new THREE.Vector3().setFromMatrixColumn(F[7], 2).multiplyScalar(-0.25)));
     for (const t of C.tubes) {
-      const p = [new THREE.Vector3(g[0] + 0.24, g[1], rz - 0.1), new THREE.Vector3(g[0] + t.off, g[1], g[2] + 2.05),
-        new THREE.Vector3(g[0] + t.off + 0.03, g[1], g[2] + 1.0), new THREE.Vector3(g[0] + t.off, g[1], g[2] + 0.1)];
-      for (let k = 1; k <= 6; k++) {
-        const o = new THREE.Vector3().setFromMatrixPosition(F[k]);
-        const side = new THREE.Vector3().setFromMatrixColumn(F[k], 1).multiplyScalar(t.off);
-        p.push(o.add(side));
+      const p = [new THREE.Vector3(g[0] + t.off, g[1] + 0.12, rz - 0.12), new THREE.Vector3(g[0] + t.off, g[1] + 0.12, g[2] + 0.35),
+        new THREE.Vector3(g[0] + t.off, g[1] + 0.06, g[2] + 0.08)];
+      // along the arm: offset to one side of each link, always the same side (no flipping at the wrist)
+      for (let i = 0; i < joints.length; i++) {
+        const a = joints[Math.max(i - 1, 0)], b = joints[Math.min(i + 1, joints.length - 1)];
+        const along = b.clone().sub(a);
+        let side = along.clone().cross(new THREE.Vector3(0, 0, 1));
+        if (side.lengthSq() < 1e-6) side.set(1, 0, 0);
+        if (side.x < 0) side.negate();
+        p.push(joints[i].clone().add(side.normalize().multiplyScalar(t.off * 0.8)));
       }
-      p.push(new THREE.Vector3().setFromMatrixPosition(F[7]).add(new THREE.Vector3().setFromMatrixColumn(F[7], 2).multiplyScalar(-0.25))
-        .add(new THREE.Vector3().setFromMatrixColumn(F[7], 1).multiplyScalar(0.04)));
-      if (t === C.tubes[0]) {                                    // dress-pack clamps hold the bundle at each link
+      if (t === C.tubes[0]) {                                    // clamps hold the bundle along the mast and the arm
         for (let k = 0; k < 16; k++) {
-          const i = 3 + Math.floor(k / 2);
+          const i = 2 + Math.floor(k / 2);
           if (i >= p.length - 1) { this._m4.makeScale(0, 0, 0); C.clamps.setMatrixAt(k, this._m4); continue; }
           const a = p[i], b = p[i + 1], u = (k % 2) * 0.5 + 0.25;
           const at = a.clone().lerp(b, u), dir = b.clone().sub(a).normalize();
@@ -175,9 +178,17 @@ export class Cables {
         }
         C.clamps.instanceMatrix.needsUpdate = true;
       }
-      const curve = new THREE.CatmullRomCurve3(p, false, "centripetal");
-      t.mesh.geometry.dispose();
-      t.mesh.geometry = new THREE.TubeGeometry(curve, 48, t.r, 6, false);
+      const tube = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(p, false, "centripetal", 0.3), 64, t.r, 6, false);
+      const old = t.mesh.geometry;
+      if (old.attributes.position && old.attributes.position.count === tube.attributes.position.count) {
+        old.attributes.position.array.set(tube.attributes.position.array);
+        old.attributes.normal.array.set(tube.attributes.normal.array);
+        old.attributes.position.needsUpdate = old.attributes.normal.needsUpdate = true;
+        tube.dispose();
+      } else {
+        old.dispose();
+        t.mesh.geometry = tube;
+      }
     }
   }
 }

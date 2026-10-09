@@ -331,3 +331,16 @@ dialog.rec-dlg { max-width: 640px; } dialog.rec-dlg h2 { color: #b54708; }
 .resume-chip { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); background: #16a34a; color: #fff;
   padding: 8px 16px; border-radius: 999px; font-size: 14px; box-shadow: var(--shadow-lg); white-space: nowrap; z-index: 4; }
 .scan-resume { margin-top: 8px; padding: 8px 10px; background: #e8f5ec; border-radius: 8px; font-size: 13px; }
+
+/* welcome */
+dialog.welcome { border: 0; border-radius: 22px; padding: 44px 56px 30px; text-align: center; max-width: 560px; width: 92vw;
+  background: linear-gradient(160deg, #1e293b, #0f172a 70%); color: #e2e8f0; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+dialog.welcome::backdrop { background: rgba(8, 12, 18, 0.72); backdrop-filter: blur(4px); }
+.wl-mark { font-size: 54px; color: var(--accent); line-height: 1; }
+dialog.welcome h1 { margin: 10px 0 4px; font-size: 30px; letter-spacing: .01em; color: #fff; }
+dialog.welcome h1 span { color: var(--accent); letter-spacing: .12em; }
+.wl-sub { margin: 0 0 18px; color: #94a3b8; font-size: 15px; }
+.wl-by { margin: 0 0 18px; font-size: 17px; } .wl-by b { color: #fff; }
+.wl-info { color: #94a3b8; font-size: 13px; min-height: 18px; }
+dialog.welcome .primary { min-width: 180px; justify-content: center; font-size: 17px; margin: 6px 0 10px; }
+.wl-foot { margin: 8px 0 0; font-size: 11px; color: #64748b; }

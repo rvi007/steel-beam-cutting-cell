@@ -38,6 +38,7 @@ const shot = async (name, running = false) => {
 };
 // CI runners have no GPU: use the app's own low-graphics setting (no shadows) so frames stay fast
 if (process.env.CI) await page.addInitScript(() => localStorage.setItem("quality", "low"));
+await page.addInitScript(() => sessionStorage.setItem("welcomed", "1"));   // the welcome screen is checked separately
 
 await page.goto(base, { waitUntil: "load" });   // the safety check-in never lets the network go idle
 await page.waitForFunction(() => window.app && window.app.bars && window.app.bars.length > 0, null, { timeout: 30000 });
