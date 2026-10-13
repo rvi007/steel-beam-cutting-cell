@@ -110,3 +110,46 @@ class ShoppingList(unittest.TestCase):
                 self.assertGreaterEqual(float(qty.split()[0]) * 1000 + 50, mm, profile)
             else:                                    # bought as cut pieces
                 self.assertEqual(int(qty), pieces[profile], profile)
+
+
+@unittest.skipIf(cad.cq is None, "CadQuery not installed (it's for a PC)")
+class Continuity(unittest.TestCase):
+    """Nothing in the cell floats: every fixed part touches another one or stands on the floor, and every
+    roller is mounted - a shaft through it and a bolted pillow-block bearing at each end."""
+
+    def solids(self, length):
+        from beamcell import cad, machine as M
+        M.set_length(length)
+        try:
+            m = cad.build_cell()
+        finally:
+            M.set_length(12)
+        out = []
+        for group, name, label, shape, colour in m.items:
+            if group is None:
+                bb = (shape.val() if hasattr(shape, "val") else shape).BoundingBox()
+                out.append((label, (bb.xmin, bb.xmax, bb.ymin, bb.ymax, bb.zmin, bb.zmax)))
+        return out
+
+    def test_nothing_floats(self):
+        touch = lambda a, b: all(a[2 * i] <= b[2 * i + 1] + 2 and b[2 * i] <= a[2 * i + 1] + 2 for i in range(3))
+        for length in (12, 20):
+            parts = self.solids(length)
+            floating = [lab for i, (lab, a) in enumerate(parts)
+                        if a[4] > 5 and not any(touch(a, b) for j, (_, b) in enumerate(parts) if j != i)]
+            self.assertEqual(floating, [], f"{length} m: not attached to anything")
+
+    def test_every_roller_is_mounted(self):
+        for length in (12, 20):
+            parts = self.solids(length)
+            tubes = [a for lab, a in parts if "roller" in lab.lower() and "tube" not in lab.lower() and lab.startswith(("Bed roller", "Driven infeed", "Bridging"))]
+            shafts = [a for lab, a in parts if lab.startswith("Roller shaft")]
+            housings = [a for lab, a in parts if lab.startswith("Pillow-block bearing UCP205 - housing")]
+            self.assertGreater(len(tubes), 10)
+            for t in tubes:
+                x = (t[0] + t[1]) / 2
+                shaft = [s for s in shafts if s[0] <= x <= s[1]]
+                self.assertEqual(len(shaft), 1, f"roller at x={x:.0f} has no shaft")
+                s = shaft[0]
+                held = [h for h in housings if h[0] <= x <= h[1] and s[2] <= h[2] and h[3] <= s[3]]
+                self.assertEqual(len(held), 2, f"roller at x={x:.0f} isn't held by two bearings")

@@ -428,19 +428,23 @@ def build_cell():
     for x in np.arange(bx0 + 150, bx1, 2000):
         m.hollow("bed_cross", "Bed cross member RHS 80x40x4 S355 - ties the two rails", BED, 80, 40, 4,
                  (x, by - 360, 300), (x, by + 360, 300))
-    for x in M.ROLLER_X:
-        X = x * mm
-        m.tube("bed_roller", "Bed roller - tube 101.6x3.6, 720 long (top = bed height 900 mm)", ALU,
-               (X, by - 360, bz - rr), (X, by + 360, bz - rr), rr, 3.6)
+    def roller_unit(X, label):
+        """A roller as it is really built: 101.6x3.6 tube with end caps, a 25 mm shaft right through, and a
+        UCP205 pillow-block bearing at each end, bolted to the rail (or stand) top at rail_top."""
+        m.tube("bed_roller", label, ALU, (X, by - 360, bz - rr), (X, by + 360, bz - rr), rr, 3.6)
         for e in (-360, 357):
             m.cyl("roller_end", "Roller end cap with bearing seat", STEEL, (X, by + e, bz - rr), (X, by + e + 3, bz - rr), rr - 3.6)
-        m.cyl("roller_shaft", "Roller shaft 25 mm, bright steel", STEEL, (X, by - 440, bz - rr), (X, by + 440, bz - rr), 12.5)
+        m.cyl("roller_shaft", "Roller shaft 25 mm, bright steel, through both bearings", STEEL, (X, by - 440, bz - rr), (X, by + 440, bz - rr), 12.5)
         for dy in (-400, 400):
             y = by + dy
             m.box("bearing_base", "Pillow-block bearing UCP205 - base", DARK, X - 70, X + 70, y - 19, y + 19, rail_top, rail_top + 15)
+            m.box("bearing_pedestal", "Pillow-block bearing UCP205 - pedestal", DARK, X - 22, X + 22, y - 17, y + 17, rail_top + 15, bz - rr)
             m.cyl("bearing_housing", "Pillow-block bearing UCP205 - housing", DARK, (X, y - 17, bz - rr), (X, y + 17, bz - rr), 33)
             for bxo in (-52, 52):
                 m.cyl("bearing_bolt", "M12 bolt - bearing to rail", STEEL, (X + bxo, y, rail_top + 15), (X + bxo, y, rail_top + 25), 9)
+
+    for x in M.ROLLER_X:
+        roller_unit(x * mm, "Bed roller - tube 101.6x3.6, 720 long (top = bed height 900 mm)")
     # scrap tray under the bed
     tz = M.SCRAP_TRAY_Z * mm
     m.box("scrap_tray_floor", "Scrap tray - offcuts fall between the rollers into it", BLUE_TRAY,
@@ -486,14 +490,17 @@ def build_cell():
             m.hollow("infeed_leg", "Infeed conveyor leg SHS 80x80x5", BED, 80, 80, 5, (x, by + dy, 15), (x, by + dy, rail_top - 120))
             m.box("infeed_foot", "Leg foot plate 200x200x15", DARK, x - 100, x + 100, by + dy - 100, by + dy + 100, 0, 15)
     for x in np.arange(ix0 + 500, ix1, 1000):
-        m.tube("infeed_roller", "Driven infeed roller 101.6x3.6 (chain-driven, powered: brings the bar in)", ALU,
-               (x, by - 360, bz - rr), (x, by + 360, bz - rr), rr, 3.6)
-        m.cyl("infeed_sprocket", "Roller drive sprocket", DARK, (x, by + 400, bz - rr), (x, by + 440, bz - rr), 40)
+        roller_unit(x, "Driven infeed roller 101.6x3.6 (chain-driven, powered: brings the bar in)")
+        m.cyl("infeed_sprocket", "Roller drive sprocket on the shaft end", DARK, (x, by + 420, bz - rr), (x, by + 440, bz - rr), 40)
     for x in (ix1 + 450, (xa - 0.6) * mm + 900):                   # through the opening: rollers bridge to the bed
-        m.tube("infeed_roller", "Bridging roller through the infeed opening", ALU, (x, by - 360, bz - rr), (x, by + 360, bz - rr), rr, 3.6)
+        roller_unit(x, "Bridging roller through the infeed opening")
         for dy in (-400, 400):
-            m.hollow("infeed_leg", "Roller stand SHS 80x80x5", BED, 80, 80, 5, (x, by + dy, 15), (x, by + dy, bz - rr - 40))
+            m.hollow("infeed_leg", "Roller stand SHS 80x80x5", BED, 80, 80, 5, (x, by + dy, 15), (x, by + dy, rail_top))
+            m.box("infeed_foot", "Stand foot plate 200x200x15", DARK, x - 100, x + 100, by + dy - 100, by + dy + 100, 0, 15)
+    m.box("infeed_motor_base", "Gearmotor base frame, bolted to the floor", BED, ix1 - 720, ix1 - 280, by + 440, by + 760, 0, 300)
     m.box("infeed_motor", "Infeed conveyor gearmotor with inverter", (0.25, 0.4, 0.6), ix1 - 700, ix1 - 300, by + 450, by + 750, 300, 700)
+    m.box("infeed_drive_chain", "Drive chain - gearmotor to the first roller (under the fixed guard)", DARK,
+          ix1 - 520, ix1 - 480, by + 425, by + 450, 500, bz - rr)
     m.box("infeed_chain_guard", "Roller chain guard (fixed guard, BS EN ISO 14120)", YELLOW, ix0, ix1, by + 440, by + 480, bz - rr - 60, bz - rr + 60)
     rack_y0, rack_y1 = by - 450, by - 2650                         # loading rack on the front side of the conveyor
     for x in np.arange(ix0 + 1000, ix1, 2500):
@@ -557,22 +564,24 @@ def build_cell():
                 if a_ >= op0 and b_ <= op1:
                     continue
                 if a_ < op0 < b_:
-                    m.box("fence_mesh", "Weld-mesh fence panel", DARK, a_ + 40, op0 - 40, fy - 2, fy + 2, 150, 2050)
+                    m.box("fence_mesh", "Weld-mesh fence panel", DARK, a_ + 30, op0 - 40, fy - 2, fy + 2, 150, 2050)
                     continue
                 if a_ < op1 < b_:
-                    m.box("fence_mesh", "Weld-mesh fence panel", DARK, op1 + 40, b_ - 40, fy - 2, fy + 2, 150, 2050)
+                    m.box("fence_mesh", "Weld-mesh fence panel", DARK, op1 + 40, b_ - 30, fy - 2, fy + 2, 150, 2050)
                     continue
             p0 = (ax + (bx - ax) * i / n, ay + (byy - ay) * i / n)
             p1 = (ax + (bx - ax) * (i + 1) / n, ay + (byy - ay) * (i + 1) / n)
             if abs(p1[1] - p0[1]) < 1:
                 m.box("fence_mesh", "Weld-mesh fence panel 1900 high (BS EN ISO 13857 reach distances)", DARK,
-                      p0[0] + 40, p1[0] - 40, p0[1] - 2, p0[1] + 2, 150, 2050)
+                      p0[0] + 30, p1[0] - 30, p0[1] - 2, p0[1] + 2, 150, 2050)
             else:
                 m.box("fence_mesh", "Weld-mesh fence panel 1900 high (BS EN ISO 13857 reach distances)", DARK,
-                      p0[0] - 2, p0[0] + 2, min(p0[1], p1[1]) + 40, max(p0[1], p1[1]) - 40, 150, 2050)
+                      p0[0] - 2, p0[0] + 2, min(p0[1], p1[1]) + 30, max(p0[1], p1[1]) - 30, 150, 2050)
     for xg, what in ((op0, "sender"), (op1, "receiver")):
         m.box("light_grid", f"Perimeter light grid, 4 beams ({what}, SICK deTem4 class, Type 4) across the outfeed opening",
               RUBBER, xg - 40, xg + 40, fy - 40, fy + 40, 0, 1500)
+        m.hollow("muting_post", "Muting sensor post SHS 40x40x3", YELLOW, 40, 40, 3, (xg, fy - 270, 15), (xg, fy - 270, bz + 40))
+        m.box("muting_post_foot", "Post foot plate", DARK, xg - 60, xg + 60, fy - 330, fy - 210, 0, 15)
         m.box("muting_sensor", "Muting sensor - lets steel on the transfer through, never a person (BS EN IEC 62046)", DARK,
               xg - 30, xg + 30, fy - 300, fy - 240, bz + 40, bz + 100)
         m.cyl("muting_lamp", "Muting lamp - lit while steel passes", (1, 0.85, 0.2), (xg, fy, 1500), (xg, fy, 1620), 35)
@@ -597,6 +606,8 @@ def build_cell():
               fx0 - 150, fx0 - 90, y - 30, y + 30, 0, 1800)
     m.box("desk", "Operator desk - the Jetson and the screen", DARK, gx + 2000, gx + 3200, -fy - 1400, -fy - 800, 0, 900)
     m.box("screen", "Operator screen", RUBBER, gx + 2250, gx + 2950, -fy - 1040, -fy - 1000, 1050, 1470)
+    m.box("screen_stand", "Screen stand (VESA mount)", DARK, gx + 2580, gx + 2620, -fy - 1000, -fy - 960, 900, 1200)
+    m.box("screen_stand_foot", "Screen stand foot", DARK, gx + 2480, gx + 2720, -fy - 1080, -fy - 900, 900, 910)
     m.box("estop_box", "Emergency stop (BS EN ISO 13850) - red mushroom on yellow", YELLOW,
           gx + 2090, gx + 2210, -fy - 1110, -fy - 990, 900, 980)
     m.cyl("estop_head", "Emergency stop button", RED, (gx + 2150, -fy - 1050, 980), (gx + 2150, -fy - 1050, 1020), 45)
@@ -733,7 +744,7 @@ def build_cell():
                 [(180, by + dy, bz + 20), (180, by + dy, cz), (180, ty, cz), (180, ty, 260)], 5)
     gx1 = m.gate_hinge[0] + (gx - m.gate_hinge[0]) * 2           # the latch side of the gate opening
     m.cable("cable_gate", "Gate interlock cable (coded switch, guard locking)", SAFETY_C,
-            [(gx1, -fy - 40, 1100), (gx1, -fy - 60, 1100), (gx1, ty, 260)], 6)
+            [(gx1, -fy - 25, 1100), (gx1, -fy - 60, 1100), (gx1, ty, 260)], 6)
     m.cable("cable_fire_detector", "Flame detector cable down the column", GREY_C,
             [(fdx, fdy, run_z - 50), (fdx - 140, -W / 2 - 140, run_z - 50), (fdx - 140, -W / 2 - 140, cz),
              (fdx - 140, ty, cz), (fdx - 140, ty, 260)], 6)
